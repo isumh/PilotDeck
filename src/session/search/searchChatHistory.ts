@@ -2,7 +2,7 @@ import { createReadStream } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { createInterface } from "node:readline";
-import { getPilotProjectChatDir } from "../../pilot/paths.js";
+import { getEastYunProjectChatDir } from "../../eastyun/paths.js";
 import { sanitizeSessionIdForPath } from "../storage/ProjectSessionStorage.js";
 import { isInternalSession } from "../storage/SessionCatalog.js";
 import { readSessionInfo, type SessionInfo } from "../storage/SessionList.js";
@@ -25,8 +25,8 @@ export type ChatHistorySearchMatch = {
 };
 
 export type SearchChatHistoryOptions = {
-  pilotHome: string;
-  /** When omitted, searches all projects under pilotHome. */
+  eastyunHome: string;
+  /** When omitted, searches all projects under eastyunHome. */
   projectRoot?: string;
   query: string;
   limit?: number;
@@ -131,7 +131,7 @@ export async function searchChatHistory(options: SearchChatHistoryOptions): Prom
   const includeInternal = options.includeInternal ?? false;
 
   const sessionFiles = await collectSessionFiles({
-    pilotHome: options.pilotHome,
+    eastyunHome: options.eastyunHome,
     projectRoot: options.projectRoot,
     sessionId: options.sessionId,
     includeInternal,
@@ -213,14 +213,14 @@ function buildMatcher(
 }
 
 async function collectSessionFiles(options: {
-  pilotHome: string;
+  eastyunHome: string;
   projectRoot?: string;
   sessionId?: string;
   includeInternal: boolean;
 }): Promise<SessionFileTarget[]> {
   if (options.sessionId) {
     const projectRoot = options.projectRoot ?? process.cwd();
-    const chatDir = getPilotProjectChatDir(projectRoot, options.pilotHome);
+    const chatDir = getEastYunProjectChatDir(projectRoot, options.eastyunHome);
     if (!options.includeInternal && isInternalSession(options.sessionId)) {
       return [];
     }
@@ -231,11 +231,11 @@ async function collectSessionFiles(options: {
   }
 
   if (options.projectRoot) {
-    const chatDir = getPilotProjectChatDir(options.projectRoot, options.pilotHome);
+    const chatDir = getEastYunProjectChatDir(options.projectRoot, options.eastyunHome);
     return listJsonlFiles(chatDir, options.projectRoot, options.includeInternal);
   }
 
-  const projectsDir = resolve(options.pilotHome, "projects");
+  const projectsDir = resolve(options.eastyunHome, "projects");
   let projectIds: string[];
   try {
     projectIds = await readdir(projectsDir);

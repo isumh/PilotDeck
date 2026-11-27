@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import * as fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { createProjectId, createCollisionResistantProjectId } from '../utils/pilotPaths.js';
+import { createProjectId, createCollisionResistantProjectId } from '../utils/eastyunPaths.js';
 import { resolveRegisteredProject } from './projectRegistration.js';
 
 const cleanups = [];

@@ -2,36 +2,36 @@ import type {
   CanonicalToolResultBlock,
   CanonicalToolResultContentBlock,
 } from "../../model/index.js";
-import type { PilotDeckToolError } from "./errors.js";
-import type { PilotDeckToolResultContent, PilotDeckToolSupplementalMessage } from "./types.js";
+import type { EastYunDeskToolError } from "./errors.js";
+import type { EastYunDeskToolResultContent, EastYunDeskToolSupplementalMessage } from "./types.js";
 
-export type PilotDeckToolSuccessResult = {
+export type EastYunDeskToolSuccessResult = {
   type: "success";
   toolCallId: string;
   toolName: string;
-  content: PilotDeckToolResultContent[];
-  supplementalMessages?: PilotDeckToolSupplementalMessage[];
+  content: EastYunDeskToolResultContent[];
+  supplementalMessages?: EastYunDeskToolSupplementalMessage[];
   data?: unknown;
   metadata?: Record<string, unknown>;
   startedAt: string;
   completedAt: string;
 };
 
-export type PilotDeckToolErrorResult = {
+export type EastYunDeskToolErrorResult = {
   type: "error";
   toolCallId: string;
   toolName: string;
-  error: PilotDeckToolError;
-  content: PilotDeckToolResultContent[];
-  supplementalMessages?: PilotDeckToolSupplementalMessage[];
+  error: EastYunDeskToolError;
+  content: EastYunDeskToolResultContent[];
+  supplementalMessages?: EastYunDeskToolSupplementalMessage[];
   metadata?: Record<string, unknown>;
   startedAt: string;
   completedAt: string;
 };
 
-export type PilotDeckToolResult = PilotDeckToolSuccessResult | PilotDeckToolErrorResult;
+export type EastYunDeskToolResult = EastYunDeskToolSuccessResult | EastYunDeskToolErrorResult;
 
-export type PilotDeckToolResultSizeMetadata = {
+export type EastYunDeskToolResultSizeMetadata = {
   truncated?: boolean;
   originalBytes?: number;
   returnedBytes?: number;
@@ -40,7 +40,7 @@ export type PilotDeckToolResultSizeMetadata = {
 
 const EMPTY_TOOL_OUTPUT = "Tool completed with no output.";
 
-export function contentToText(content: PilotDeckToolResultContent): string {
+export function contentToText(content: EastYunDeskToolResultContent): string {
   switch (content.type) {
     case "text":
       return content.text;
@@ -57,7 +57,7 @@ export function contentToText(content: PilotDeckToolResultContent): string {
   }
 }
 
-export function toCanonicalToolResultBlock(result: PilotDeckToolResult): CanonicalToolResultBlock {
+export function toCanonicalToolResultBlock(result: EastYunDeskToolResult): CanonicalToolResultBlock {
   const contentBlocks = result.content.map(toCanonicalToolResultContentBlock);
 
   return {
@@ -69,7 +69,7 @@ export function toCanonicalToolResultBlock(result: PilotDeckToolResult): Canonic
   };
 }
 
-function sanitizeToolResultRaw(result: PilotDeckToolResult): unknown {
+function sanitizeToolResultRaw(result: EastYunDeskToolResult): unknown {
   return {
     ...result,
     content: result.content.map(sanitizeRawContent),
@@ -84,7 +84,7 @@ function sanitizeToolResultRaw(result: PilotDeckToolResult): unknown {
   };
 }
 
-function sanitizeRawContent(content: PilotDeckToolResultContent): unknown {
+function sanitizeRawContent(content: EastYunDeskToolResultContent): unknown {
   const kind = (content as { type?: unknown }).type;
   if (kind === "image" || kind === "pdf" || kind === "audio") {
     const { data: _omitted, ...rest } = content as Record<string, unknown>;
@@ -95,7 +95,7 @@ function sanitizeRawContent(content: PilotDeckToolResultContent): unknown {
 }
 
 function toCanonicalToolResultContentBlock(
-  content: PilotDeckToolResultContent,
+  content: EastYunDeskToolResultContent,
 ): CanonicalToolResultContentBlock {
   if (content.type === "image") {
     return {
@@ -125,7 +125,7 @@ function toCanonicalToolResultContentBlock(
   };
 }
 
-export function estimateResultContentBytes(content: PilotDeckToolResultContent[]): number {
+export function estimateResultContentBytes(content: EastYunDeskToolResultContent[]): number {
   return content.reduce((total, item) => {
     switch (item.type) {
       case "image":
@@ -138,9 +138,9 @@ export function estimateResultContentBytes(content: PilotDeckToolResultContent[]
 }
 
 export function applyResultSizeLimit(
-  content: PilotDeckToolResultContent[],
+  content: EastYunDeskToolResultContent[],
   maxBytes: number | undefined,
-): { content: PilotDeckToolResultContent[]; metadata?: PilotDeckToolResultSizeMetadata } {
+): { content: EastYunDeskToolResultContent[]; metadata?: EastYunDeskToolResultSizeMetadata } {
   if (maxBytes === undefined || maxBytes < 0) {
     return { content };
   }

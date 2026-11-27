@@ -1,5 +1,5 @@
 {
-  "brand": "PilotDeck",
+  "brand": "EastYunDesk",
   "sidebar": {
     "kicker": "First-time setup",
     "title": "Prepare your AI workspace",
@@ -7,12 +7,11 @@
   },
   "steps": {
     "language": "Language",
-    "provider": "Model provider",
     "connection": "Model access",
     "workspace": "Workspace"
   },
   "language": {
-    "eyebrow": "Welcome to PilotDeck",
+    "eyebrow": "Welcome to EastYunDesk",
     "title": "Connect your model and start collaborating",
     "intro": "Finish model setup in a few steps. You can change the provider, model, or key in Settings at any time.",
     "legend": "Choose your interface language",
@@ -28,7 +27,7 @@
   },
   "provider": {
     "title": "Choose your model provider",
-    "intro": "Pick a provider first. PilotDeck will fill in the recommended endpoint format.",
+    "intro": "Pick a provider first. EastYunDesk will fill in the recommended endpoint format.",
     "customTitle": "Custom",
     "customHint": "OpenAI / Anthropic / Google"
   },
@@ -79,7 +78,8 @@
     "manualSupported": "Supports",
     "manualUnsupported": "Does not support",
     "manualCancel": "Cancel",
-    "manualConfirm": "Confirm"
+    "manualConfirm": "Confirm",
+    "testRequired": "Test the connection successfully before continuing."
   },
   "workspace": {
     "title": "Create your workspace",
@@ -89,14 +89,11 @@
     "existingTitle": "Existing folder",
     "existingHint": "Add a folder that already exists on this machine.",
     "newTitle": "New folder",
-    "newHint": "Create a folder, optionally cloning a GitHub repository.",
+    "newHint": "Create a new folder for this workspace.",
     "pathLabel": "Workspace",
     "pathHint": "The workspace and project use the same name.",
     "pathRequired": "Enter a workspace path.",
     "browse": "Choose file",
-    "githubLabel": "GitHub URL",
-    "githubPlaceholder": "https://github.com/username/repository",
-    "githubHint": "Provide a GitHub URL to clone a repository.",
     "startChatting": "Start chatting",
     "createWorkspace": "Create workspace"
   },

@@ -9,7 +9,7 @@ const source = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8')
 // worker and retain structured-cloned storage when replacing its JS context.
 function worker(database = {}, surfaces = { shown: [], forwarded: [], badge: 0, visible: false }) {
   const handlers = {};
-  const client = { url: 'https://pilotdeck.example.test/', focus: async () => {}, postMessage(message, ports) {
+  const client = { url: 'https://eastyundesk.example.test/', focus: async () => {}, postMessage(message, ports) {
     if (message.type === 'notification:context') ports[0].postMessage({ viewed: surfaces.visible });
     else surfaces.forwarded.push(message);
   } };
@@ -46,7 +46,7 @@ function worker(database = {}, surfaces = { shown: [], forwarded: [], badge: 0, 
       return request;
     } },
     self: {
-      location: { origin: 'https://pilotdeck.example.test' },
+      location: { origin: 'https://eastyundesk.example.test' },
       addEventListener: (name, handler) => { handlers[name] = handler; },
       clients: { matchAll: async () => surfaces.noClients ? [] : [client] },
       navigator: { setAppBadge: async count => { surfaces.badge = count; }, clearAppBadge: async () => { surfaces.badge = 0; } },

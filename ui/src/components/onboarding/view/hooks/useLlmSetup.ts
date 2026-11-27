@@ -10,6 +10,11 @@ import type { LlmSetupController, ModelImageSupport, ModelListStatus, ModelTestS
 
 type UseLlmSetupOptions = {
   onSaved?: () => void | Promise<void>;
+  /**
+   * Provider the wizard is pinned to. EastYunDesk passes its builtin
+   * `yna-llm` entry so the provider picker can be dropped entirely.
+   */
+  initialProvider?: CatalogProvider | null;
 };
 
 const IDLE_MODEL_TEST: ModelTestState = { status: 'idle', message: '', testId: '' };
@@ -22,10 +27,20 @@ function validEndpoint(value: string) {
   }
 }
 
-export default function useLlmSetup({ onSaved }: UseLlmSetupOptions = {}): LlmSetupController {
+export default function useLlmSetup({
+  onSaved,
+  initialProvider = null,
+}: UseLlmSetupOptions = {}): LlmSetupController {
   const { t, i18n } = useTranslation('onboarding');
-  const [selectedProvider, setSelectedProvider] = useState<CatalogProvider | null>(DEFAULT_PROVIDER);
-  const [modelIds, setModelIds] = useState<string[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<CatalogProvider | null>(
+    initialProvider ?? DEFAULT_PROVIDER,
+  );
+  const [modelIds, setModelIds] = useState<string[]>(() => (
+    initialProvider ? uniqueModelIds(initialProvider.models.map((model) => model.id)) : []
+  ));
+  // Tracks whether a usable key already exists on disk. The wizard uses it to
+  // collapse "language → connection → workspace" into "language → workspace".
+  const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [customUrl, setCustomUrl] = useState('');
   const [testMessage, setTestMessage] = useState('');
@@ -74,6 +89,11 @@ export default function useLlmSetup({ onSaved }: UseLlmSetupOptions = {}): LlmSe
       && !customProviderIdError
       && (!modelListRequiresApiKey || hasUsableApiKey(apiKey) || hasEnvironmentApiKeyFallback),
   );
+  // EastYunDesk requires one passing connection test before the key is stored;
+  // the wizard refuses to advance otherwise.
+  const connectionTestPassed = effectiveModelIds.length > 0
+    && effectiveModelIds.every((id) => modelTests[id]?.status === 'success');
+
   const canContinue = Boolean(
     selectedProvider
     && effectiveProviderId
@@ -82,6 +102,11 @@ export default function useLlmSetup({ onSaved }: UseLlmSetupOptions = {}): LlmSe
     && (!selectedProviderRequiresApiKey || hasUsableApiKey(apiKey) || hasEnvironmentApiKeyFallback)
     && effectiveModelIds.length > 0,
   );
+
+  const setApiKeyInput = useCallback((value: string) => {
+    setApiKey(value);
+    setHasStoredApiKey(false);
+  }, []);
 
   const resetTest = useCallback(() => {
     testGenerationRef.current += 1;
@@ -110,26 +135,33 @@ export default function useLlmSetup({ onSaved }: UseLlmSetupOptions = {}): LlmSe
         const res = await authenticatedFetch('/api/config/provider');
         if (!res.ok) return;
         const data = await res.json();
-        setEnvironmentCredentialProviderIds(
-          Array.isArray(data.environmentCredentialProviderIds)
-            ? data.environmentCredentialProviderIds.filter((id: unknown): id is string => typeof id === 'string')
-            : [],
-        );
+        const environmentIds: string[] = Array.isArray(data.environmentCredentialProviderIds)
+          ? data.environmentCredentialProviderIds.filter((id: unknown): id is string => typeof id === 'string')
+          : [];
+        setEnvironmentCredentialProviderIds(environmentIds);
+        const providerId = initialProvider?.id ?? '';
+        const environmentKeyUsable = Boolean(providerId) && environmentIds.includes(providerId);
+        setHasStoredApiKey(environmentKeyUsable);
         if (!data.exists || !data.provider) return;
 
         const p = data.provider;
         const existingKeyIsUsable = hasUsableApiKey(p.apiKey);
+        setHasStoredApiKey(existingKeyIsUsable || environmentKeyUsable);
         if (existingKeyIsUsable) setApiKey(p.apiKey);
         if (p.baseUrl) {
           const match = findCatalogProviderByUrl(p.baseUrl);
-          if (match) {
+          if (match && !initialProvider) {
             setSelectedProvider(match);
+          }
+          if (!initialProvider || match || p.baseUrl === initialProvider.defaultUrl) {
             const existingModel = typeof p.model === 'string' ? p.model.trim() : '';
             setModelIds(existingModel ? [existingModel] : []);
           }
         }
       } catch { /* no existing config */ }
     })();
+    // The provider is fixed for the wizard, so this probe only has to run once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -572,13 +604,15 @@ export default function useLlmSetup({ onSaved }: UseLlmSetupOptions = {}): LlmSe
     selectedProviderRequiresApiKey,
     hasEnvironmentApiKeyFallback,
     apiKeyInputRequired,
+    hasStoredApiKey,
+    connectionTestPassed,
     canFetchModels,
     canContinue,
     manualModelIds,
     setModelIds,
     selectModelId,
     deselectModelId,
-    setApiKey,
+    setApiKey: setApiKeyInput,
     setCustomUrl,
     setCustomProviderId,
     setCustomProtocol,

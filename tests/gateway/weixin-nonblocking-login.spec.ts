@@ -16,7 +16,7 @@ test("WeixinChannel.start returns while QR login is waiting", async (t) => {
   t.mock.method(console, "log", () => undefined);
   t.mock.method(console, "error", () => undefined);
 
-  const tempDir = await mkdtemp(join(tmpdir(), "pilotdeck-weixin-start-"));
+  const tempDir = await mkdtemp(join(tmpdir(), "eastyundesk-weixin-start-"));
   t.after(async () => {
     await rm(tempDir, { recursive: true, force: true });
   });
@@ -56,19 +56,19 @@ test("WeixinChannel.start returns while QR login is waiting", async (t) => {
 });
 
 test("channel runtime status reporter persists the latest channel state", async (t) => {
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-channel-status-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-channel-status-"));
   t.after(async () => {
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   });
 
-  const report = createChannelRuntimeStatusReporter(pilotHome);
+  const report = createChannelRuntimeStatusReporter(eastyunHome);
   report("weixin", {
     state: "waiting_for_login",
     message: "微信等待扫码登录",
     qrUrl: "https://wechat.example/qr",
   });
 
-  const snapshot = readChannelRuntimeStatusSnapshot(pilotHome);
+  const snapshot = readChannelRuntimeStatusSnapshot(eastyunHome);
   assert.equal(snapshot.channels.weixin.channelKey, "weixin");
   assert.equal(snapshot.channels.weixin.state, "waiting_for_login");
   assert.equal(snapshot.channels.weixin.message, "微信等待扫码登录");

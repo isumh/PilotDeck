@@ -1,5 +1,5 @@
 import type { Gateway } from "../../gateway/index.js";
-import type { PilotDeckToolDefinition } from "../../tool/index.js";
+import type { EastYunDeskToolDefinition } from "../../tool/index.js";
 import type { AlwaysOnConfig } from "../config/parseAlwaysOnConfig.js";
 import type { CreateAlwaysOnDiscoveryPlanToolOptions } from "../tool/AlwaysOnDiscoveryPlanTool.js";
 import { createAlwaysOnDiscoveryPlanTool } from "../tool/AlwaysOnDiscoveryPlanTool.js";
@@ -17,7 +17,7 @@ import type { TelemetryClient } from "../../telemetry/index.js";
 
 export type CreateAlwaysOnManagerOptions = {
   config: AlwaysOnConfig;
-  pilotHome: string;
+  eastyunHome: string;
   sessionOverrides?: SessionConfigOverrides;
   now?: () => Date;
   uuid?: () => string;
@@ -41,7 +41,7 @@ export class AlwaysOnManager {
   private readonly runtimes: AlwaysOnRuntime[] = [];
   private readonly runContexts = new AlwaysOnRunContextRegistry();
   private readonly sessionOverrides: SessionConfigOverrides;
-  private readonly tools: PilotDeckToolDefinition[];
+  private readonly tools: EastYunDeskToolDefinition[];
   private readonly logger: AlwaysOnRuntimeLogger;
 
   constructor(private readonly options: CreateAlwaysOnManagerOptions) {
@@ -74,7 +74,7 @@ export class AlwaysOnManager {
       this.runtimes.push(
         new AlwaysOnRuntime({
           config: options.config,
-          pilotHome: options.pilotHome,
+          eastyunHome: options.eastyunHome,
           projectKey,
           now: options.now,
           uuid: options.uuid,
@@ -91,7 +91,7 @@ export class AlwaysOnManager {
     }
   }
 
-  getTools(): PilotDeckToolDefinition[] {
+  getTools(): EastYunDeskToolDefinition[] {
     return [...this.tools];
   }
 

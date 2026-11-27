@@ -34,8 +34,8 @@ const editorTabs: CodeEditorTab[] = [{
   id: 'editor-tab-0',
   fileStack: [{
     name: 'report.pdf',
-    path: '/workspace/PilotDeck/report.pdf',
-    projectName: 'pilotdeck',
+    path: '/workspace/EastYunDesk/report.pdf',
+    projectName: 'eastyundesk',
     diffInfo: null,
   }],
   dirty: false,

@@ -2,7 +2,7 @@ import { createReadStream } from 'node:fs';
 import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import { resolvePilotHome } from '../utils/pilotPaths.js';
+import { resolveEastYunHome } from '../utils/eastyunPaths.js';
 
 const timeZone = 'Asia/Shanghai';
 const dayFormatter = new Intl.DateTimeFormat('sv-SE', {
@@ -10,8 +10,8 @@ const dayFormatter = new Intl.DateTimeFormat('sv-SE', {
 });
 
 /** Cache daily totals; unchanged historical files are never rescanned. */
-export function createUsageStatsReader(pilotHome = resolvePilotHome(), now = () => new Date()) {
-    const directory = join(pilotHome, 'usage', 'daily');
+export function createUsageStatsReader(eastyunHome = resolveEastYunHome(), now = () => new Date()) {
+    const directory = join(eastyunHome, 'usage', 'daily');
     const cache = new Map();
     let inFlight;
     async function read() {

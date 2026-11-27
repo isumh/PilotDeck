@@ -1,6 +1,6 @@
 # Scheduled tasks
 
-Scheduled tasks are owned by `pilotdeck server`. Keep the server and computer
+Scheduled tasks are owned by `eastyundesk server`. Keep the server and computer
 running for local work. The Web page, Agent tools and Gateway share `CronManager`
 and its project runtimes; the old UI daemon helpers are not used.
 
@@ -251,12 +251,12 @@ Local scheduling still requires the runtime and computer to remain running.
 ## Storage and interfaces
 
 Reminder records and per-user acknowledgements are in
-`<PILOT_HOME>/cron/reminders.json`, written atomically with serialized mutations.
+`<EASTYUN_HOME>/cron/reminders.json`, written atomically with serialized mutations.
 `GET /api/always-on/cron-reminders` returns the current user’s pending records;
 `POST /api/always-on/cron-reminders/:id/dismiss` acknowledges only that user’s
 record. Gateway equivalents are `cron_reminder_list` and `cron_reminder_dismiss`.
 
-Tasks are in `<PILOT_HOME>/cron/projects/<projectId>/tasks.json`, with a `.cwd`
+Tasks are in `<EASTYUN_HOME>/cron/projects/<projectId>/tasks.json`, with a `.cwd`
 project marker. The storage ID hashes the absolute project path as resolved by
 the filesystem, including its drive letter and Unicode characters. Equivalent
 spellings of the same directory share a store, and distinct directories keep

@@ -51,7 +51,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.clearAllMocks(); });
 it('repairs an inactive task cache after its run changed and reuses unchanged task history', async () => {
   let content = 'Old result';
   vi.mocked(authenticatedFetch).mockImplementation(async url => String(url).includes('/token-usage') ? json({ used: 20 })
-    : json({ messages: [{ id: content, kind: 'text', role: 'assistant', content, timestamp: '2026-01-01', provider: 'pilotdeck' }], total: 1, hasMore: false }));
+    : json({ messages: [{ id: content, kind: 'text', role: 'assistant', content, timestamp: '2026-01-01', provider: 'eastyundesk' }], total: 1, hasMore: false }));
   const props = { ...initial, eventDriven: true, historyRevision: 'run-1:completed' };
   const { result, rerender } = mount(false, props);
   await waitFor(() => expect(result.current.view.chatMessages[0]?.content).toBe('Old result'));
@@ -342,7 +342,7 @@ it('loads history after StrictMode effect replay', async () => {
 });
 
 it('reuses cached task history when selecting another task and returning, without losing message state', async () => {
-  vi.mocked(authenticatedFetch).mockImplementation(async url => String(url).includes('/token-usage') ? json({ used: 20 }) : json({ messages: [{ id: String(url), kind: 'text', role: 'assistant', content: 'Saved task output', sessionId: String(url).includes('session-a') ? 'session-a' : 'session-b', timestamp: '2026-01-01T00:00:00Z', provider: 'pilotdeck' }], total: 1, hasMore: false }));
+  vi.mocked(authenticatedFetch).mockImplementation(async url => String(url).includes('/token-usage') ? json({ used: 20 }) : json({ messages: [{ id: String(url), kind: 'text', role: 'assistant', content: 'Saved task output', sessionId: String(url).includes('session-a') ? 'session-a' : 'session-b', timestamp: '2026-01-01T00:00:00Z', provider: 'eastyundesk' }], total: 1, hasMore: false }));
   const props = { ...initial, eventDriven: true };
   const { result, rerender } = mount(false, props);
   await waitFor(() => expect(result.current.view.chatMessages).toHaveLength(1));

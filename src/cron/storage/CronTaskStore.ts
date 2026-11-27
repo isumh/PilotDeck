@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { appendFile, copyFile, mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { GatewayEvent } from "../../gateway/index.js";
-import { resolveProjectIdentityPath } from "../../pilot/paths.js";
+import { resolveProjectIdentityPath } from "../../eastyun/paths.js";
 import type { CronRunRecord, CronTask, CronTaskChange } from "../protocol/types.js";
 import { cronRunEventsPath, type CronPaths } from "./CronPaths.js";
 import { isValidCalendarSchedule, isValidCronExpression } from "../runtime/CronSchedule.js";

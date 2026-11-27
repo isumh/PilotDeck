@@ -2,11 +2,41 @@ import {
   type CatalogProvider,
 } from '../../../shared/catalogProviders';
 
-export const ONBOARDING_STEP_IDS = ['language', 'provider', 'connection', 'workspace'] as const;
+/**
+ * EastYunDesk's first-run wizard: language → connection → workspace.
+ *
+ * The upstream provider picker is gone: the app ships a single builtin provider
+ * (`yna-llm`) so the user only has to supply a key and pass one connection
+ * test. When a key is already stored the connection step is skipped, leaving
+ * `CONFIGURED_ONBOARDING_STEP_IDS`.
+ */
+export const ONBOARDING_STEP_IDS = ['language', 'connection', 'workspace'] as const;
+
+export const CONFIGURED_ONBOARDING_STEP_IDS = ['language', 'workspace'] as const;
 
 export type OnboardingStepId = (typeof ONBOARDING_STEP_IDS)[number];
 
 export const CUSTOM_PROVIDER_ID = '__custom__';
+
+/** Must match `BUILTIN_PROVIDER_ID` in ui/server/services/eastyundeskConfig.js. */
+export const BUILTIN_PROVIDER_ID = 'yna-llm';
+export const BUILTIN_PROVIDER_URL = 'http://ai-gw.ceairyn.com/v1';
+export const BUILTIN_PROVIDER_PROTOCOL = 'openai-responses' as const;
+export const BUILTIN_MODEL_ID = 'qwen3.8-27b';
+export const BUILTIN_AGENT_MODEL = `${BUILTIN_PROVIDER_ID}/${BUILTIN_MODEL_ID}`;
+
+/**
+ * The builtin provider is fixed: no catalog entry is offered for it, and the
+ * connection step never lets the user switch provider or model.
+ */
+export const BUILTIN_PROVIDER: CatalogProvider = {
+  id: BUILTIN_PROVIDER_ID,
+  displayName: 'EastYunDesk AI',
+  protocol: BUILTIN_PROVIDER_PROTOCOL,
+  defaultUrl: BUILTIN_PROVIDER_URL,
+  requiresApiKey: true,
+  models: [{ id: BUILTIN_MODEL_ID, displayName: BUILTIN_MODEL_ID }],
+};
 
 export const RESERVED_CUSTOM_PROVIDER_IDS = new Set([
   'anthropic',

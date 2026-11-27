@@ -72,7 +72,7 @@ test("plan-mode reminder is appended after projection and recent3 cache indices 
     router: {} as AgentRuntimeDependencies["router"],
     context: new DefaultContextRuntime(),
     planFileManager: {
-      getPlanDirectoryPath: () => '/pilot-home/projects/general/plans',
+      getPlanDirectoryPath: () => '/eastyun-home/projects/general/plans',
       resolvePlanFilePath: () => undefined,
       readPlanFile: () => undefined,
     },
@@ -102,7 +102,7 @@ test("plan-mode reminder is appended after projection and recent3 cache indices 
   }).createModelRequest(messages, input, { emitInstructionEvents: false });
 
   const reminder = request.messages[5]?.content.find(block => block.type === 'text');
-  assert.ok(reminder && reminder.type === 'text' && reminder.text.includes('/pilot-home/projects/general/plans'));
+  assert.ok(reminder && reminder.type === 'text' && reminder.text.includes('/eastyun-home/projects/general/plans'));
   assert.equal(request.messages.length, 6);
   assert.equal(request.messages[5]?.metadata?.purpose, "plan_mode_reminder");
   assert.deepEqual(request.cachePlan?.messages, [3, 4, 5]);

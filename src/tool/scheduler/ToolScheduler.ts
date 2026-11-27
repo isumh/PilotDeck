@@ -1,6 +1,6 @@
-import type { PilotDeckToolResult } from "../protocol/result.js";
-import type { PilotDeckToolCall, PilotDeckToolRuntimeContext } from "../protocol/types.js";
+import type { EastYunDeskToolResult } from "../protocol/result.js";
+import type { EastYunDeskToolCall, EastYunDeskToolRuntimeContext } from "../protocol/types.js";
 
-export type PilotDeckToolScheduler = {
-  executeAll(calls: PilotDeckToolCall[], context: PilotDeckToolRuntimeContext): Promise<PilotDeckToolResult[]>;
+export type EastYunDeskToolScheduler = {
+  executeAll(calls: EastYunDeskToolCall[], context: EastYunDeskToolRuntimeContext): Promise<EastYunDeskToolResult[]>;
 };

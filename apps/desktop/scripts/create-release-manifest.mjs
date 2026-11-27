@@ -22,13 +22,13 @@ const assets = files.map(record);
 const manifest = {
   schemaVersion: 1,
   artifactSchemaVersion: 1,
-  differentialUpdates: process.env.PILOTDECK_DIFFERENTIAL_UPDATES !== '0',
-  version: requiredEnv("PILOTDECK_RELEASE_VERSION"),
-  tag: requiredEnv("PILOTDECK_RELEASE_TAG"),
-  date: requiredEnv("PILOTDECK_RELEASE_DATE"),
-  buildTime: requiredEnv("PILOTDECK_RELEASE_BUILD_TIME"),
-  sourceSha: requiredEnv("PILOTDECK_COMMIT_SHA"),
-  repository: requiredEnv("PILOTDECK_UPDATE_REPOSITORY"),
+  differentialUpdates: process.env.EASTYUNDESK_DIFFERENTIAL_UPDATES !== '0',
+  version: requiredEnv("EASTYUNDESK_RELEASE_VERSION"),
+  tag: requiredEnv("EASTYUNDESK_RELEASE_TAG"),
+  date: requiredEnv("EASTYUNDESK_RELEASE_DATE"),
+  buildTime: requiredEnv("EASTYUNDESK_RELEASE_BUILD_TIME"),
+  sourceSha: requiredEnv("EASTYUNDESK_COMMIT_SHA"),
+  repository: requiredEnv("EASTYUNDESK_UPDATE_REPOSITORY"),
   assets,
 };
 

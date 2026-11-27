@@ -51,8 +51,8 @@ export default function ContextPanel({ target, used, total, percent, percentLabe
       if (detail?.sessionId === params.get('sessionId') && detail.projectPath === params.get('projectPath')
         && hasUsage(detail.lastTurnUsage)) updateCache(detail.lastTurnUsage);
     };
-    window.addEventListener('pilotdeck:agent-turn-complete', onComplete);
-    return () => window.removeEventListener('pilotdeck:agent-turn-complete', onComplete);
+    window.addEventListener('eastyundesk:agent-turn-complete', onComplete);
+    return () => window.removeEventListener('eastyundesk:agent-turn-complete', onComplete);
   }, [targetKey, updateCache]);
   useEffect(() => {
     setSnapshot(null);

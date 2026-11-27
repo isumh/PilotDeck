@@ -11,22 +11,22 @@ import { InMemoryTranscriptWriter } from '../../src/session/transcript/InMemoryT
 import { InProcessGateway } from '../../src/gateway/client/InProcessGateway.js';
 import { SessionRouter } from '../../src/gateway/SessionRouter.js';
 import { createRegisteredWebProjectResolver } from '../../src/web/server/listProjects.js';
-import { createProjectId } from '../../src/pilot/index.js';
+import { createProjectId } from '../../src/eastyun/index.js';
 import { currentRequestContext } from '../../src/network/requestContext.js';
 
 test('tool task followed by explicit models and Auto accepts each turn once and releases the session', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'pilotdeck-fast-send-'));
-  const pilotHome = join(root, 'home');
+  const root = await mkdtemp(join(tmpdir(), 'eastyundesk-fast-send-'));
+  const eastyunHome = join(root, 'home');
   const project = join(root, 'project');
   const transcript = new InMemoryTranscriptWriter();
   const requestedModels: Array<string | undefined> = [];
   let router: SessionRouter | undefined;
   try {
     await mkdir(project);
-    const registration = join(pilotHome, 'projects', createProjectId(project));
+    const registration = join(eastyunHome, 'projects', createProjectId(project));
     await mkdir(registration, {recursive: true});
     await writeFile(join(registration, '.cwd'), project);
-    const resolver = createRegisteredWebProjectResolver({pilotHome});
+    const resolver = createRegisteredWebProjectResolver({eastyunHome});
     const loop = {
       async *run(input: AgentLoopInput): AsyncGenerator<AgentEvent, AgentLoopRunResult, unknown> {
         const context = currentRequestContext();

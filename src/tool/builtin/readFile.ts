@@ -1,10 +1,10 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import type { PilotDeckToolDefinition } from "../protocol/types.js";
+import type { EastYunDeskToolDefinition } from "../protocol/types.js";
 import type { PermissionResult, PermissionRule } from "../../permission/index.js";
-import { PilotDeckToolRuntimeError } from "../protocol/errors.js";
+import { EastYunDeskToolRuntimeError } from "../protocol/errors.js";
 import { applyResultSizeLimit } from "../protocol/result.js";
-import { resolvePilotDeckWorkspacePath } from "./filesystem/pathSafety.js";
+import { resolveEastYunDeskWorkspacePath } from "./filesystem/pathSafety.js";
 import { readFileInRange } from "./filesystem/readFileInRange.js";
 import {
   countPdfPages,
@@ -40,7 +40,7 @@ const PDF_EXTRACT_SIZE_THRESHOLD = 3 * 1024 * 1024;
 const FILE_UNCHANGED_STUB =
   "File unchanged since the last read. Refer to the earlier read_file result instead of re-reading it.";
 
-export function createReadFileTool(): PilotDeckToolDefinition<ReadFileInput> {
+export function createReadFileTool(): EastYunDeskToolDefinition<ReadFileInput> {
   return {
     name: "read_file",
     aliases: ["Read"],
@@ -155,13 +155,13 @@ export function createReadFileTool(): PilotDeckToolDefinition<ReadFileInput> {
       return { ok: true, input };
     },
     execute: async (input, context) => {
-      const resolved = resolvePilotDeckWorkspacePath(input.file_path, context, {
+      const resolved = resolveEastYunDeskWorkspacePath(input.file_path, context, {
         mustExist: true,
         allowRegisteredReadFiles: true,
         allowOutsideWorkspace: context.currentPermissionDecision?.type === "allow",
       });
       if (!resolved.ok) {
-        throw new PilotDeckToolRuntimeError(resolved.error.code, resolved.error.message, resolved.error.details);
+        throw new EastYunDeskToolRuntimeError(resolved.error.code, resolved.error.message, resolved.error.details);
       }
 
       const fileStat = await stat(resolved.absolutePath);
@@ -185,7 +185,7 @@ export function createReadFileTool(): PilotDeckToolDefinition<ReadFileInput> {
       if (kind === "image") {
         const mimeType = getImageMimeType(resolved.absolutePath);
         if (!mimeType) {
-          throw new PilotDeckToolRuntimeError("invalid_tool_input", `Unsupported image type: ${resolved.relativePath}.`);
+          throw new EastYunDeskToolRuntimeError("invalid_tool_input", `Unsupported image type: ${resolved.relativePath}.`);
         }
         const imageBuffer = await readFile(resolved.absolutePath, { signal: context.abortSignal });
         const preparedImage = await prepareImageForModel(imageBuffer, mimeType, MAX_IMAGE_BYTES);
@@ -236,7 +236,7 @@ export function createReadFileTool(): PilotDeckToolDefinition<ReadFileInput> {
         const supportsImage = context.modelMultimodal?.input?.includes("image");
         const parsedPages = input.pages ? parsePdfPageRange(input.pages) : undefined;
         if (input.pages && !parsedPages) {
-          throw new PilotDeckToolRuntimeError("invalid_tool_input", `Invalid PDF page range: ${input.pages}.`);
+          throw new EastYunDeskToolRuntimeError("invalid_tool_input", `Invalid PDF page range: ${input.pages}.`);
         }
 
         const pdfBuffer = await readFile(resolved.absolutePath, { signal: context.abortSignal });
@@ -247,7 +247,7 @@ export function createReadFileTool(): PilotDeckToolDefinition<ReadFileInput> {
           && pageCount !== undefined
           && parsedPages.lastPage > pageCount
         ) {
-          throw new PilotDeckToolRuntimeError(
+          throw new EastYunDeskToolRuntimeError(
             "invalid_tool_input",
             `PDF page range ${input.pages} exceeds the detected page count (${pageCount}).`,
           );
@@ -314,7 +314,7 @@ export function createReadFileTool(): PilotDeckToolDefinition<ReadFileInput> {
 
         // Without pages: enforce page count threshold
         if (pageCount !== undefined && pageCount > PDF_AT_MENTION_INLINE_THRESHOLD) {
-          throw new PilotDeckToolRuntimeError(
+          throw new EastYunDeskToolRuntimeError(
             "invalid_tool_input",
             `This PDF has ${pageCount} pages, which is too many to read at once. ` +
             `Use the pages parameter to read specific page ranges (e.g., pages: "1-5"). ` +
@@ -576,7 +576,7 @@ function renderToolResultRefReadMoreNotice(filePath: string, nextOffset: number,
 }
 
 function isManagedToolResultRefPath(filePath: string): boolean {
-  return /^\.pilotdeck[\\/]tool-results[\\/]refs[\\/]result-\d+\.(?:txt|json)$/.test(filePath);
+  return /^\.eastyundesk[\\/]tool-results[\\/]refs[\\/]result-\d+\.(?:txt|json)$/.test(filePath);
 }
 
 function renderOversizedLinePreview(text: string, filePath: string, offset: number): string {
@@ -699,7 +699,7 @@ function ensureTokenBudget(text: string, filePath: string, suggestedOffset?: num
     const action = suggestedOffset === undefined
       ? "Use offset and limit to read a smaller portion."
       : `Use a smaller limit, for example read_file({ file_path: "${filePath}", offset: ${suggestedOffset}, limit: 500 }).`;
-    throw new PilotDeckToolRuntimeError(
+    throw new EastYunDeskToolRuntimeError(
       "result_too_large",
       `File content from ${filePath} exceeds the text token budget. ${action}`,
     );
@@ -710,7 +710,7 @@ function ensureTokenBudget(text: string, filePath: string, suggestedOffset?: num
  * Validate image integrity and attempt repair if truncated/corrupted.
  * Fast path: complete JPEGs (with EOI marker and > 1KB) pass through unchanged.
  * For suspicious images, attempt re-encode via sharp which can tolerate minor truncation.
- * Throws PilotDeckToolRuntimeError if the image is unrecoverably corrupt.
+ * Throws EastYunDeskToolRuntimeError if the image is unrecoverably corrupt.
  */
 async function validateAndRepairImage(
   buffer: Buffer,
@@ -743,7 +743,7 @@ async function validateAndRepairImage(
     const repaired = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
     return { buffer: repaired, mimeType: "image/jpeg" };
   } catch {
-    throw new PilotDeckToolRuntimeError(
+    throw new EastYunDeskToolRuntimeError(
       "invalid_tool_input",
       `Image file appears truncated or corrupted (${buffer.length} bytes). Cannot decode.`,
     );
@@ -778,7 +778,7 @@ async function compressImageForBudget(
 ): Promise<{ buffer: Buffer; mimeType: string }> {
   const image = await compressImageToFit(buffer, mimeType, maxBytes);
   if (!image) {
-    throw new PilotDeckToolRuntimeError(
+    throw new EastYunDeskToolRuntimeError(
       "result_too_large",
       `Image content exceeds the read_file byte budget after compression attempts (${mimeType}).`,
       { mimeType, bytes: buffer.byteLength, maxBytes },
@@ -789,9 +789,9 @@ async function compressImageForBudget(
 
 function checkReadFilePermission(
   inputPath: string,
-  context: Parameters<NonNullable<PilotDeckToolDefinition<ReadFileInput>["checkPermissions"]>>[1],
+  context: Parameters<NonNullable<EastYunDeskToolDefinition<ReadFileInput>["checkPermissions"]>>[1],
 ): PermissionResult {
-  const workspaceResolved = resolvePilotDeckWorkspacePath(inputPath, context, {
+  const workspaceResolved = resolveEastYunDeskWorkspacePath(inputPath, context, {
     mustExist: true,
     allowRegisteredReadFiles: true,
   });
@@ -806,7 +806,7 @@ function checkReadFilePermission(
     };
   }
 
-  const outsideResolved = resolvePilotDeckWorkspacePath(inputPath, context, {
+  const outsideResolved = resolveEastYunDeskWorkspacePath(inputPath, context, {
     mustExist: true,
     allowOutsideWorkspace: true,
   });

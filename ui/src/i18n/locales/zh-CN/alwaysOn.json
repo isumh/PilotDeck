@@ -169,7 +169,7 @@
         "repeatInterval": "重复间隔"
       },
       "placeholders": {
-        "prompt": "描述 PilotDeck 在任务运行时应该做什么。",
+        "prompt": "描述 EastYunDesk 在任务运行时应该做什么。",
         "workspace": "选择工作区",
         "expression": "30 8 * * 1",
         "name": "例如：每日销售日报"
@@ -290,7 +290,7 @@
     "preview": "接下来几次执行",
     "latestResult": "最近结果",
     "unread": "未读结果",
-    "localNotice": "本地任务需要电脑和 PilotDeck 保持运行。",
+    "localNotice": "本地任务需要电脑和 EastYunDesk 保持运行。",
     "ordinals": {
       "1": "第一个",
       "2": "第二个",

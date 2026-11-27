@@ -1,5 +1,5 @@
 import type { ModelRuntime } from "../../model/index.js";
-import type { PilotAgentModelSelection } from "../../pilot/config/types.js";
+import type { EastYunAgentModelSelection } from "../../eastyun/config/types.js";
 
 export const SESSION_TITLE_MAX_INPUT_CHARS = 1200;
 export const SESSION_TITLE_MAX_OUTPUT_CHARS = 80;
@@ -31,14 +31,14 @@ export type SessionTitleGeneratorInput = {
   turnId: string;
   signal: AbortSignal;
   /** Use the model selected for this turn when it differs from the agent default. */
-  model?: Pick<PilotAgentModelSelection, "provider" | "model">;
+  model?: Pick<EastYunAgentModelSelection, "provider" | "model">;
 };
 
 export type SessionTitleGenerator = (input: SessionTitleGeneratorInput) => Promise<string | null>;
 
 export type CreateSessionTitleGeneratorOptions = {
   modelRuntime: Pick<ModelRuntime, "complete">;
-  agentModel: PilotAgentModelSelection;
+  agentModel: EastYunAgentModelSelection;
   timeoutMs?: number;
   /** Locale used when the user's input language cannot be determined. */
   systemLanguage?: string;

@@ -4,22 +4,27 @@ import { ShieldCheckIcon, StepCheckIcon } from './icons';
 
 type SetupSidebarProps = {
   currentStep: OnboardingStepId;
+  /**
+   * Visible step list. A wizard that skips the connection step passes the
+   * shortened list so the rail matches what the user will actually walk through.
+   */
+  steps?: readonly OnboardingStepId[];
 };
 
-export default function SetupSidebar({ currentStep }: SetupSidebarProps) {
+export default function SetupSidebar({ currentStep, steps = ONBOARDING_STEP_IDS }: SetupSidebarProps) {
   const { t } = useTranslation('onboarding');
-  const currentIndex = ONBOARDING_STEP_IDS.indexOf(currentStep);
+  const currentIndex = steps.indexOf(currentStep);
 
   return (
     <aside className="setup-sidebar">
       <div>
         <div className="setup-icon" aria-hidden="true">
-          <img alt="" src="/pilotdeck-p-mark-transparent-v2.png" />
+          <img alt="" src="/eastyundesk-p-mark-transparent-v2.png" />
         </div>
         <p className="sidebar-kicker">{t('sidebar.kicker')}</p>
         <h2>{t('sidebar.title')}</h2>
         <ol className="progress-rail" aria-label={t('common:uiText.setupProgress')}>
-          {ONBOARDING_STEP_IDS.map((stepId, index) => {
+          {steps.map((stepId, index) => {
             const status = index < currentIndex ? 'done' : index === currentIndex ? 'active' : '';
             return (
               <li

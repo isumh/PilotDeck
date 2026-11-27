@@ -15,15 +15,15 @@ import { InProcessGateway } from "../../src/gateway/client/InProcessGateway.js";
 import { RemoteGateway } from "../../src/gateway/client/RemoteGateway.js";
 import type { GatewayWsClient } from "../../src/gateway/client/GatewayWsClient.js";
 import type { Gateway, GatewayCronController, GatewayEvent } from "../../src/gateway/index.js";
-import { PILOTDECK_GATEWAY_PROTOCOL_VERSION } from "../../src/gateway/protocol/version.js";
+import { EASTYUNDESK_GATEWAY_PROTOCOL_VERSION } from "../../src/gateway/protocol/version.js";
 import { GatewayWsConnection } from "../../src/gateway/server/GatewayWsConnection.js";
 import type { TextWebSocketConnection } from "../../src/gateway/server/websocket.js";
 import type { SessionRouter } from "../../src/gateway/SessionRouter.js";
 import { GatewayBrowserClient } from "../../src/web/client/GatewayBrowserClient.js";
 import type { WebGatewayMethod } from "../../src/web/client/protocol.js";
 
-function createStore(pilotHome: string, projectKey: string): CronTaskStore {
-  return new CronTaskStore(resolveCronPaths({ pilotHome, projectKey }));
+function createStore(eastyunHome: string, projectKey: string): CronTaskStore {
+  return new CronTaskStore(resolveCronPaths({ eastyunHome, projectKey }));
 }
 
 function makeTask(overrides: Partial<CronTask> = {}): CronTask {
@@ -97,14 +97,14 @@ async function flushAsyncWork(): Promise<void> {
 }
 
 test("CronTaskStore normalizes legacy tasks without a revision to zero", async () => {
-  const pilotHome = mkdtempSync(join(tmpdir(), "pilotdeck-cron-legacy-revision-"));
+  const eastyunHome = mkdtempSync(join(tmpdir(), "eastyundesk-cron-legacy-revision-"));
   const projectKey = "/tmp/projects/cron-editing";
   try {
-    const store = createStore(pilotHome, projectKey);
+    const store = createStore(eastyunHome, projectKey);
     await store.putTask(makeTask({ revision: undefined }));
     assert.equal((await store.getTask("task-1"))?.revision, 0);
   } finally {
-    rmSync(pilotHome, { recursive: true, force: true });
+    rmSync(eastyunHome, { recursive: true, force: true });
   }
 });
 
@@ -116,14 +116,14 @@ test("CronSchedule finds the next February 29 in the task timezone", () => {
 });
 
 test("CronRuntime updates a task in place and rejects running or stale updates", async () => {
-  const pilotHome = mkdtempSync(join(tmpdir(), "pilotdeck-cron-editing-"));
+  const eastyunHome = mkdtempSync(join(tmpdir(), "eastyundesk-cron-editing-"));
   const projectKey = "/tmp/projects/cron-editing";
   let now = new Date("2026-01-01T00:00:00.000Z");
   try {
-    const store = createStore(pilotHome, projectKey);
+    const store = createStore(eastyunHome, projectKey);
     const runtime = createCronRuntime({
       config: defaultCronConfig(),
-      pilotHome,
+      eastyunHome,
       projectKey,
       store,
       now: () => now,
@@ -214,18 +214,18 @@ test("CronRuntime updates a task in place and rejects running or stale updates",
       schedule: { type: "once", runAt: "2026-02-03T13:30:00.000Z" },
     }), /message is required/);
   } finally {
-    rmSync(pilotHome, { recursive: true, force: true });
+    rmSync(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("CronRuntime updates daily, weekly, monthly, yearly, and one-time schedules in place", async () => {
-  const pilotHome = mkdtempSync(join(tmpdir(), "pilotdeck-cron-editing-schedules-"));
+  const eastyunHome = mkdtempSync(join(tmpdir(), "eastyundesk-cron-editing-schedules-"));
   const projectKey = "/tmp/projects/cron-editing-schedules";
   const now = new Date("2026-01-01T00:00:00.000Z");
   try {
     const runtime = createCronRuntime({
       config: defaultCronConfig(),
-      pilotHome,
+      eastyunHome,
       projectKey,
       now: () => now,
       uuid: () => "task-schedules",
@@ -268,19 +268,19 @@ test("CronRuntime updates daily, weekly, monthly, yearly, and one-time schedules
       assert.equal(result.task.scheduleComputationVersion, scheduleCase.schedule.type === "cron" ? 3 : undefined);
     }
   } finally {
-    rmSync(pilotHome, { recursive: true, force: true });
+    rmSync(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("CronRuntime checks the persisted task workspace inside the atomic update", async () => {
-  const pilotHome = mkdtempSync(join(tmpdir(), "pilotdeck-cron-editing-project-"));
+  const eastyunHome = mkdtempSync(join(tmpdir(), "eastyundesk-cron-editing-project-"));
   const projectKey = "/tmp/projects/cron-editing-project";
   try {
-    const store = createStore(pilotHome, projectKey);
+    const store = createStore(eastyunHome, projectKey);
     await store.putTask(makeTask({ projectKey: "/tmp/projects/another-project" }));
     const runtime = createCronRuntime({
       config: defaultCronConfig(),
-      pilotHome,
+      eastyunHome,
       projectKey,
       store,
       now: () => new Date("2026-01-01T00:00:00.000Z"),
@@ -296,16 +296,16 @@ test("CronRuntime checks the persisted task workspace inside the atomic update",
     }), { updated: false, reason: "not_found" });
     assert.equal((await store.getTask("task-1"))?.projectKey, "/tmp/projects/another-project");
   } finally {
-    rmSync(pilotHome, { recursive: true, force: true });
+    rmSync(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("CronFire never executes an edited snapshot and claims a current snapshot only once", async () => {
-  const pilotHome = mkdtempSync(join(tmpdir(), "pilotdeck-cron-claim-"));
+  const eastyunHome = mkdtempSync(join(tmpdir(), "eastyundesk-cron-claim-"));
   const projectKey = "/tmp/projects/cron-editing";
   const now = () => new Date("2026-01-01T00:00:00.000Z");
   try {
-    const store = createStore(pilotHome, projectKey);
+    const store = createStore(eastyunHome, projectKey);
     const oldSnapshot = makeTask();
     await store.putTask(oldSnapshot);
     let submitCount = 0;
@@ -335,16 +335,16 @@ test("CronFire never executes an edited snapshot and claims a current snapshot o
     assert.equal(completed?.status, "scheduled");
     assert.equal(completed?.revision, 3);
   } finally {
-    rmSync(pilotHome, { recursive: true, force: true });
+    rmSync(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("CronFire forwards live gateway events", async () => {
-  const pilotHome = mkdtempSync(join(tmpdir(), "pilotdeck-cron-turn-events-"));
+  const eastyunHome = mkdtempSync(join(tmpdir(), "eastyundesk-cron-turn-events-"));
   const projectKey = "/tmp/projects/cron-editing";
   const now = () => new Date("2026-01-01T00:00:00.000Z");
   try {
-    const store = createStore(pilotHome, projectKey);
+    const store = createStore(eastyunHome, projectKey);
     const task = makeTask();
     await store.putTask(task);
     const gatewayEvents: GatewayEvent[] = [
@@ -372,16 +372,16 @@ test("CronFire forwards live gateway events", async () => {
     assert.deepEqual(forwarded.at(-1)?.event, { type: "agent_status", event: "cron_settled", runId: "run-1", detail: { finishReason: "completed" } });
     assert.equal((await store.getTask(task.taskId))?.status, "scheduled");
   } finally {
-    rmSync(pilotHome, { recursive: true, force: true });
+    rmSync(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("CronFire completes when live event forwarding fails", async () => {
-  const pilotHome = mkdtempSync(join(tmpdir(), "pilotdeck-cron-turn-events-failure-"));
+  const eastyunHome = mkdtempSync(join(tmpdir(), "eastyundesk-cron-turn-events-failure-"));
   const projectKey = "/tmp/projects/cron-editing";
   const now = () => new Date("2026-01-01T00:00:00.000Z");
   try {
-    const store = createStore(pilotHome, projectKey);
+    const store = createStore(eastyunHome, projectKey);
     const task = makeTask();
     await store.putTask(task);
     const gateway = {
@@ -414,15 +414,15 @@ test("CronFire completes when live event forwarding fails", async () => {
     assert.equal((await store.getTask(task.taskId))?.status, "scheduled");
     assert.ok(warnings.includes("cron turn event delivery failed"));
   } finally {
-    rmSync(pilotHome, { recursive: true, force: true });
+    rmSync(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("CronScheduler refreshes legacy next runs without dropping overdue tasks", async () => {
-  const pilotHome = mkdtempSync(join(tmpdir(), "pilotdeck-cron-day-migration-"));
+  const eastyunHome = mkdtempSync(join(tmpdir(), "eastyundesk-cron-day-migration-"));
   const projectKey = "/tmp/projects/cron-editing";
   const now = new Date("2026-06-02T00:00:00.000Z");
-  const store = createStore(pilotHome, projectKey);
+  const store = createStore(eastyunHome, projectKey);
   const createScheduler = () => new CronScheduler({
     config: defaultCronConfig(),
     store,
@@ -489,14 +489,14 @@ test("CronScheduler refreshes legacy next runs without dropping overdue tasks", 
   } finally {
     await scheduler.stop();
     await restartedScheduler.stop();
-    rmSync(pilotHome, { recursive: true, force: true });
+    rmSync(eastyunHome, { recursive: true, force: true });
   }
 });
 
 for (const expression of ["0 9 * * *", "0 9 1 * 1"]) {
   test(`CronScheduler preserves a deferred v2 run when upgrading ${expression}`, async () => {
-    const pilotHome = mkdtempSync(join(tmpdir(), "pilotdeck-cron-deferred-migration-"));
-    const store = createStore(pilotHome, "/tmp/projects/cron-editing");
+    const eastyunHome = mkdtempSync(join(tmpdir(), "eastyundesk-cron-deferred-migration-"));
+    const store = createStore(eastyunHome, "/tmp/projects/cron-editing");
     let now = new Date("2026-06-01T09:00:00.000Z");
     let activeRunCount = 1;
     const firedTasks: CronTask[] = [];
@@ -543,14 +543,14 @@ for (const expression of ["0 9 * * *", "0 9 1 * 1"]) {
       await beforeUpgrade.stop();
       await upgraded.stop();
       await restarted.stop();
-      rmSync(pilotHome, { recursive: true, force: true });
+      rmSync(eastyunHome, { recursive: true, force: true });
     }
   });
 }
 
 test("CronScheduler migrates unchanged v2 day semantics without searching calendar minutes", async (t) => {
-  const pilotHome = mkdtempSync(join(tmpdir(), "pilotdeck-cron-unchanged-migration-"));
-  const store = createStore(pilotHome, "/tmp/projects/cron-editing");
+  const eastyunHome = mkdtempSync(join(tmpdir(), "eastyundesk-cron-unchanged-migration-"));
+  const store = createStore(eastyunHome, "/tmp/projects/cron-editing");
   const now = new Date("2026-01-02T00:00:00.000Z");
   const cases = [
     { expression: "0 9 1 1 *", nextRunAt: "2027-01-01T09:00:00.000Z" },
@@ -588,7 +588,7 @@ test("CronScheduler migrates unchanged v2 day semantics without searching calend
     }
   } finally {
     await scheduler.stop();
-    rmSync(pilotHome, { recursive: true, force: true });
+    rmSync(eastyunHome, { recursive: true, force: true });
   }
 });
 
@@ -672,7 +672,7 @@ test("Cron update is forwarded by gateway dispatchers and clients", async () => 
   });
   socket.dispatch({
     type: "hello",
-    protocolVersion: PILOTDECK_GATEWAY_PROTOCOL_VERSION,
+    protocolVersion: EASTYUNDESK_GATEWAY_PROTOCOL_VERSION,
     clientName: "test",
     clientVersion: "test",
     token: "secret",

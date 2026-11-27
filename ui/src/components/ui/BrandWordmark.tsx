@@ -1,11 +1,11 @@
 import { cn } from '../../lib/utils.js';
-import wordmarkLight from '../../assets/pilotdeck-wordmark-light.png';
-import wordmarkDark from '../../assets/pilotdeck-wordmark-dark.png';
+import wordmarkLight from '../../assets/eastyundesk-wordmark-light.png';
+import wordmarkDark from '../../assets/eastyundesk-wordmark-dark.png';
 
 /** Display the original wordmark artwork while cropping out its square emblem. */
 export default function BrandWordmark({ className }: { className?: string }) {
   return (
-    <span className={cn('brand-wordmark', className)} role="img" aria-label="PILOTDECK">
+    <span className={cn('brand-wordmark', className)} role="img" aria-label="EASTYUNDESK">
       <img
         className="brand-wordmark-image brand-wordmark-light"
         src={wordmarkLight}

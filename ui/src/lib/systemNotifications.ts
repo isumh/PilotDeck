@@ -1,7 +1,7 @@
 import type { SystemNotification } from '../../shared/notifications';
 
 export async function notificationWorkerMessage(type: string, value: unknown) {
-  if (window.pilotdeckDesktop || !('serviceWorker' in navigator)) return undefined;
+  if (window.eastyundeskDesktop || !('serviceWorker' in navigator)) return undefined;
   let registration;
   try { registration = await navigator.serviceWorker.getRegistration(); } catch { return undefined; }
   const worker = registration?.active;
@@ -16,7 +16,7 @@ export async function notificationWorkerMessage(type: string, value: unknown) {
 }
 
 export async function showSystemNotification(payload: SystemNotification) {
-  if (window.pilotdeckDesktop?.showNotification) return window.pilotdeckDesktop.showNotification(payload);
+  if (window.eastyundeskDesktop?.showNotification) return window.eastyundeskDesktop.showNotification(payload);
   if (!('Notification' in window) || Notification.permission !== 'granted') return false;
   const handled = await notificationWorkerMessage('notification:show', payload);
   if (handled !== undefined) return handled;
@@ -26,15 +26,15 @@ export async function showSystemNotification(payload: SystemNotification) {
   notification.onclick = () => {
     if (payload.data.kind !== 'reminder') notification.close();
     window.focus();
-    window.dispatchEvent(new CustomEvent('pilotdeck:notification-navigate', { detail: payload.data }));
+    window.dispatchEvent(new CustomEvent('eastyundesk:notification-navigate', { detail: payload.data }));
   };
   return true;
 }
 
 /** Web/PWA has no global counter. Clear badges left by an older deployment. */
 export async function clearWebNotificationBadge() {
-  if (window.pilotdeckDesktop) return;
-  document.title = 'PilotDeck';
+  if (window.eastyundeskDesktop) return;
+  document.title = 'EastYunDesk';
   const badge = navigator as Navigator & { clearAppBadge?: () => Promise<void> };
   await badge.clearAppBadge?.();
 }

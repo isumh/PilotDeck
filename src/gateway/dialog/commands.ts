@@ -2,20 +2,20 @@ import { readFile, readdir } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { getRegisteredCommands } from "../../adapters/channel/protocol/ChannelCommandRegistry.js";
-import { resolvePilotHome } from "../../pilot/index.js";
+import { resolveEastYunHome } from "../../eastyun/index.js";
 import type { CommandListItem, CommandsListInput, CommandsListResult, MatchRange } from "../protocol/types.js";
 import { DialogGatewayError } from "./errors.js";
 
 const PINNED = ["/skill_install", "/projects", "/switch-project"];
 const WEB_BUILTINS: Array<[string, string]> = [
   ["/clear", "Clear the conversation history"], ["/model", "View the current AI model and available options"],
-  ["/cost", "Display token usage and cost information"], ["/memory", "Open PILOTDECK.md memory file for editing"],
+  ["/cost", "Display token usage and cost information"], ["/memory", "Open EASTYUNDESK.md memory file for editing"],
   ["/config", "Open settings and configuration"], ["/rewind", "Rewind the conversation to a previous state"],
   ["/ao", "List, run, or inspect Always-On jobs"], ["/turnkey", "Run turnkey workflow subcommands"],
   ["/skill_install", "Install a skill"],
 ];
 
-export async function listCommands(input: CommandsListInput, configuredPilotHome?: string): Promise<CommandsListResult> {
+export async function listCommands(input: CommandsListInput, configuredEastYunHome?: string): Promise<CommandsListResult> {
   if (!input.projectKey) throw new DialogGatewayError("PROJECT_NOT_FOUND", "projectKey is required.");
   const query = input.query?.trim().toLocaleLowerCase() ?? "";
   if (query.length > 256) throw new DialogGatewayError("INVALID_QUERY", "query must not exceed 256 characters.");
@@ -28,12 +28,12 @@ export async function listCommands(input: CommandsListInput, configuredPilotHome
   } satisfies CommandListItem));
   const builtins = WEB_BUILTINS.map(([name, description]) => ({ name, description, namespace: "builtin", type: "builtin", metadata: { type: "builtin" } }));
   const builtin = dedupe([...builtins, ...registry]);
-  const pilotHome = configuredPilotHome ?? resolvePilotHome(process.env);
+  const eastyunHome = configuredEastYunHome ?? resolveEastYunHome(process.env);
   const [projectCommands, projectSkills, userCommands, userSkills] = await Promise.all([
-    scanMarkdown(join(input.projectKey, ".pilotdeck", "commands"), "project", "command"),
-    scanSkills(join(input.projectKey, ".pilotdeck", "skills"), "project"),
-    scanMarkdown(join(pilotHome, "commands"), "user", "command"),
-    scanSkills(join(pilotHome, "skills"), "user"),
+    scanMarkdown(join(input.projectKey, ".eastyundesk", "commands"), "project", "command"),
+    scanSkills(join(input.projectKey, ".eastyundesk", "skills"), "project"),
+    scanMarkdown(join(eastyunHome, "commands"), "user", "command"),
+    scanSkills(join(eastyunHome, "skills"), "user"),
   ]);
   const all = dedupe([...builtin, ...projectCommands, ...projectSkills, ...userCommands, ...userSkills]);
   const matched = all.map((item) => ({ ...item, matches: commandMatches(item, query) }))

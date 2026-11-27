@@ -1,4 +1,4 @@
-import { resolvePilotHome } from "../../pilot/index.js";
+import { resolveEastYunHome } from "../../eastyun/index.js";
 import {
   formatChatHistorySearchResults,
 } from "../../session/search/formatChatHistorySearch.js";
@@ -9,7 +9,7 @@ import {
 } from "../../session/search/searchChatHistory.js";
 
 export type RunChatSearchOptions = {
-  pilotHome?: string;
+  eastyunHome?: string;
   projectRoot?: string;
   arg: string;
   locale?: "zh" | "en";
@@ -17,10 +17,10 @@ export type RunChatSearchOptions = {
 
 export async function runChatSearch(options: RunChatSearchOptions): Promise<SearchChatHistoryResult> {
   const parsed = parseChatSearchArgs(options.arg);
-  const pilotHome = options.pilotHome ?? resolvePilotHome(process.env);
+  const eastyunHome = options.eastyunHome ?? resolveEastYunHome(process.env);
 
   return searchChatHistory({
-    pilotHome,
+    eastyunHome,
     projectRoot: parsed.allProjects ? undefined : options.projectRoot,
     query: parsed.query,
     limit: parsed.limit,
@@ -60,7 +60,7 @@ export async function runChatSearchCli(argv: string[]): Promise<void> {
   const subcommand = argv[0];
   if (subcommand !== "search") {
     console.error(
-      "Usage: pilotdeck chat search <keyword> [--project <path>] [--all-projects] [--limit N] [--json] [--regex] [--case-sensitive] [--role user|assistant|all] [--session <id>]",
+      "Usage: eastyundesk chat search <keyword> [--project <path>] [--all-projects] [--limit N] [--json] [--regex] [--case-sensitive] [--role user|assistant|all] [--session <id>]",
     );
     process.exitCode = 1;
     return;
@@ -94,9 +94,9 @@ export async function runChatSearchCli(argv: string[]): Promise<void> {
     return;
   }
 
-  const pilotHome = readStringFlag(argv, "--pilot-home") ?? resolvePilotHome(process.env);
+  const eastyunHome = readStringFlag(argv, "--eastyun-home") ?? resolveEastYunHome(process.env);
   const result = await searchChatHistory({
-    pilotHome,
+    eastyunHome,
     projectRoot: allProjects ? undefined : projectRoot,
     query,
     limit,

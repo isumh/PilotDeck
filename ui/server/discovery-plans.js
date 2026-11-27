@@ -7,7 +7,7 @@
  * commands.
  */
 
-import { isSessionActiveViaGateway as isClaudeSDKSessionActive, getPilotDeckGateway } from './pilotdeck-bridge.js';
+import { isSessionActiveViaGateway as isClaudeSDKSessionActive, getEastYunDeskGateway } from './eastyundesk-bridge.js';
 import {
   extractProjectDirectory,
   getProjectCronJobsOverview,
@@ -19,7 +19,7 @@ import {
   appendAlwaysOnRunLogEvent,
   formatAlwaysOnPlanLogLine,
 } from './services/always-on-run-logs.js';
-import { resolvePilotHome, resolveProjectStorageId } from './utils/pilotPaths.js';
+import { resolveEastYunHome, resolveProjectStorageId } from './utils/eastyunPaths.js';
 
 import { DiscoveryPlanService } from '../../src/always-on/web/DiscoveryPlanService.js';
 import { buildDiscoveryContext } from '../../src/always-on/web/DiscoveryPlanContext.js';
@@ -35,10 +35,10 @@ import { DiscoveryStateStore } from '../../src/always-on/storage/DiscoveryStateS
 // ---------------------------------------------------------------------------
 
 function getService() {
-  const pilotHome = resolvePilotHome();
+  const eastyunHome = resolveEastYunHome();
   return new DiscoveryPlanService({
-    pilotHome,
-    resolveProjectId: (projectRoot) => resolveProjectStorageId(projectRoot, pilotHome),
+    eastyunHome,
+    resolveProjectId: (projectRoot) => resolveProjectStorageId(projectRoot, eastyunHome),
     paths: { extractProjectDirectory },
     sessions: { getSessions },
     activity: { isSessionActive: isClaudeSDKSessionActive },
@@ -55,7 +55,7 @@ function getService() {
     state: {
       clearActiveWorkCycleId: async (projectRoot) => {
         const paths = resolveAlwaysOnPaths({
-          pilotHome,
+          eastyunHome,
           projectKey: projectRoot,
         });
         const store = new DiscoveryStateStore(paths);
@@ -86,7 +86,7 @@ export async function getProjectDiscoveryPlansOverview(projectName) {
 
 export async function rerunDiscoveryPlan(projectName, planId) {
   const projectRoot = await extractProjectDirectory(projectName);
-  const gw = await getPilotDeckGateway();
+  const gw = await getEastYunDeskGateway();
   const result = await gw.alwaysOnRerunPlan({
     projectKey: projectRoot,
     planId,
@@ -115,7 +115,7 @@ export async function archiveWorkCycle(projectName, cycleId) {
 export async function applyWorkCycle(projectName, cycleId) {
   const result = await getService().queueCycleApply(projectName, cycleId);
 
-  const gw = await getPilotDeckGateway();
+  const gw = await getEastYunDeskGateway();
 
   let applyResult;
   try {

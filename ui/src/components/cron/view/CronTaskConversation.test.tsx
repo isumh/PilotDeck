@@ -55,7 +55,7 @@ it.each(['completed', 'failed'])('recovers an ordinary task reply that %s offscr
   let answer = 'Old A';
   mocks.fetch.mockImplementation(async (url: string) => url.includes('/token-usage') ? json({ used: 20 }) : json({
     messages: [{ id: url.includes('task-a') ? answer : 'B', kind: 'text', role: 'assistant', content: url.includes('task-a') ? answer : 'B',
-      timestamp: '2026-01-01', provider: 'pilotdeck' }], total: 1, hasMore: false,
+      timestamp: '2026-01-01', provider: 'eastyundesk' }], total: 1, hasMore: false,
   }));
   render(<I18nextProvider i18n={i18n}><MemoryRouter initialEntries={['/cron?taskId=task-a']}><CronPanel /></MemoryRouter></I18nextProvider>);
   await screen.findByText('Old A');

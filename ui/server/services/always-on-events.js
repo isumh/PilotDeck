@@ -1,13 +1,13 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { resolvePilotHome, resolveProjectStorageId } from '../utils/pilotPaths.js';
-import { getPilotDeckGateway } from '../pilotdeck-bridge.js';
+import { resolveEastYunHome, resolveProjectStorageId } from '../utils/eastyunPaths.js';
+import { getEastYunDeskGateway } from '../eastyundesk-bridge.js';
 
 /**
  * Read phase events from a single project's events.jsonl.
  *
  * @param {string} projectDir Absolute path to the project's always-on dir
- *   (e.g. `~/.pilotdeck/always-on/projects/<id>`)
+ *   (e.g. `~/.eastyundesk/always-on/projects/<id>`)
  * @returns {Array<object>}
  */
 async function readProjectEvents(projectDir) {
@@ -33,14 +33,14 @@ async function readProjectEvents(projectDir) {
 /**
  * Build a lookup from projectKey -> { projectName, projectDisplayName }.
  */
-async function buildProjectLookup(pilotHome) {
-    const gateway = await getPilotDeckGateway();
+async function buildProjectLookup(eastyunHome) {
+    const gateway = await getEastYunDeskGateway();
     const { projects } = await gateway.listProjects();
     const lookup = new Map();
     for (const project of projects) {
         const key = resolve(project.projectKey ?? project.fullPath ?? '');
         if (!key) continue;
-        const name = resolveProjectStorageId(key, pilotHome);
+        const name = resolveProjectStorageId(key, eastyunHome);
         const displayName = project.displayName || key.split(/[\\/]/).pop() || name;
         lookup.set(key, { projectName: name, projectDisplayName: displayName });
     }
@@ -55,8 +55,8 @@ async function buildProjectLookup(pilotHome) {
  */
 export async function getAlwaysOnDashboardEvents(opts = {}) {
     const { limit = 200, since } = opts;
-    const pilotHome = resolvePilotHome();
-    const projectsDir = resolve(pilotHome, 'always-on', 'projects');
+    const eastyunHome = resolveEastYunHome();
+    const projectsDir = resolve(eastyunHome, 'always-on', 'projects');
 
     let projectDirs;
     try {
@@ -65,7 +65,7 @@ export async function getAlwaysOnDashboardEvents(opts = {}) {
         return { events: [] };
     }
 
-    const lookup = await buildProjectLookup(pilotHome).catch(() => new Map());
+    const lookup = await buildProjectLookup(eastyunHome).catch(() => new Map());
 
     const allEvents = [];
     for (const entry of projectDirs) {
@@ -93,7 +93,7 @@ export async function getAlwaysOnDashboardEvents(opts = {}) {
     const events = filtered.map((event) => {
         const key = resolve(event.projectKey || '');
         const info = lookup.get(key) || {
-            projectName: resolveProjectStorageId(key || 'unknown', pilotHome),
+            projectName: resolveProjectStorageId(key || 'unknown', eastyunHome),
             projectDisplayName: key.split(/[\\/]/).pop() || 'Unknown',
         };
         return {

@@ -110,7 +110,7 @@ tools:
           auth: headerApiKey
           apiKeyParam: X-API-Key
           headers:
-            X-Client: PilotDeck
+            X-Client: EastYunDesk
           requestBody:
             messages:
               - role: user

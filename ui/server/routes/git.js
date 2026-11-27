@@ -4,11 +4,11 @@ import { spawn } from 'child_process';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { extractProjectDirectory } from '../projects.js';
-import { runChatViaGateway, getPilotDeckGateway } from '../pilotdeck-bridge.js';
+import { runChatViaGateway, getEastYunDeskGateway } from '../eastyundesk-bridge.js';
 import { requestLimiters } from '../middleware/rateLimits.js';
 import { parseGitStatus, gitStatusError } from '../utils/gitStatus.js';
 import { isPathInsideOrEqual } from '../utils/pathSafety.js';
-import { ensurePilotProjectGitIgnore } from '../utils/pilotPaths.js';
+import { ensureEastYunProjectGitIgnore } from '../utils/eastyunPaths.js';
 
 const router = express.Router();
 const COMMIT_DIFF_CHARACTER_LIMIT = 500_000;
@@ -302,7 +302,7 @@ router.get('/status', async (req, res) => {
   try {
     const projectPath = await getActualProjectPath(project);
 
-    ensurePilotProjectGitIgnore(projectPath, false);
+    ensureEastYunProjectGitIgnore(projectPath, false);
     // Validate git repository
     await validateGitRepository(projectPath);
 
@@ -356,7 +356,7 @@ function legacyGitOperation(action) {
       const projectPath = await getActualProjectPath(project);
       const selected = files ?? (file ? [file] : undefined);
       const paths = selected ? await Promise.all(selected.map(async value => (await resolveRepositoryFilePath(projectPath, value)).repositoryRelativeFilePath)) : undefined;
-      const gateway = await getPilotDeckGateway();
+      const gateway = await getEastYunDeskGateway();
       const result = await gateway.manageCheckpoints({ projectKey: projectPath, sessionKey: sessionId || 'git:management', action: 'git',
         repositoryOperation: { operation: 'legacy', legacyAction: action, branch, message, files: paths } });
       res.json(result);
@@ -369,7 +369,7 @@ router.post('/operation', async (req, res) => {
   try {
     const { project, sessionId, ...repositoryOperation } = req.body ?? {};
     if (typeof project !== 'string') return res.status(400).json({ error: 'Project is required.' });
-    const gateway = await getPilotDeckGateway();
+    const gateway = await getEastYunDeskGateway();
     if (!gateway.manageCheckpoints) return res.status(503).json({ error: 'This Gateway cannot coordinate Git operations.' });
     const result = await gateway.manageCheckpoints({ projectKey: await getActualProjectPath(project), sessionKey: sessionId || 'git:management', action: 'git', repositoryOperation });
     return res.json(result);
@@ -715,15 +715,15 @@ router.get('/commit-diff', async (req, res) => {
 
 // Generate commit message based on staged changes using AI
 router.post('/generate-commit-message', requestLimiters.model, async (req, res) => {
-  const { project, files, provider = 'pilotdeck' } = req.body;
+  const { project, files, provider = 'eastyundesk' } = req.body;
 
   if (!project || !files || files.length === 0) {
     return res.status(400).json({ error: 'Project name and files are required' });
   }
 
   // Validate provider
-  if (!['claude', 'pilotdeck', 'cursor'].includes(provider)) {
-    return res.status(400).json({ error: 'provider must be "claude", "pilotdeck" or "cursor"' });
+  if (!['claude', 'eastyundesk', 'cursor'].includes(provider)) {
+    return res.status(400).json({ error: 'provider must be "claude", "eastyundesk" or "cursor"' });
   }
 
   try {
@@ -815,9 +815,9 @@ Generate the commit message:`;
           const parsed = typeof data === 'string' ? JSON.parse(data) : data;
           console.log('🔍 Writer received message type:', parsed.type);
 
-          if ((parsed.type === 'claude-response' || parsed.type === 'pilotdeck-response') && parsed.data) {
+          if ((parsed.type === 'claude-response' || parsed.type === 'eastyundesk-response') && parsed.data) {
             const message = parsed.data.message || parsed.data;
-            console.log('📦 PilotDeck response message:', JSON.stringify(message, null, 2).substring(0, 500));
+            console.log('📦 EastYunDesk response message:', JSON.stringify(message, null, 2).substring(0, 500));
             if (message.content && Array.isArray(message.content)) {
               // Extract text from content array
               for (const item of message.content) {
@@ -849,7 +849,7 @@ Generate the commit message:`;
     console.log('🚀 Calling AI agent with provider:', provider);
     console.log('📝 Prompt length:', prompt.length);
 
-    // All providers route through the PilotDeck gateway. The `provider`
+    // All providers route through the EastYunDesk gateway. The `provider`
     // value is kept only as a label in the resulting message frames.
     await runChatViaGateway(
       prompt,
@@ -860,7 +860,7 @@ Generate the commit message:`;
         model: provider === 'cursor' ? undefined : 'sonnet',
       },
       writer,
-      provider || 'pilotdeck',
+      provider || 'eastyundesk',
     );
 
     console.log('📊 Total response text collected:', responseText.length, 'characters');

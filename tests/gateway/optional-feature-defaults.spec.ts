@@ -59,16 +59,16 @@ tools: { webSearch: { region: cn } }
 `, true],
 ] as const) {
   test(`${name}: catalog, router execution and search availability agree`, async (t) => {
-    const home = await mkdtemp(join(tmpdir(), 'pilotdeck-feature-defaults-'));
-    await writeFile(join(home, 'pilotdeck.yaml'), BASE + extra);
+    const home = await mkdtemp(join(tmpdir(), 'eastyundesk-feature-defaults-'));
+    await writeFile(join(home, 'eastyundesk.yaml'), BASE + extra);
     await mkdir(join(home, 'skills'));
     const requests: CanonicalModelRequest[] = [];
     const completions: CanonicalModelRequest[] = [];
     const local = createLocalGateway({
-      pilotHome: home,
+      eastyunHome: home,
       projectRoot: home,
       builtinSkillsRoot: join(home, 'skills'),
-      env: { ...process.env, PILOT_HOME: home, PILOTDECK_CONFIG_PATH: join(home, 'pilotdeck.yaml'), PILOT_AGENT_MODEL: undefined, TAVILY_API_KEY: 'present-but-not-opt-in' },
+      env: { ...process.env, EASTYUN_HOME: home, EASTYUNDESK_CONFIG_PATH: join(home, 'eastyundesk.yaml'), EASTYUN_AGENT_MODEL: undefined, TAVILY_API_KEY: 'present-but-not-opt-in' },
       __testModelFactory(snapshot) {
         assert.notEqual(snapshot.config.memory?.enabled, true);
         for (const channel of ['feishu', 'weixin', 'wecom'] as const) {
@@ -107,13 +107,13 @@ tools: { webSearch: { region: cn } }
 
 
 test('image tools appear only after opt-in and disappear from the next request in the same chat', async (t) => {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-image-toggle-'));
-  const configPath = join(home, 'pilotdeck.yaml');
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-image-toggle-'));
+  const configPath = join(home, 'eastyundesk.yaml');
   await writeFile(configPath, BASE);
   await mkdir(join(home, 'skills'));
   const requests: CanonicalModelRequest[] = [];
-  const local = createLocalGateway({ pilotHome: home, projectRoot: home, builtinSkillsRoot: join(home, 'skills'),
-    env: { ...process.env, PILOT_HOME: home, PILOTDECK_CONFIG_PATH: configPath, PILOT_AGENT_MODEL: undefined },
+  const local = createLocalGateway({ eastyunHome: home, projectRoot: home, builtinSkillsRoot: join(home, 'skills'),
+    env: { ...process.env, EASTYUN_HOME: home, EASTYUNDESK_CONFIG_PATH: configPath, EASTYUN_AGENT_MODEL: undefined },
     __testModelFactory(snapshot) {
       return { ...createModelRuntime(snapshot.config.model),
         async *stream(request): AsyncIterable<CanonicalModelEvent> {
@@ -145,13 +145,13 @@ test('image tools appear only after opt-in and disappear from the next request i
 });
 
 test('video tools appear only after opt-in and disappear from the next request in the same chat', async (t) => {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-video-toggle-'));
-  const configPath = join(home, 'pilotdeck.yaml');
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-video-toggle-'));
+  const configPath = join(home, 'eastyundesk.yaml');
   await writeFile(configPath, BASE);
   await mkdir(join(home, 'skills'));
   const requests: CanonicalModelRequest[] = [];
-  const local = createLocalGateway({ pilotHome: home, projectRoot: home, builtinSkillsRoot: join(home, 'skills'),
-    env: { ...process.env, PILOT_HOME: home, PILOTDECK_CONFIG_PATH: configPath, PILOT_AGENT_MODEL: undefined },
+  const local = createLocalGateway({ eastyunHome: home, projectRoot: home, builtinSkillsRoot: join(home, 'skills'),
+    env: { ...process.env, EASTYUN_HOME: home, EASTYUNDESK_CONFIG_PATH: configPath, EASTYUN_AGENT_MODEL: undefined },
     __testModelFactory(snapshot) {
       return { ...createModelRuntime(snapshot.config.model),
         async *stream(request): AsyncIterable<CanonicalModelEvent> {

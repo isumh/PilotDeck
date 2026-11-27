@@ -7,16 +7,16 @@ let gatewayEventToFrames: (event: unknown, sessionId: string, provider: string) 
 beforeAll(async () => {
   // Load the real backend once, before any React hooks or fetch mocks exist.
   // Its cold dependency graph is setup work, not part of a 5s UI assertion.
-  const bridgePath = '../../server/pilotdeck-bridge.js';
+  const bridgePath = '../../server/eastyundesk-bridge.js';
   ({ gatewayEventToFrames } = await import(bridgePath));
 }, 60_000);
 const thought = (revision: number, content: string, offset?: number): NormalizedMessage => ({
-  id: 'wire', sessionId: 's', runId: 'run', kind: 'thinking', provider: 'pilotdeck', timestamp: '2026-01-01', content,
+  id: 'wire', sessionId: 's', runId: 'run', kind: 'thinking', provider: 'eastyundesk', timestamp: '2026-01-01', content,
   timeline: { version: 1, turnId: 'run', id: 'thought', order: 0, revision, offset },
 });
 it('reconciles scheduled inputs by run identity without collapsing a later run of the same instructions', () => {
   const frames = ['run-1', 'run-2'].map(runId => gatewayEventToFrames({ type: 'agent_status', event: 'cron_input', runId,
-    detail: { message: 'Inspect report' } }, 'cron:task', 'pilotdeck')[0]);
+    detail: { message: 'Inspect report' } }, 'cron:task', 'eastyundesk')[0]);
   const history = [{ ...frames[0], id: 'persisted-input', content: 'Inspect report\n\nLegacy result policy' }];
   expect(getRealtimeMessagesToKeepAfterServerRefresh(frames, history).map(item => item.runId)).toEqual(['run-2']);
 });
@@ -160,7 +160,7 @@ for (const method of ['fetchFromServer', 'refreshFromServer'] as const) {
     const event = { type: 'agent_status', runId: 'run', event: 'subagent_model_error',
       detail: { subagentId: 'child', errorId: 'failure-1', message: 'Timed out' } };
     // Each transport independently deserializes and converts the same event.
-    const frames = () => gatewayEventToFrames(JSON.parse(JSON.stringify(event)), 's', 'pilotdeck');
+    const frames = () => gatewayEventToFrames(JSON.parse(JSON.stringify(event)), 's', 'eastyundesk');
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ messages: [],
       stream: { active: true, runId: 'run', messages: frames() } }))));
     const { result } = renderHook(useSessionStore);
@@ -180,7 +180,7 @@ for (const method of ['fetchFromServer', 'refreshFromServer'] as const) {
       expect(result.current.getSubagentDetailMessages('s', 'child')).toHaveLength(1);
       act(() => {
         const separate = { ...event, detail: { ...event.detail, errorId: 'failure-2' } };
-        for (const frame of gatewayEventToFrames(separate, 's', 'pilotdeck')) {
+        for (const frame of gatewayEventToFrames(separate, 's', 'eastyundesk')) {
           result.current.appendSubagentDetailMessage('s', 'child', frame);
         }
       });
@@ -196,7 +196,7 @@ for (const method of ['fetchFromServer', 'refreshFromServer'] as const) {
 it('merges live task guidance with its durable history once, in the original turn position', async () => {
   const timeline = { version: 1 as const, turnId: 'run', id: 'steer:guidance', order: 4, revision: 12 };
   const [live] = gatewayEventToFrames({ type: 'steer_applied', runId: 'run', itemId: 'guidance', timeline,
-    message: { role: 'user', content: [{ type: 'text', text: 'Use primary sources', timeline }] } }, 'cron:task', 'pilotdeck');
+    message: { role: 'user', content: [{ type: 'text', text: 'Use primary sources', timeline }] } }, 'cron:task', 'eastyundesk');
   const history: NormalizedMessage = { ...live, id: 'history-guidance', turnId: 'run', queueItemId: 'guidance', isSteer: true, isFinal: true };
   vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ messages: [history] }))));
   const { result } = renderHook(useSessionStore);

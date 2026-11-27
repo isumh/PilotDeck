@@ -19,7 +19,7 @@ const reference = (id: string) => createTextContentReference({ id, selectionMode
   locator: { surface: 'editor', quote: { exact: id } }, selectedText: id,
 });
 const quote = (id: string) => act(() => {
-  window.dispatchEvent(new CustomEvent('pilotdeck:add-chat-reference', { detail: reference(id) }));
+  window.dispatchEvent(new CustomEvent('eastyundesk:add-chat-reference', { detail: reference(id) }));
 });
 const mention = (projectName: string) => act(() => {
   window.dispatchEvent(new CustomEvent(ADD_WORKSPACE_FILE_MENTION_EVENT, { detail: { projectName, relativePath: 'report.md' } }));
@@ -34,7 +34,7 @@ function setup(selectedProject: Project, sessionId: string, initialActive = true
     canAbortSession: false, tokenBudget: null, sendMessage, enqueuePreparedInput,
     pendingViewSessionRef: { current: null }, scrollToBottom: vi.fn(), addMessage: vi.fn(),
     clearMessages: vi.fn(), rewindMessages: vi.fn(), setIsLoading: vi.fn(), setCanAbortSession: vi.fn(),
-    setIsAborting: vi.fn(), setClaudeStatus: vi.fn(), setPilotDeckStatus: vi.fn(), setIsUserScrolledUp: vi.fn(),
+    setIsAborting: vi.fn(), setClaudeStatus: vi.fn(), setEastYunDeskStatus: vi.fn(), setIsUserScrolledUp: vi.fn(),
     pendingPermissionRequests: [], setPendingPermissionRequests: vi.fn(),
   }), { initialProps: { active: initialActive } });
   return { ...view, sendMessage, enqueuePreparedInput };

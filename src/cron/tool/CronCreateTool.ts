@@ -1,11 +1,11 @@
-import { PilotDeckToolRuntimeError, type PilotDeckToolDefinition } from "../../tool/index.js";
+import { EastYunDeskToolRuntimeError, type EastYunDeskToolDefinition } from "../../tool/index.js";
 import type { CronCreateInput, CronCreateResult } from "../protocol/types.js";
 import type { GatewayChannelKey } from "../../gateway/index.js";
 import { CRON_CREATE_SCHEDULE_SCHEMA } from "./CronSchemas.js";
 import type { CronToolRuntime } from "./CronToolRuntime.js";
-import { resolvePilotHome } from "../../pilot/paths.js";
+import { resolveEastYunHome } from "../../eastyun/paths.js";
 
-export function createCronCreateTool(runtime: CronToolRuntime): PilotDeckToolDefinition<CronCreateInput, CronCreateResult> {
+export function createCronCreateTool(runtime: CronToolRuntime): EastYunDeskToolDefinition<CronCreateInput, CronCreateResult> {
   return {
     name: "cron_create",
     title: "Create Cron Task",
@@ -42,16 +42,16 @@ export function createCronCreateTool(runtime: CronToolRuntime): PilotDeckToolDef
     execute: async (input, context) => {
       const schedule = input.schedule;
       if (schedule?.type === "monthly") {
-        throw new PilotDeckToolRuntimeError("invalid_tool_input",
+        throw new EastYunDeskToolRuntimeError("invalid_tool_input",
           "New tasks do not support monthly weekday rules. Use cron for a fixed day of the month, or ask the user to choose another schedule.");
       }
       if (schedule?.type === "interval" &&
         (!Number.isSafeInteger(schedule.everySeconds) || schedule.everySeconds < 60 || schedule.everySeconds % 60 !== 0)) {
-        throw new PilotDeckToolRuntimeError("invalid_tool_input",
+        throw new EastYunDeskToolRuntimeError("invalid_tool_input",
           "Repeating intervals must be in whole minutes. Set everySeconds to a positive multiple of 60.");
       }
       const channelKey = inferChannelKey(context.sessionId);
-      const projectKey = input.projectKey === "general" ? resolvePilotHome(context.env) : input.projectKey ?? context.projectKey ?? context.cwd;
+      const projectKey = input.projectKey === "general" ? resolveEastYunHome(context.env) : input.projectKey ?? context.projectKey ?? context.cwd;
       const result = await runtime.createTask({
         ...input,
         sessionKey: context.sessionId,

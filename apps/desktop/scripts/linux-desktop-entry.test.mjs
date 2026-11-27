@@ -11,7 +11,7 @@ test('generated Linux launcher declares every desktop action and preserves local
   // Exercise the installed electron-builder generator without building a binary.
   const helper = Object.create(LinuxTargetHelper.prototype);
   helper.packager = {
-    appInfo: { productName: 'PilotDeck', sanitizedProductName: 'PilotDeck', description: metadata.description },
+    appInfo: { productName: 'EastYunDesk', sanitizedProductName: 'EastYunDesk', description: metadata.description },
     info: { metadata }, config: metadata.build,
     platformSpecificBuildOptions: metadata.build.linux,
     executableName: metadata.desktopName, fileAssociations: [],
@@ -31,7 +31,7 @@ test('generated Linux launcher declares every desktop action and preserves local
   for (const action of actions) assert.ok(sections.has(`Desktop Action ${action}`));
   for (const key of sections.keys()) if (key.startsWith('Desktop Action ')) assert.ok(actions.includes(key.slice('Desktop Action '.length)));
   const uninstall = sections.get('Desktop Action Uninstall');
-  assert.equal(uninstall.get('Name'), 'Uninstall PilotDeck');
-  assert.equal(uninstall.get('Name[zh_CN]'), '卸载 PilotDeck');
-  assert.equal(uninstall.get('Exec'), 'pilotdeck-desktop --uninstall');
+  assert.equal(uninstall.get('Name'), 'Uninstall EastYunDesk');
+  assert.equal(uninstall.get('Name[zh_CN]'), '卸载 EastYunDesk');
+  assert.equal(uninstall.get('Exec'), 'eastyundesk-desktop --uninstall');
 });

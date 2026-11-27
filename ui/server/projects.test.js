@@ -10,11 +10,11 @@ const gateway = vi.hoisted(() => ({
     listSessions: vi.fn(),
 }));
 
-vi.mock('./pilotdeck-bridge.js', () => ({
-    getPilotDeckGateway: vi.fn(async () => gateway),
+vi.mock('./eastyundesk-bridge.js', () => ({
+    getEastYunDeskGateway: vi.fn(async () => gateway),
     beginSessionDeletion: vi.fn(() => () => {}),
     isGatewayUnavailableError: (error) => /Gateway WebSocket/i.test(error?.message || ''),
-    withPilotDeckGatewayReadRetry: vi.fn(async (operation) => operation(gateway)),
+    withEastYunDeskGatewayReadRetry: vi.fn(async (operation) => operation(gateway)),
 }));
 
 vi.mock('./database/db.js', () => ({
@@ -22,9 +22,9 @@ vi.mock('./database/db.js', () => ({
 }));
 
 import { addProjectManually, deleteSession, getProjects, getProjectsSnapshot } from './projects.js';
-import { createProjectId, sanitizeSessionIdForPath } from './utils/pilotPaths.js';
+import { createProjectId, sanitizeSessionIdForPath } from './utils/eastyunPaths.js';
 
-const originalPilotHome = process.env.PILOT_HOME;
+const originalEastYunHome = process.env.EASTYUN_HOME;
 const originalWorkspacesRoot = process.env.WORKSPACES_ROOT;
 let testWorkspacesRoot;
 
@@ -38,16 +38,16 @@ function deferred() {
 
 describe('getProjects', () => {
     beforeAll(async () => {
-        process.env.PILOT_HOME = path.resolve('/tmp/pilotdeck-project-sort-test');
-        testWorkspacesRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'pilotdeck-projects-test-'));
+        process.env.EASTYUN_HOME = path.resolve('/tmp/eastyundesk-project-sort-test');
+        testWorkspacesRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'eastyundesk-projects-test-'));
         process.env.WORKSPACES_ROOT = testWorkspacesRoot;
     });
 
     afterAll(async () => {
-        if (originalPilotHome === undefined) {
-            delete process.env.PILOT_HOME;
+        if (originalEastYunHome === undefined) {
+            delete process.env.EASTYUN_HOME;
         } else {
-            process.env.PILOT_HOME = originalPilotHome;
+            process.env.EASTYUN_HOME = originalEastYunHome;
         }
         if (originalWorkspacesRoot === undefined) {
             delete process.env.WORKSPACES_ROOT;
@@ -114,8 +114,8 @@ describe('getProjects', () => {
         ]);
         expect(projects.find((project) => project.name === 'general')).toMatchObject({
             kind: 'general',
-            fullPath: process.env.PILOT_HOME,
-            workspaceCwd: path.join(testWorkspacesRoot, 'PilotDeckGeneral'),
+            fullPath: process.env.EASTYUN_HOME,
+            workspaceCwd: path.join(testWorkspacesRoot, 'EastYunDeskGeneral'),
             capabilities: {
                 files: false,
                 explore: false,
@@ -155,22 +155,22 @@ describe('getProjects', () => {
         const summary = deferred();
         gateway.listProjects.mockResolvedValue({ projects: [] });
         gateway.listSessions.mockImplementation(({ projectKey }) => {
-            if (projectKey === process.env.PILOT_HOME) return sessions.promise;
+            if (projectKey === process.env.EASTYUN_HOME) return sessions.promise;
             return Promise.resolve({ sessions: [] });
         });
         gateway.describeProject.mockImplementation(({ projectKey }) => {
-            if (projectKey === process.env.PILOT_HOME) return summary.promise;
+            if (projectKey === process.env.EASTYUN_HOME) return summary.promise;
             return Promise.resolve({ sessionCount: 0 });
         });
 
         const projectsPromise = getProjects();
         try {
             await vi.waitFor(() => expect(gateway.listSessions).toHaveBeenCalledWith({
-                projectKey: process.env.PILOT_HOME,
+                projectKey: process.env.EASTYUN_HOME,
                 limit: 5,
             }));
             expect(gateway.describeProject).toHaveBeenCalledWith({
-                projectKey: process.env.PILOT_HOME,
+                projectKey: process.env.EASTYUN_HOME,
             });
         } finally {
             sessions.resolve({ sessions: [] });
@@ -187,7 +187,7 @@ describe('getProjects', () => {
         let active = 0;
         let maxActive = 0;
         gateway.listSessions.mockImplementation(async ({ projectKey }) => {
-            if (projectKey === process.env.PILOT_HOME) return { sessions: [] };
+            if (projectKey === process.env.EASTYUN_HOME) return { sessions: [] };
             active += 1;
             maxActive = Math.max(maxActive, active);
             await release.promise;
@@ -205,35 +205,35 @@ describe('getProjects', () => {
 
 
 describe('project registration and snapshot ordering', () => {
-    let pilotHome;
+    let eastyunHome;
     let previousHome;
     let previousWorkspacesRoot;
     beforeEach(async () => {
-        previousHome = process.env.PILOT_HOME;
+        previousHome = process.env.EASTYUN_HOME;
         previousWorkspacesRoot = process.env.WORKSPACES_ROOT;
-        pilotHome = await fs.mkdtemp(path.join(os.tmpdir(), 'pilotdeck-project-registration-'));
-        process.env.PILOT_HOME = pilotHome;
-        process.env.WORKSPACES_ROOT = path.join(pilotHome, 'workspaces');
+        eastyunHome = await fs.mkdtemp(path.join(os.tmpdir(), 'eastyundesk-project-registration-'));
+        process.env.EASTYUN_HOME = eastyunHome;
+        process.env.WORKSPACES_ROOT = path.join(eastyunHome, 'workspaces');
         gateway.listProjects.mockReset().mockResolvedValue({ projects: [] });
         gateway.listSessions.mockReset().mockResolvedValue({ sessions: [] });
         gateway.describeProject.mockReset().mockResolvedValue({ sessionCount: 0 });
     });
     afterEach(async () => {
-        if (previousHome === undefined) delete process.env.PILOT_HOME;
-        else process.env.PILOT_HOME = previousHome;
+        if (previousHome === undefined) delete process.env.EASTYUN_HOME;
+        else process.env.EASTYUN_HOME = previousHome;
         if (previousWorkspacesRoot === undefined) delete process.env.WORKSPACES_ROOT;
         else process.env.WORKSPACES_ROOT = previousWorkspacesRoot;
         vi.restoreAllMocks();
-        await fs.rm(pilotHome, { recursive: true, force: true });
+        await fs.rm(eastyunHome, { recursive: true, force: true });
     });
 
     it('registers without querying any project or session history', async () => {
-        const workspace = path.join(pilotHome, 'workspace');
+        const workspace = path.join(eastyunHome, 'workspace');
         const registered = await addProjectManually(workspace);
         expect(registered).toMatchObject({
             fullPath: workspace, lastActivity: expect.any(Number), projectListRevision: expect.any(Number),
         });
-        expect(await fs.readFile(path.join(pilotHome, 'projects', registered.name, '.cwd'), 'utf8')).toBe(workspace);
+        expect(await fs.readFile(path.join(eastyunHome, 'projects', registered.name, '.cwd'), 'utf8')).toBe(workspace);
         expect(gateway.listProjects).not.toHaveBeenCalled();
         expect(gateway.listSessions).not.toHaveBeenCalled();
     });
@@ -242,7 +242,7 @@ describe('project registration and snapshot ordering', () => {
         const pending = deferred();
         gateway.listProjects.mockReturnValueOnce(pending.promise);
         const oldSnapshot = getProjectsSnapshot();
-        const registered = await addProjectManually(path.join(pilotHome, 'workspace'));
+        const registered = await addProjectManually(path.join(eastyunHome, 'workspace'));
         pending.resolve({ projects: [] });
         expect((await oldSnapshot).revision).toBeLessThan(registered.projectListRevision);
         expect((await getProjectsSnapshot()).revision).toBeGreaterThan(registered.projectListRevision);
@@ -252,22 +252,22 @@ describe('project registration and snapshot ordering', () => {
         const error = new Error('Disk write failed');
         vi.spyOn(fs, 'writeFile').mockRejectedValueOnce(error);
         vi.spyOn(console, 'warn').mockImplementation(() => {});
-        await expect(addProjectManually(path.join(pilotHome, 'workspace'))).rejects.toBe(error);
+        await expect(addProjectManually(path.join(eastyunHome, 'workspace'))).rejects.toBe(error);
     });
 });
 
 describe('deleteSession lifecycle', () => {
-    let pilotHome;
+    let eastyunHome;
     let previousHome;
     let project;
     let transcript;
     const sessionId = 'web:delete-background-title';
     beforeEach(async () => {
-        previousHome = process.env.PILOT_HOME;
-        pilotHome = await fs.mkdtemp(path.join(os.tmpdir(), 'pilotdeck-delete-lifecycle-'));
-        process.env.PILOT_HOME = pilotHome;
-        project = path.join(pilotHome, 'workspace');
-        const projectDirectory = path.join(pilotHome, 'projects', createProjectId(project));
+        previousHome = process.env.EASTYUN_HOME;
+        eastyunHome = await fs.mkdtemp(path.join(os.tmpdir(), 'eastyundesk-delete-lifecycle-'));
+        process.env.EASTYUN_HOME = eastyunHome;
+        project = path.join(eastyunHome, 'workspace');
+        const projectDirectory = path.join(eastyunHome, 'projects', createProjectId(project));
         await fs.mkdir(path.join(projectDirectory, 'chats'), {recursive: true});
         await fs.writeFile(path.join(projectDirectory, '.cwd'), project);
         transcript = path.join(projectDirectory, 'chats', sanitizeSessionIdForPath(sessionId) + '.jsonl');
@@ -276,9 +276,9 @@ describe('deleteSession lifecycle', () => {
         gateway.closeSession.mockReset();
     });
     afterEach(async () => {
-        if (previousHome === undefined) delete process.env.PILOT_HOME;
-        else process.env.PILOT_HOME = previousHome;
-        await fs.rm(pilotHome, {recursive: true, force: true});
+        if (previousHome === undefined) delete process.env.EASTYUN_HOME;
+        else process.env.EASTYUN_HOME = previousHome;
+        await fs.rm(eastyunHome, {recursive: true, force: true});
     });
     it('waits for the gateway writer to close before unlinking its transcript', async () => {
         const closing = deferred();

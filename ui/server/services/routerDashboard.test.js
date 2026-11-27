@@ -3,7 +3,7 @@ import os from 'node:os';
 import { promises as fs } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createRouterDashboard } from './routerDashboard.js';
-import { createProjectId, sanitizeSessionIdForPath } from '../utils/pilotPaths.js';
+import { createProjectId, sanitizeSessionIdForPath } from '../utils/eastyunPaths.js';
 
 const homes = [];
 afterEach(async () => { await Promise.all(homes.splice(0).map(home => fs.rm(home, { recursive: true, force: true }))); });
@@ -17,11 +17,11 @@ function turn(id, query, tools = []) {
     { type: 'assistant_message', turnId: id, message: { content: tools.length ? tools.map(name => ({ type: 'tool_call', name })) : [{ type: 'text', text: 'Synthetic answer' }] } }];
 }
 async function fixture(options = {}) {
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'pilotdeck-dashboard-')); homes.push(home);
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'eastyundesk-dashboard-')); homes.push(home);
   const project = path.join(home, 'workspace'); const stats = path.join(home, 'router', 'stats.jsonl');
   await fs.mkdir(path.dirname(stats), { recursive: true });
   const readFile = vi.fn((...args) => fs.readFile(...args)); const readdir = vi.fn((...args) => fs.readdir(...args));
-  const service = createRouterDashboard({ pilotHome: home, repoRoot: project, fs: { ...fs, readFile, readdir }, ...options });
+  const service = createRouterDashboard({ eastyunHome: home, repoRoot: project, fs: { ...fs, readFile, readdir }, ...options });
   const transcript = async (sessionId, entries, projectPath = project, storageId = createProjectId(projectPath)) => {
     const directory = path.join(home, 'projects', storageId); const file = path.join(directory, 'chats', `${sanitizeSessionIdForPath(sessionId)}.jsonl`);
     await fs.mkdir(path.dirname(file), { recursive: true }); await fs.writeFile(path.join(directory, '.cwd'), projectPath);
@@ -84,7 +84,7 @@ describe('router dashboard projections', () => {
     await f.writeStats([record('a', 'a', f.project), record('b', 'b', f.project, 1)]);
     await f.service.getRouterSessionStats('a'); await f.service.getRouterSessionStats('b'); await f.service.getRouterSessionStats('a');
     expect(f.transcriptReads().map(file => path.basename(file))).toEqual(['a.jsonl', 'b.jsonl', 'a.jsonl']);
-    const tiny = createRouterDashboard({ pilotHome: f.home, repoRoot: f.project, fs: { ...fs, readFile: f.readFile }, maxCacheBytes: 1 });
+    const tiny = createRouterDashboard({ eastyunHome: f.home, repoRoot: f.project, fs: { ...fs, readFile: f.readFile }, maxCacheBytes: 1 });
     const before = f.transcriptReads().length; await tiny.getRouterSessionStats('a'); await tiny.getRouterSessionStats('a');
     expect(f.transcriptReads().length - before).toBe(2);
   });

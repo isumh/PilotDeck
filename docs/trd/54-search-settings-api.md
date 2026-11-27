@@ -16,7 +16,7 @@ Search settings live at tools.webSearch. GET/PUT `/api/config` and POST `/api/co
 
 Switching providers preserves other saved entries. Existing per-provider values take precedence over legacy top-level fields; form editing migrates legacy values into their original provider. Mask reuse requires matching provider, endpoint and authentication scope for both saving and probing.
 
-Unknown fields warn. Malformed providers and active non-HTTP(S) endpoints are fatal. Inactive raw YAML is retained by the general configuration layer. An explicit provider wins. A legacy key without a provider defaults to glm. Otherwise the first available environment credential follows the order in [resolveProvider](../../src/tool/builtin/webSearch.ts). Supported IDs and SerpAPI engines are defined by the shared [provider registry](../../src/pilot/config/webSearchProviders.ts).
+Unknown fields warn. Malformed providers and active non-HTTP(S) endpoints are fatal. Inactive raw YAML is retained by the general configuration layer. An explicit provider wins. A legacy key without a provider defaults to glm. Otherwise the first available environment credential follows the order in [resolveProvider](../../src/tool/builtin/webSearch.ts). Supported IDs and SerpAPI engines are defined by the shared [provider registry](../../src/eastyun/config/webSearchProviders.ts).
 
 Custom mapping defaults: name=custom, auth=bearer (also bodyApiKey/queryApiKey/none), method=POST (or GET), queryParam=query, apiKeyParam=api_key, empty resultsPath for common-field fallback, and title/url/snippet/source/publishedAt field names. See the provider reference for request examples.
 
@@ -32,4 +32,4 @@ The server probes the fixed query hello, with a 15-second timeout and at most tw
 
 The runtime web_search tool uses the same provider contracts and normalizes results to `{ query, organic[] }`. Serper places gl in its body; Brave maps it to the country query parameter.
 
-Implementation: [config routes](../../ui/server/routes/config.js), [search parser](../../src/pilot/config/parseToolsConfig.ts), [search tool](../../src/tool/builtin/webSearch.ts), [settings UI](../../ui/src/components/settings/view/agentSearch). Cover all provider methods/authentication, defaults, result normalization, error/timeout paths and form switching with deterministic fixtures. Live service checks require explicit opt-in.
+Implementation: [config routes](../../ui/server/routes/config.js), [search parser](../../src/eastyun/config/parseToolsConfig.ts), [search tool](../../src/tool/builtin/webSearch.ts), [settings UI](../../ui/src/components/settings/view/agentSearch). Cover all provider methods/authentication, defaults, result normalization, error/timeout paths and form switching with deterministic fixtures. Live service checks require explicit opt-in.

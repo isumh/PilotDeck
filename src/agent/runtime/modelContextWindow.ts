@@ -1,9 +1,9 @@
 import type { ModelRuntime } from "../../model/index.js";
-import type { PilotAgentModelSelection } from "../../pilot/config/types.js";
+import type { EastYunAgentModelSelection } from "../../eastyun/config/types.js";
 
 export type ResolveRoutedModelMaxContextTokensInput = {
   modelRuntime: Pick<ModelRuntime, "getCapabilities">;
-  agentModel: PilotAgentModelSelection;
+  agentModel: EastYunAgentModelSelection;
   agentMaxContextTokens?: number;
   provider: string;
   model: string;

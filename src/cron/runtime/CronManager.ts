@@ -5,8 +5,8 @@ import { homedir } from "node:os";
 import type { SessionConfigOverrides } from "../../always-on/runtime/SessionConfigOverrides.js";
 import type { Gateway } from "../../gateway/index.js";
 import type { TelemetryClient } from "../../telemetry/index.js";
-import type { PilotDeckToolDefinition } from "../../tool/index.js";
-import { resolveProjectIdentityPath } from "../../pilot/paths.js";
+import type { EastYunDeskToolDefinition } from "../../tool/index.js";
+import { resolveProjectIdentityPath } from "../../eastyun/paths.js";
 import type { CronConfig } from "../config/parseCronConfig.js";
 import type {
   CronCreateInput,
@@ -37,7 +37,7 @@ import { createRegisteredWebProjectResolver } from "../../web/server/listProject
 
 export type CreateCronManagerOptions = {
   config: CronConfig;
-  pilotHome: string;
+  eastyunHome: string;
   sessionOverrides?: SessionConfigOverrides;
   now?: () => Date;
   uuid?: () => string;
@@ -53,11 +53,11 @@ export type CreateCronManagerOptions = {
 export class CronManager {
   readonly config: CronConfig;
 
-  private readonly pilotHome: string;
+  private readonly eastyunHome: string;
   private readonly runtimes = new Map<string, CronRuntime>();
   private readonly runtimesByDirectory = new Map<string, CronRuntime>();
   private readonly starting = new Map<CronRuntime, Promise<void>>();
-  private readonly tools: PilotDeckToolDefinition[];
+  private readonly tools: EastYunDeskToolDefinition[];
   private gateway?: Gateway;
   private started = false;
   private readonly reminders: CronReminderStore;
@@ -66,13 +66,13 @@ export class CronManager {
 
   constructor(private readonly options: CreateCronManagerOptions) {
     this.config = options.config;
-    this.pilotHome = resolve(options.pilotHome);
-    this.resolveRegisteredProject = createRegisteredWebProjectResolver({ pilotHome: this.pilotHome });
+    this.eastyunHome = resolve(options.eastyunHome);
+    this.resolveRegisteredProject = createRegisteredWebProjectResolver({ eastyunHome: this.eastyunHome });
     this.tools = createCronTools(this);
-    this.reminders = new CronReminderStore(resolve(this.pilotHome, "cron", "reminders.json"));
+    this.reminders = new CronReminderStore(resolve(this.eastyunHome, "cron", "reminders.json"));
   }
 
-  getTools(): PilotDeckToolDefinition[] {
+  getTools(): EastYunDeskToolDefinition[] {
     return this.config.enabled ? [...this.tools] : [];
   }
 
@@ -92,11 +92,11 @@ export class CronManager {
       throw new Error("CronManager.start called before bindGateway.");
     }
     await migrateCronStores({
-      pilotHome: this.pilotHome,
+      eastyunHome: this.eastyunHome,
       logger: this.options.logger,
     });
     this.started = true;
-    const projectKeys = await discoverCronProjectKeys(this.pilotHome, this.options.logger);
+    const projectKeys = await discoverCronProjectKeys(this.eastyunHome, this.options.logger);
     for (const projectKey of projectKeys) {
       try { await this.ensureRuntime(projectKey); }
       catch (error) { this.options.logger?.warn("cron project could not start; its store was preserved", { projectKey, error: String(error) }); }
@@ -116,33 +116,33 @@ export class CronManager {
   }
 
   async createTask(input: CronCreateInput): Promise<CronCreateResult> {
-    if (!this.config.enabled) throw new Error("Cron is disabled. Enable it in pilotdeck.yaml to create tasks.");
-    const requested = input.projectKey === "general" ? this.pilotHome : requireProjectKey(input.projectKey);
+    if (!this.config.enabled) throw new Error("Cron is disabled. Enable it in eastyundesk.yaml to create tasks.");
+    const requested = input.projectKey === "general" ? this.eastyunHome : requireProjectKey(input.projectKey);
     // Check before creating a runtime, project marker, or durable task. Agent
     // tools and Gateway/Web requests share this creation boundary.
-    const projectKey = resolveProjectIdentityPath(requested) === resolveProjectIdentityPath(this.pilotHome)
-      ? this.pilotHome : await this.resolveRegisteredProject(requested);
+    const projectKey = resolveProjectIdentityPath(requested) === resolveProjectIdentityPath(this.eastyunHome)
+      ? this.eastyunHome : await this.resolveRegisteredProject(requested);
     if (!projectKey) {
       throw Object.assign(new Error("Cron project is not registered or its directory is unavailable. Select an existing project and try again."), {
         code: "cron_project_unavailable",
       });
     }
     let workspaceCwd = input.workspaceCwd;
-    if (projectKey === this.pilotHome && !workspaceCwd) {
-      const configured = process.env.PILOTDECK_GENERAL_WORKSPACE_DIRECTORY?.trim();
+    if (projectKey === this.eastyunHome && !workspaceCwd) {
+      const configured = process.env.EASTYUNDESK_GENERAL_WORKSPACE_DIRECTORY?.trim();
       if (configured) workspaceCwd = configured.startsWith("~/") ? resolve(homedir(), configured.slice(2)) : configured;
       else {
         try {
-          const state = JSON.parse(await readFile(resolve(this.pilotHome, "general-workspace.json"), "utf-8"));
+          const state = JSON.parse(await readFile(resolve(this.eastyunHome, "general-workspace.json"), "utf-8"));
           if (state.version === 1 && typeof state.directory === "string") workspaceCwd = state.directory;
         } catch (error) {
           throw new Error("Cron General workspace is unavailable. Open General in the Web UI to prepare it.", { cause: error });
         }
       }
     }
-    if (projectKey === this.pilotHome) {
+    if (projectKey === this.eastyunHome) {
       if (!workspaceCwd || !isAbsolute(workspaceCwd)) throw new Error("Cron General workspace is unavailable.");
-      const [home, workspace] = await Promise.all([realpath(this.pilotHome), realpath(workspaceCwd)]);
+      const [home, workspace] = await Promise.all([realpath(this.eastyunHome), realpath(workspaceCwd)]);
       const outside = (root: string, path: string) => { const rel = relative(root, path); return rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel); };
       if (!outside(home, workspace) || !outside(workspace, home)) throw new Error("Cron General workspace must be separate from the configuration directory.");
       workspaceCwd = workspace;
@@ -152,7 +152,7 @@ export class CronManager {
   }
 
   async listTasks(input: CronListInput = {}): Promise<CronListResult> {
-    if (input.projectKey === "general") input = { ...input, projectKey: this.pilotHome };
+    if (input.projectKey === "general") input = { ...input, projectKey: this.eastyunHome };
     if (input.projectKey) {
       const runtime = await this.ensureRuntime(input.projectKey);
       return runtime.listTasks(input);
@@ -177,7 +177,7 @@ export class CronManager {
   }
 
   async updateTask(input: CronUpdateInput): Promise<CronUpdateResult> {
-    if (input.projectKey === "general") input = { ...input, projectKey: this.pilotHome };
+    if (input.projectKey === "general") input = { ...input, projectKey: this.eastyunHome };
     const runtime = await this.resolveTaskRuntime(input.taskId, input.projectKey);
     if (!runtime) return { updated: false, reason: "not_found" };
     return runtime.updateTask(input);
@@ -244,7 +244,7 @@ export class CronManager {
   }
 
   private async ensureRuntime(projectKeyInput: string): Promise<CronRuntime> {
-    const projectKey = projectKeyInput === "general" ? this.pilotHome : resolve(projectKeyInput);
+    const projectKey = projectKeyInput === "general" ? this.eastyunHome : resolve(projectKeyInput);
     const identity = resolveProjectIdentityPath(projectKey);
     const atPath = this.runtimes.get(identity);
     const directory = atPath ? undefined : getProjectDirectoryIdentity(identity);
@@ -260,7 +260,7 @@ export class CronManager {
 
     const runtime = new CronRuntime({
       config: this.config,
-      pilotHome: this.pilotHome,
+      eastyunHome: this.eastyunHome,
       projectKey,
       sessionOverrides: this.options.sessionOverrides,
       now: this.options.now,
@@ -361,10 +361,10 @@ function validateReminderScope(scope: string): void {
 }
 
 async function discoverCronProjectKeys(
-  pilotHome: string,
+  eastyunHome: string,
   logger?: CronRuntimeLogger,
 ): Promise<string[]> {
-  const projectsDir = resolve(pilotHome, "cron", "projects");
+  const projectsDir = resolve(eastyunHome, "cron", "projects");
   let entries: Dirent<string>[];
   try {
     entries = await readdir(projectsDir, { withFileTypes: true });

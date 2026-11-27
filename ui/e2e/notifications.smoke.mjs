@@ -2,8 +2,8 @@
 import { chromium, expect } from '@playwright/test';
 import fs from 'node:fs/promises';
 import { buildSystemNotification } from '../shared/notifications.js';
-const artifacts = '/tmp/pilotdeck-notifications-qa';
-const origin = process.env.PILOTDECK_SMOKE_URL || 'http://127.0.0.1:5187';
+const artifacts = '/tmp/eastyundesk-notifications-qa';
+const origin = process.env.EASTYUNDESK_SMOKE_URL || 'http://127.0.0.1:5187';
 await fs.mkdir(artifacts, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome' });
 const context = await browser.newContext({ permissions: ['notifications'], viewport: { width: 1440, height: 1000 } });
@@ -25,7 +25,7 @@ const mockApi = async route => {
   const p = new URL(route.request().url()).pathname;
   let body = {};
   if (p === '/api/projects') body = [{ name: 'demo', displayName: 'Demo', fullPath: '/fixture/demo', kind: 'workspace', sessions: [{ id: 's1', title: 'Report' }], capabilities: { files: true } }];
-  else if (p === '/api/settings/general-workspace') body = { directory: '', effectiveDirectory: '/fixture/PilotDeckGeneral', defaultDirectory: '/fixture/PilotDeckGeneral' };
+  else if (p === '/api/settings/general-workspace') body = { directory: '', effectiveDirectory: '/fixture/EastYunDeskGeneral', defaultDirectory: '/fixture/EastYunDeskGeneral' };
   else if (p.includes('onboarding-status')) body = { hasCompletedOnboarding: true };
   else if (p.includes('sessions')) body = { sessions: [], messages: [], hasMore: false, total: 0 };
   else if (p === '/api/config') body = { exists: true, raw: 'agent:\n  model: fixture/test\n', validation: { valid: true, errors: [] } };
@@ -57,7 +57,7 @@ try {
   const notification = { id: 'r1', sessionId: 's1', scope: '1', kind: 'completed', sessionName: 'Report', preview: 'Report is ready', createdAt: new Date().toISOString() };
   socket.send(JSON.stringify({ type: 'session-notification', notification }));
   await expect.poll(() => worker.evaluate(() => self.__notifications.length)).toBe(1);
-  await expect(page).toHaveTitle('PilotDeck');
+  await expect(page).toHaveTitle('EastYunDesk');
   // A Web Push copy of the same event must not display a second notification.
   await worker.evaluate(async payload => { await showNotificationOnce(payload); }, buildSystemNotification(notification, {}, 'zh-CN'));
   expect(await worker.evaluate(() => self.__notifications.length)).toBe(1);
@@ -68,7 +68,7 @@ try {
   const displayed = await worker.evaluate(() => self.__notifications.at(-1));
   expect(displayed.body).not.toContain('Sensitive question');
   expect(displayed.body).toContain('请回答后继续');
-  await expect(page).toHaveTitle('PilotDeck');
+  await expect(page).toHaveTitle('EastYunDesk');
   await card.scrollIntoViewIfNeeded();
   await page.screenshot({ path: `${artifacts}/settings-web-light.png`, fullPage: true });
   await page.goto(`${origin}/settings/appearance`);
@@ -81,7 +81,7 @@ try {
   expect(await worker.evaluate(() => notificationState(state => Object.keys(state.pending).length))).toBe(1);
   await page.reload();
   await expect(page.getByRole('article', { name: '通知', exact: true })).toBeVisible();
-  await expect(page).toHaveTitle('PilotDeck');
+  await expect(page).toHaveTitle('EastYunDesk');
   // Click routing focuses the existing page and navigates to the right conversation.
   await worker.evaluate(async () => {
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
@@ -100,7 +100,7 @@ try {
       window.__tasks = new Set();
       window.__settingsOpened = 0;
       window.__preferences = { enabled: false, sound: true, preview: true, badge: true };
-      window.pilotdeckDesktop = {
+      window.eastyundeskDesktop = {
         platform, getAppearance: () => ({ language: 'zh-CN', themeMode: 'light' }), setAppearance: async () => {},
         getRuntimeStatus: () => ({ phase: 'ready', progress: 96 }), onRuntimeStatus: () => () => {},
         getNotificationStatus: async () => ({ supported: true, permission: 'unknown', preferences: window.__preferences }),

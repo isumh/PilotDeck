@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Video, KeyRound, Link, Plug, Save, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { usePilotDeckConfig, type ConfigSaveResult } from '../../../../hooks/usePilotDeckConfig';
+import { useEastYunDeskConfig, type ConfigSaveResult } from '../../../../hooks/useEastYunDeskConfig';
 import { authenticatedFetch } from '../../../../utils/api';
 import { ConfigSaveError, SettingsToggle } from '../../shared/view';
 import { GeneralSettingsIcon } from '../../shared/view/GeneralSettingsPrimitives';
 import { configToYamlString, safeParseYaml } from '../modelPool/utils/configYaml';
-import type { PilotDeckConfig } from '../modelPool/types';
-import { DEFAULT_VIDEO_BASE_URL, videoApiBaseUrl, type VideoGenerationConfig } from '../../../../../../src/pilot/config/videoGenerationConfig.js';
+import type { EastYunDeskConfig } from '../modelPool/types';
+import { DEFAULT_VIDEO_BASE_URL, videoApiBaseUrl, type VideoGenerationConfig } from '../../../../../../src/eastyun/config/videoGenerationConfig.js';
 
 type Field = 'apiKey' | 'baseUrl' | 'model';
 type Draft = Record<Field, string> & { extraParams: string };
@@ -20,8 +20,8 @@ function address(value?: string) {
 }
 
 export function VideoGenerationForm({ config, onChange }: {
-  config: PilotDeckConfig;
-  onChange: (config: PilotDeckConfig) => void | Promise<ConfigSaveResult>;
+  config: EastYunDeskConfig;
+  onChange: (config: EastYunDeskConfig) => void | Promise<ConfigSaveResult>;
 }) {
   const { t } = useTranslation('settings');
   const current = config.tools?.videoGeneration ?? {};
@@ -150,10 +150,10 @@ export function VideoGenerationForm({ config, onChange }: {
 }
 
 export default function VideoGenerationSettings() {
-  const { raw, commitRaw, loading, error } = usePilotDeckConfig();
+  const { raw, commitRaw, loading, error } = useEastYunDeskConfig();
   const config = useMemo(() => safeParseYaml(raw), [raw]);
   const { t } = useTranslation('settings');
-  if (loading) return <div role="status">{t('pilotDeckConfig.loading')}</div>;
+  if (loading) return <div role="status">{t('eastyunDeskConfig.loading')}</div>;
   if (!config) return <div>{t('settingsPage.invalidYaml.agentSearch')}</div>;
   return <div className="search-page-content"><ConfigSaveError error={error} /><VideoGenerationForm config={config} onChange={next => commitRaw(configToYamlString(next))} /></div>;
 }

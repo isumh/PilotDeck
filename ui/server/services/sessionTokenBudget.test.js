@@ -1,9 +1,9 @@
 import { afterEach, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ live: vi.fn(), history: vi.fn(), project: vi.fn() }));
-vi.mock('../pilotdeck-bridge.js', () => ({
+vi.mock('../eastyundesk-bridge.js', () => ({
     getSessionTokenBudget: mocks.live,
-    withPilotDeckGatewayReadRetry: operation => operation({ readSessionMessages: mocks.history }),
+    withEastYunDeskGatewayReadRetry: operation => operation({ readSessionMessages: mocks.history }),
 }));
 vi.mock('../projects.js', () => ({ extractProjectDirectory: mocks.project }));
 import { readSessionTokenBudget } from './sessionTokenBudget.js';

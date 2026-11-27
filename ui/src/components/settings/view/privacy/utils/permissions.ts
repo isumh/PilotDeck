@@ -1,10 +1,10 @@
 import {
-  PILOTDECK_SETTINGS_KEY,
-  getPilotDeckSettings,
+  EASTYUNDESK_SETTINGS_KEY,
+  getEastYunDeskSettings,
   safeLocalStorage,
-  savePilotDeckPermissionSettings,
+  saveEastYunDeskPermissionSettings,
 } from "../../../../chat/utils/chatStorage";
-import type { PilotDeckSettings } from "../../../../chat/types/types";
+import type { EastYunDeskSettings } from "../../../../chat/types/types";
 import type { ParsedPermissionsImport, PermissionsExport } from "../types";
 
 export const addUnique = (items: string[], value: string): string[] => {
@@ -28,27 +28,27 @@ export const mergeUnique = (a: string[], b: string[]): string[] => {
   return out;
 };
 
-export function persistPermissionSettings(updates: Partial<PilotDeckSettings>) {
-  const current = getPilotDeckSettings();
-  const next: PilotDeckSettings = {
+export function persistPermissionSettings(updates: Partial<EastYunDeskSettings>) {
+  const current = getEastYunDeskSettings();
+  const next: EastYunDeskSettings = {
     ...current,
     ...updates,
     lastUpdated: new Date().toISOString(),
   };
-  safeLocalStorage.setItem(PILOTDECK_SETTINGS_KEY, JSON.stringify(next));
-  window.dispatchEvent(new Event("pilotdeck-settings-changed"));
-  savePilotDeckPermissionSettings(updates).catch((error) => {
+  safeLocalStorage.setItem(EASTYUNDESK_SETTINGS_KEY, JSON.stringify(next));
+  window.dispatchEvent(new Event("eastyundesk-settings-changed"));
+  saveEastYunDeskPermissionSettings(updates).catch((error) => {
     console.error("Failed to persist permission settings to backend:", error);
   });
   return next;
 }
 
 export function buildExportPayload(): PermissionsExport {
-  const settings = getPilotDeckSettings();
+  const settings = getEastYunDeskSettings();
   return {
     version: 2,
     exportedAt: new Date().toISOString(),
-    source: "pilotdeck",
+    source: "eastyundesk",
     allowedTools: settings.allowedTools,
     disallowedTools: settings.disallowedTools,
     skipPermissions: settings.skipPermissions,

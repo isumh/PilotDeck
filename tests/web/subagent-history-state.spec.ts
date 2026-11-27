@@ -10,8 +10,8 @@ import { readWebSessionMessages } from "../../src/web/server/readSessionMessages
 const createdAt = "2026-08-10T00:00:00.000Z";
 
 test("history keeps a completed sibling complete when its parent turn is aborted", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-subagent-history-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-subagent-history-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-subagent-history-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-subagent-history-home-"));
 
   try {
     const sessionKey = "web:s_subagent_mixed_terminal_state";
@@ -20,7 +20,7 @@ test("history keeps a completed sibling complete when its parent turn is aborted
     const abortedSubagentId = "subagent-aborted";
     const storage = createAgentProjectSessionStorage({
       projectRoot,
-      pilotHome,
+      eastyunHome,
       sessionId: sessionKey,
       now: () => new Date(createdAt),
     });
@@ -85,7 +85,7 @@ test("history keeps a completed sibling complete when its parent turn is aborted
       completedAt: createdAt,
     });
 
-    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, pilotHome });
+    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, eastyunHome });
     const completedTool = replay.messages.find(
       (message) => message.kind === "tool_use" && message.toolCallId === "agent-call-completed",
     );
@@ -107,13 +107,13 @@ test("history keeps a completed sibling complete when its parent turn is aborted
     assert.equal(abortedResult, undefined, "aborted subagent must remain unfinished for stopped-state fallback");
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("history does not duplicate a persisted subagent tool result", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-subagent-result-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-subagent-result-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-subagent-result-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-subagent-result-home-"));
 
   try {
     const sessionKey = "web:s_subagent_persisted_result";
@@ -122,7 +122,7 @@ test("history does not duplicate a persisted subagent tool result", async () => 
     const toolCallId = "agent-call-with-result";
     const storage = createAgentProjectSessionStorage({
       projectRoot,
-      pilotHome,
+      eastyunHome,
       sessionId: sessionKey,
       now: () => new Date(createdAt),
     });
@@ -160,7 +160,7 @@ test("history does not duplicate a persisted subagent tool result", async () => 
       }],
     });
 
-    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, pilotHome });
+    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, eastyunHome });
     const results = replay.messages.filter(
       (message) => message.kind === "tool_result" && message.toolCallId === toolCallId,
     );
@@ -169,6 +169,6 @@ test("history does not duplicate a persisted subagent tool result", async () => 
     assert.equal(results[0]?.text, "persisted full result");
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });

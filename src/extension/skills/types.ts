@@ -3,14 +3,14 @@
  * between the gateway, its remote clients (UI server bridge), and any
  * future SDK consumer. They intentionally avoid leaking absolute paths
  * to outside callers — every operation is addressed by `(scope, slug)`
- * and the manager itself owns the path layout under `~/.pilotdeck/skills/`
- * and `<projectRoot>/.pilotdeck/skills/`.
+ * and the manager itself owns the path layout under `~/.eastyundesk/skills/`
+ * and `<projectRoot>/.eastyundesk/skills/`.
  */
 
 /**
- * "builtin" is shipped with PilotDeck and is read-only. "user" lives in
- * `~/.pilotdeck/skills/`, available to every project. "project" lives in
- * `<projectRoot>/.pilotdeck/skills/`, scoped to the active project.
+ * "builtin" is shipped with EastYunDesk and is read-only. "user" lives in
+ * `~/.eastyundesk/skills/`, available to every project. "project" lives in
+ * `<projectRoot>/.eastyundesk/skills/`, scoped to the active project.
  */
 export type SkillScope = "builtin" | "user" | "project";
 

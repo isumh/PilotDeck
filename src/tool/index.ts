@@ -1,57 +1,57 @@
 export type {
-  PilotDeckPermissionAuditRecord,
-  PilotDeckToolAuditRecord,
-  PilotDeckToolAuditRecorder,
+  EastYunDeskPermissionAuditRecord,
+  EastYunDeskToolAuditRecord,
+  EastYunDeskToolAuditRecorder,
 } from "./audit/ToolAuditRecorder.js";
 export { ToolRuntime } from "./execution/ToolRuntime.js";
 export { validateToolInput } from "./execution/validateToolInput.js";
 export {
   normalizeToolError,
-  PilotDeckToolRuntimeError,
+  EastYunDeskToolRuntimeError,
   toolError,
-  type PilotDeckToolError,
-  type PilotDeckToolErrorCode,
+  type EastYunDeskToolError,
+  type EastYunDeskToolErrorCode,
 } from "./protocol/errors.js";
 export {
   applyResultSizeLimit,
   contentToText,
   estimateResultContentBytes,
   toCanonicalToolResultBlock,
-  type PilotDeckToolErrorResult,
-  type PilotDeckToolResult,
-  type PilotDeckToolResultSizeMetadata,
-  type PilotDeckToolSuccessResult,
+  type EastYunDeskToolErrorResult,
+  type EastYunDeskToolResult,
+  type EastYunDeskToolResultSizeMetadata,
+  type EastYunDeskToolSuccessResult,
 } from "./protocol/result.js";
 export type {
-  PilotDeckJsonSchema,
-  PilotDeckToolInputSchema,
-  PilotDeckToolValidationIssue,
-  PilotDeckToolValidationResult,
+  EastYunDeskJsonSchema,
+  EastYunDeskToolInputSchema,
+  EastYunDeskToolValidationIssue,
+  EastYunDeskToolValidationResult,
 } from "./protocol/schema.js";
 export type {
-  PilotDeckToolCall,
-  PilotDeckToolAvailability,
-  PilotDeckToolAvailabilityContext,
-  PilotDeckToolDefinition,
-  PilotDeckToolExecutionOutput,
-  PilotDeckToolSupplementalMessage,
-  PilotDeckFileUpdateNotification,
-  PilotDeckFileUpdateNotifier,
-  PilotDeckPlanTodoStateHandle,
-  PilotDeckPlanTodoStateSnapshot,
-  PilotDeckToolFileHistorySink,
-  PilotDeckToolKind,
-  PilotDeckToolModelClient,
-  PilotDeckToolProgressEvent,
-  PilotDeckToolProgressSink,
-  PilotDeckTodoItem,
-  PilotDeckReadFileStateEntry,
-  PilotDeckReadFileStateMap,
-  PilotDeckToolResultContent,
-  PilotDeckToolRuntimeContext,
-  PilotDeckSubagentForkApi,
-  PilotDeckWriteSnapshotEntry,
-  PilotDeckWriteSnapshotMap,
+  EastYunDeskToolCall,
+  EastYunDeskToolAvailability,
+  EastYunDeskToolAvailabilityContext,
+  EastYunDeskToolDefinition,
+  EastYunDeskToolExecutionOutput,
+  EastYunDeskToolSupplementalMessage,
+  EastYunDeskFileUpdateNotification,
+  EastYunDeskFileUpdateNotifier,
+  EastYunDeskPlanTodoStateHandle,
+  EastYunDeskPlanTodoStateSnapshot,
+  EastYunDeskToolFileHistorySink,
+  EastYunDeskToolKind,
+  EastYunDeskToolModelClient,
+  EastYunDeskToolProgressEvent,
+  EastYunDeskToolProgressSink,
+  EastYunDeskTodoItem,
+  EastYunDeskReadFileStateEntry,
+  EastYunDeskReadFileStateMap,
+  EastYunDeskToolResultContent,
+  EastYunDeskToolRuntimeContext,
+  EastYunDeskSubagentForkApi,
+  EastYunDeskWriteSnapshotEntry,
+  EastYunDeskWriteSnapshotMap,
 } from "./protocol/types.js";
 export {
   ToolRegistry,
@@ -62,12 +62,12 @@ export { createBuiltinRegistry, type CreateBuiltinRegistryOptions } from "./regi
 export {
   filterAvailableTools,
   type FilterAvailableToolsResult,
-  type PilotDeckUnavailableToolDiagnostic,
+  type EastYunDeskUnavailableToolDiagnostic,
 } from "./registry/filterAvailableTools.js";
 export { ConcurrentToolScheduler } from "./scheduler/ConcurrentToolScheduler.js";
 export type { ConcurrentToolSchedulerOptions } from "./scheduler/ConcurrentToolScheduler.js";
 export { SequentialToolScheduler } from "./scheduler/SequentialToolScheduler.js";
-export type { PilotDeckToolScheduler } from "./scheduler/ToolScheduler.js";
+export type { EastYunDeskToolScheduler } from "./scheduler/ToolScheduler.js";
 export {
   BUILTIN_SUBAGENTS,
   createAgentTool,
@@ -107,9 +107,9 @@ export {
   type BashOutputState,
   type BashInput,
   type CreateBashToolOptions,
-  type PilotDeckCommandOptions,
-  type PilotDeckCommandResult,
-  type PilotDeckCommandRunner,
+  type EastYunDeskCommandOptions,
+  type EastYunDeskCommandResult,
+  type EastYunDeskCommandRunner,
 } from "./builtin/bash.js";
 export {
   ASK_USER_QUESTION_HEADER_MAX,
@@ -122,12 +122,12 @@ export {
 } from "./builtin/askUserQuestion.js";
 export {
   InMemoryElicitationChannel,
-  type PilotDeckElicitationAnswer,
-  type PilotDeckElicitationChannel,
-  type PilotDeckElicitationOption,
-  type PilotDeckElicitationQuestion,
-  type PilotDeckElicitationRequest,
-} from "./elicitation/PilotDeckElicitationChannel.js";
+  type EastYunDeskElicitationAnswer,
+  type EastYunDeskElicitationChannel,
+  type EastYunDeskElicitationOption,
+  type EastYunDeskElicitationQuestion,
+  type EastYunDeskElicitationRequest,
+} from "./elicitation/EastYunDeskElicitationChannel.js";
 export { validateHtmlPreview } from "./elicitation/validateHtmlPreview.js";
 export {
   createWebFetchTool,
@@ -185,12 +185,12 @@ export {
   buildMcpToolWireName,
   createMcpTool,
   type CreateMcpToolOptions,
-  type PilotDeckMcpToolAdapter,
+  type EastYunDeskMcpToolAdapter,
 } from "./builtin/mcpTool.js";
 export {
   createListMcpResourcesTool,
   createReadMcpResourceTool,
-  type PilotDeckMcpResourceAdapter,
+  type EastYunDeskMcpResourceAdapter,
 } from "./builtin/mcpResources.js";
 export { createStructuredOutputTool, type StructuredOutputInput } from "./builtin/structuredOutput.js";
 export {

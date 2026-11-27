@@ -1,12 +1,16 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authenticatedFetch } from '../../../utils/api';
-import { ONBOARDING_STEP_IDS, type OnboardingStepId } from './constants';
+import {
+  BUILTIN_PROVIDER,
+  CONFIGURED_ONBOARDING_STEP_IDS,
+  ONBOARDING_STEP_IDS,
+  type OnboardingStepId,
+} from './constants';
 import useLlmSetup from './hooks/useLlmSetup';
 import useOnboardingWorkspace from './hooks/useOnboardingWorkspace';
 import ConnectionStep from './subcomponents/ConnectionStep';
 import LanguageStep from './subcomponents/LanguageStep';
-import ProviderStep from './subcomponents/ProviderStep';
 import SetupSidebar from './subcomponents/SetupSidebar';
 import WorkspaceStep from './subcomponents/WorkspaceStep';
 import './Onboarding.css';
@@ -21,8 +25,16 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const [completeError, setCompleteError] = useState('');
   const [isFinishing, setIsFinishing] = useState(false);
   const finishingRef = useRef(false);
-  const llm = useLlmSetup();
+  // The builtin provider is fixed, so the wizard never shows a provider picker.
+  const llm = useLlmSetup({ initialProvider: BUILTIN_PROVIDER });
   const workspace = useOnboardingWorkspace();
+
+  // A usable key is already stored: the connection step has nothing to collect,
+  // so the wizard collapses to language → workspace.
+  const steps: readonly OnboardingStepId[] = useMemo(
+    () => (llm.hasStoredApiKey ? CONFIGURED_ONBOARDING_STEP_IDS : ONBOARDING_STEP_IDS),
+    [llm.hasStoredApiKey],
+  );
 
   const goTo = useCallback((step: OnboardingStepId) => {
     setCompleteError('');
@@ -30,20 +42,25 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   }, []);
 
   const goBack = useCallback(() => {
-    const index = ONBOARDING_STEP_IDS.indexOf(currentStep);
+    const index = steps.indexOf(currentStep);
     if (index > 0) {
-      goTo(ONBOARDING_STEP_IDS[index - 1]);
+      goTo(steps[index - 1]);
     }
-  }, [currentStep, goTo]);
+  }, [currentStep, goTo, steps]);
 
   const goNext = useCallback(() => {
-    const index = ONBOARDING_STEP_IDS.indexOf(currentStep);
-    if (index < ONBOARDING_STEP_IDS.length - 1) {
-      goTo(ONBOARDING_STEP_IDS[index + 1]);
+    const index = steps.indexOf(currentStep);
+    if (index >= 0 && index < steps.length - 1) {
+      goTo(steps[index + 1]);
     }
-  }, [currentStep, goTo]);
+  }, [currentStep, goTo, steps]);
 
   const handleConnectionContinue = useCallback(async () => {
+    if (!llm.connectionTestPassed) {
+      setCompleteError('Run a successful connection test before continuing.');
+      return;
+    }
+    setCompleteError('');
     try {
       await llm.handleSave();
       goNext();
@@ -95,16 +112,18 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   return (
     <main className="onboarding-shell prototype-shell desktop-prototype-shell" data-platform="desktop">
       <section className="onboarding-frame" aria-live="polite">
-        <SetupSidebar currentStep={currentStep} />
+        <SetupSidebar currentStep={currentStep} steps={steps} />
         <div className="setup-content">
           {currentStep === 'language' && (
             <LanguageStep onContinue={goNext} />
           )}
-          {currentStep === 'provider' && (
-            <ProviderStep llm={llm} onBack={goBack} onContinue={goNext} />
-          )}
           {currentStep === 'connection' && (
-            <ConnectionStep llm={llm} onBack={goBack} onContinue={handleConnectionContinue} />
+            <ConnectionStep
+              llm={llm}
+              onBack={goBack}
+              onContinue={handleConnectionContinue}
+              requirePassedTest
+            />
           )}
           {currentStep === 'workspace' && (
             <WorkspaceStep
@@ -113,10 +132,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
               progress={workspace.progress}
               isCreating={isFinishing || workspace.isCreating}
               onWorkspacePathChange={workspace.setWorkspacePath}
-              onGithubUrlChange={workspace.setGithubUrl}
-              onTokenModeChange={workspace.setTokenMode}
-              onSelectedGithubTokenChange={workspace.setSelectedGithubToken}
-              onNewGithubTokenChange={workspace.setNewGithubToken}
               onBack={goBack}
               onSkipChat={handleSkipChat}
               onFinish={handleFinish}

@@ -1,7 +1,7 @@
 import type { ApiModelListItem } from '../../../shared/modelListApi';
 import type { CatalogProvider, CatalogProviderProtocol } from '../../../shared/catalogProviders';
 import type { OnboardingStepId } from './constants';
-import type { TokenMode, WorkspaceType } from '../../project-creation-wizard/types';
+import type { WorkspaceType } from '../../project-creation-wizard/types';
 
 export type { OnboardingStepId };
 
@@ -47,6 +47,10 @@ export type LlmSetupController = {
   selectedProviderRequiresApiKey: boolean;
   hasEnvironmentApiKeyFallback: boolean;
   apiKeyInputRequired: boolean;
+  /** A usable credential is already on disk, so a connection step can be skipped. */
+  hasStoredApiKey: boolean;
+  /** Every selected model passed a connection test in this wizard session. */
+  connectionTestPassed: boolean;
   canFetchModels: boolean;
   canContinue: boolean;
   manualModelIds: string[];
@@ -67,11 +71,12 @@ export type LlmSetupController = {
   handleSave: () => Promise<void>;
 };
 
+/**
+ * The onboarding workspace step only creates a brand-new local workspace. The
+ * clone-from-GitHub path (and its token handling) was removed with §5, so the
+ * draft carries no GitHub fields.
+ */
 export type WorkspaceDraft = {
   workspaceType: WorkspaceType;
   workspacePath: string;
-  githubUrl: string;
-  tokenMode: TokenMode;
-  selectedGithubToken: string;
-  newGithubToken: string;
 };

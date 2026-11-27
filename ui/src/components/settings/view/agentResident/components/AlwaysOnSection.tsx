@@ -8,12 +8,12 @@ import {
   setAlwaysOnProjectEnabled,
 } from "../../../shared/utils/alwaysOnConfigPatch";
 import { patch } from "../../modelPool/utils/patch";
-import type { PilotDeckConfig } from "../../modelPool/types";
+import type { EastYunDeskConfig } from "../../modelPool/types";
 
 type AlwaysOnSectionProps = {
-  config: PilotDeckConfig;
+  config: EastYunDeskConfig;
   projects: SettingsProject[];
-  onChange: (next: PilotDeckConfig) => void;
+  onChange: (next: EastYunDeskConfig) => void;
 };
 
 type TriggerDraft = {
@@ -106,7 +106,7 @@ function isValidNumberDraft(raw: string): boolean {
 }
 
 function triggerToDraft(
-  trigger: NonNullable<PilotDeckConfig["alwaysOn"]>["trigger"],
+  trigger: NonNullable<EastYunDeskConfig["alwaysOn"]>["trigger"],
   clearedFields: ReadonlySet<NumericTriggerKey> = new Set(),
 ): TriggerDraft {
   return {
@@ -278,10 +278,10 @@ export default function AlwaysOnSection({
         <header className="resident-project-panel-header">
           <div className="resident-project-panel-heading">
             <h2 id="resident-projects-title">
-              {t("pilotDeckConfig.panels.alwaysOn.workspaceOptIn.title")}
+              {t("eastyunDeskConfig.panels.alwaysOn.workspaceOptIn.title")}
             </h2>
             <p>
-              {t("pilotDeckConfig.panels.alwaysOn.workspaceOptIn.description")}
+              {t("eastyunDeskConfig.panels.alwaysOn.workspaceOptIn.description")}
             </p>
           </div>
         </header>
@@ -291,10 +291,10 @@ export default function AlwaysOnSection({
             type="search"
             value={projectQuery}
             placeholder={t(
-              "pilotDeckConfig.panels.alwaysOn.workspaceOptIn.searchPlaceholder",
+              "eastyunDeskConfig.panels.alwaysOn.workspaceOptIn.searchPlaceholder",
             )}
             aria-label={t(
-              "pilotDeckConfig.panels.alwaysOn.workspaceOptIn.searchAria",
+              "eastyunDeskConfig.panels.alwaysOn.workspaceOptIn.searchAria",
             )}
             onChange={(event) => setProjectQuery(event.target.value)}
           />
@@ -304,8 +304,8 @@ export default function AlwaysOnSection({
             <p className="resident-project-empty">
               {t(
                 projectRows.length === 0
-                  ? "pilotDeckConfig.panels.alwaysOn.workspaceOptIn.empty"
-                  : "pilotDeckConfig.panels.alwaysOn.workspaceOptIn.searchEmpty",
+                  ? "eastyunDeskConfig.panels.alwaysOn.workspaceOptIn.empty"
+                  : "eastyunDeskConfig.panels.alwaysOn.workspaceOptIn.searchEmpty",
               )}
             </p>
           ) : (
@@ -317,7 +317,7 @@ export default function AlwaysOnSection({
                   <SettingsToggle
                     checked={isAlwaysOnProjectEnabled(config, project)}
                     ariaLabel={t(
-                      "pilotDeckConfig.panels.alwaysOn.workspaceOptIn.toggleAria",
+                      "eastyunDeskConfig.panels.alwaysOn.workspaceOptIn.toggleAria",
                       { name },
                     )}
                     onChange={(isEnabled) =>
@@ -344,9 +344,9 @@ export default function AlwaysOnSection({
             <header className="resident-section-header">
               <div className="resident-section-title-line">
                 <h2 id="resident-trigger-title">
-                  {t("pilotDeckConfig.panels.alwaysOn.trigger.title")}
+                  {t("eastyunDeskConfig.panels.alwaysOn.trigger.title")}
                 </h2>
-                <p>{t("pilotDeckConfig.panels.alwaysOn.trigger.description")}</p>
+                <p>{t("eastyunDeskConfig.panels.alwaysOn.trigger.description")}</p>
               </div>
               <div className="resident-section-header-controls">
                 <div className="resident-section-actions">
@@ -390,36 +390,36 @@ export default function AlwaysOnSection({
                 <div className="resident-parameter-row">
                   {numberField(
                     "resident-checkInterval",
-                    "pilotDeckConfig.panels.alwaysOn.trigger.tickInterval.label",
-                    "pilotDeckConfig.panels.alwaysOn.trigger.tickInterval.description",
+                    "eastyunDeskConfig.panels.alwaysOn.trigger.tickInterval.label",
+                    "eastyunDeskConfig.panels.alwaysOn.trigger.tickInterval.description",
                     "tickIntervalMinutes",
                   )}
                   {numberField(
                     "resident-cooldown",
-                    "pilotDeckConfig.panels.alwaysOn.trigger.cooldown.label",
-                    "pilotDeckConfig.panels.alwaysOn.trigger.cooldown.description",
+                    "eastyunDeskConfig.panels.alwaysOn.trigger.cooldown.label",
+                    "eastyunDeskConfig.panels.alwaysOn.trigger.cooldown.description",
                     "cooldownMinutes",
                   )}
                 </div>
                 <div className="resident-parameter-row">
                   {numberField(
                     "resident-dailyBudget",
-                    "pilotDeckConfig.panels.alwaysOn.trigger.dailyBudget.label",
-                    "pilotDeckConfig.panels.alwaysOn.trigger.dailyBudget.description",
+                    "eastyunDeskConfig.panels.alwaysOn.trigger.dailyBudget.label",
+                    "eastyunDeskConfig.panels.alwaysOn.trigger.dailyBudget.description",
                     "dailyBudget",
                   )}
                   {numberField(
                     "resident-heartbeatExpiry",
-                    "pilotDeckConfig.panels.alwaysOn.trigger.heartbeatStale.label",
-                    "pilotDeckConfig.panels.alwaysOn.trigger.heartbeatStale.description",
+                    "eastyunDeskConfig.panels.alwaysOn.trigger.heartbeatStale.label",
+                    "eastyunDeskConfig.panels.alwaysOn.trigger.heartbeatStale.description",
                     "heartbeatStaleSeconds",
                   )}
                 </div>
                 <div className="resident-parameter-row">
                   {numberField(
                     "resident-recentMessageWindow",
-                    "pilotDeckConfig.panels.alwaysOn.trigger.recentUserMsg.label",
-                    "pilotDeckConfig.panels.alwaysOn.trigger.recentUserMsg.description",
+                    "eastyunDeskConfig.panels.alwaysOn.trigger.recentUserMsg.label",
+                    "eastyunDeskConfig.panels.alwaysOn.trigger.recentUserMsg.description",
                     "recentUserMsgMinutes",
                   )}
                 </div>

@@ -1,7 +1,7 @@
 import { FormData } from "undici";
 import { networkFetch } from "../../../network/fetch.js";
 import { resolveApiKey } from "../../../model/config/resolveCredentials.js";
-import { imageApiBaseUrl, type ImageGenerationConfig } from "../../../pilot/config/imageGenerationConfig.js";
+import { imageApiBaseUrl, type ImageGenerationConfig } from "../../../eastyun/config/imageGenerationConfig.js";
 
 const MAX_IMAGE_BYTES = 32 * 1024 * 1024;
 export type ImageRequest = { prompt: string; size?: string; quality?: string; background?: string;

@@ -13,7 +13,7 @@ export function getSessionRequestIdentity(project: Project | null, session: Proj
     key: JSON.stringify([...transcript, readOnly]),
     transcriptKey: JSON.stringify(transcript),
     sessionId, projectName, readOnly,
-    options: { provider: 'pilotdeck' as const, projectName, projectPath, ...params },
+    options: { provider: 'eastyundesk' as const, projectName, projectPath, ...params },
   };
 }
 

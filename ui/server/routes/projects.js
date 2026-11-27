@@ -17,7 +17,7 @@ import {
   archiveWorkCycle,
 } from '../discovery-plans.js';
 import { normalizePathForComparison } from '../utils/pathSafety.js';
-import { isVirtualProjectPath, resolvePilotHome } from '../utils/pilotPaths.js';
+import { isVirtualProjectPath, resolveEastYunHome } from '../utils/eastyunPaths.js';
 
 const router = express.Router();
 
@@ -206,7 +206,7 @@ function getDiscoveryPlanErrorStatus(error) {
 async function requireRealProjectWorkspace(req, res, next) {
   try {
     const projectPath = await extractProjectDirectory(req.params?.projectName);
-    if (isVirtualProjectPath(projectPath, resolvePilotHome(process.env), process.env)) {
+    if (isVirtualProjectPath(projectPath, resolveEastYunHome(process.env), process.env)) {
       return res.status(403).json({
         error: {
           code: 'PROJECT_PATH_FORBIDDEN',

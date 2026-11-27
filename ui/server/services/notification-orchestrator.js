@@ -4,7 +4,7 @@ import { buildSystemNotification, buildTaskReminderNotification, normalizeNotifi
 
 export function notifySessionAttention(userId, notification) {
   if (userId === undefined || userId === null) return;
-  const name = sessionNamesDb.getName(notification.sessionId, 'pilotdeck');
+  const name = sessionNamesDb.getName(notification.sessionId, 'eastyundesk');
   const event = { ...notification, sessionName: name || notification.sessionName };
   for (const subscription of pushSubscriptionsDb.getSubscriptions(userId)) {
     let saved = {};
@@ -52,7 +52,7 @@ const KIND_TO_PREF_KEY = {
 
 const PROVIDER_LABELS = {
   claude: 'Claude',
-  pilotdeck: 'PilotDeck',
+  eastyundesk: 'EastYunDesk',
   cursor: 'Cursor',
   codex: 'Codex',
   gemini: 'Gemini',
@@ -169,7 +169,7 @@ function buildPushBody(event) {
   const message = CODE_MAP[event.code] || 'You have a new notification';
 
   return {
-    title: sessionName || 'PilotDeck',
+    title: sessionName || 'EastYunDesk',
     body: `${providerLabel}: ${message}`,
     data: {
       sessionId: event.sessionId || null,

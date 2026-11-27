@@ -8,11 +8,11 @@ import { createLocalGateway } from '../../src/cli/createLocalGateway.js';
 import { createCronManager, defaultCronConfig } from '../../src/cron/index.js';
 import { SessionConfigOverrides } from '../../src/always-on/runtime/SessionConfigOverrides.js';
 import { createModelRuntime, type CanonicalModelEvent, type CanonicalModelRequest } from '../../src/model/index.js';
-import { createProjectId } from '../../src/pilot/paths.js';
+import { createProjectId } from '../../src/eastyun/paths.js';
 import type { GatewayEvent } from '../../src/gateway/index.js';
 
 async function fixture(t: test.TestContext, git: boolean) {
-  const root = await mkdtemp(join(tmpdir(), 'pilotdeck-task-workspace-'));
+  const root = await mkdtemp(join(tmpdir(), 'eastyundesk-task-workspace-'));
   const home = join(root, 'state'), project = join(root, 'project'), skills = join(root, 'skills');
   await Promise.all([mkdir(home), mkdir(project), mkdir(skills)]);
   if (git) {
@@ -22,7 +22,7 @@ async function fixture(t: test.TestContext, git: boolean) {
   }
   const record = join(home, 'projects', createProjectId(project)); await mkdir(record, { recursive: true });
   await writeFile(join(record, '.cwd'), project);
-  const configPath = join(home, 'pilotdeck.yaml');
+  const configPath = join(home, 'eastyundesk.yaml');
   await writeFile(configPath, `schemaVersion: 1
 agent: { model: test/model }
 model:
@@ -39,10 +39,10 @@ memory: { enabled: false }
 telemetry: { enabled: false }
 `);
   const sessionOverrides = new SessionConfigOverrides(), events: GatewayEvent[] = [], cwds: string[] = [], requests: CanonicalModelRequest[] = [];
-  const cron = createCronManager({ config: defaultCronConfig(), pilotHome: home, sessionOverrides, onTurnEvent: (_session, _channel, event) => { events.push(event); } });
+  const cron = createCronManager({ config: defaultCronConfig(), eastyunHome: home, sessionOverrides, onTurnEvent: (_session, _channel, event) => { events.push(event); } });
   let calls = 0;
-  const local = createLocalGateway({ pilotHome: home, projectRoot: project, builtinSkillsRoot: skills,
-    env: { PILOT_HOME: home, PILOTDECK_CONFIG_PATH: configPath }, cron, sessionOverrides,
+  const local = createLocalGateway({ eastyunHome: home, projectRoot: project, builtinSkillsRoot: skills,
+    env: { EASTYUN_HOME: home, EASTYUNDESK_CONFIG_PATH: configPath }, cron, sessionOverrides,
     extraTools: [{ name: 'observe_workspace', title: 'Observe workspace', kind: 'filesystem', description: 'Synthetic workspace observer',
       inputSchema: { type: 'object', properties: {} }, isReadOnly: () => true, isConcurrencySafe: () => true,
       execute: async (_input, context) => { cwds.push(context.cwd); return { content: [{ type: 'text', text: context.cwd }] }; } }],

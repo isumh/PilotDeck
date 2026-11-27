@@ -16,13 +16,13 @@ const desktopRoot = path.resolve(__dirname, "..");
 const packageJsonPath = path.join(desktopRoot, "package.json");
 const metadataPath = path.join(desktopRoot, "resources", "build-metadata.json");
 
-const releaseDate = process.env.PILOTDECK_RELEASE_DATE || formatReleaseDate(new Date());
-const revision = parseRevision(process.env.PILOTDECK_RELEASE_REVISION);
-const version = process.env.PILOTDECK_RELEASE_VERSION || buildDateVersion(releaseDate, revision);
-const releaseTag = process.env.PILOTDECK_RELEASE_TAG || buildReleaseTag(releaseDate, revision);
-const buildTime = process.env.PILOTDECK_RELEASE_BUILD_TIME || new Date().toISOString();
-const commitSha = process.env.PILOTDECK_COMMIT_SHA || process.env.GITHUB_SHA || resolveGitCommit();
-const repository = process.env.PILOTDECK_UPDATE_REPOSITORY || process.env.GITHUB_REPOSITORY || "OpenBMB/PilotDeck";
+const releaseDate = process.env.EASTYUNDESK_RELEASE_DATE || formatReleaseDate(new Date());
+const revision = parseRevision(process.env.EASTYUNDESK_RELEASE_REVISION);
+const version = process.env.EASTYUNDESK_RELEASE_VERSION || buildDateVersion(releaseDate, revision);
+const releaseTag = process.env.EASTYUNDESK_RELEASE_TAG || buildReleaseTag(releaseDate, revision);
+const buildTime = process.env.EASTYUNDESK_RELEASE_BUILD_TIME || new Date().toISOString();
+const commitSha = process.env.EASTYUNDESK_COMMIT_SHA || process.env.GITHUB_SHA || resolveGitCommit();
+const repository = process.env.EASTYUNDESK_UPDATE_REPOSITORY || process.env.GITHUB_REPOSITORY || "OpenBMB/PilotDeck";
 
 const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
 packageJson.version = version;
@@ -37,19 +37,19 @@ writeFileSync(metadataPath, `${JSON.stringify({
 }, null, 2)}\n`);
 
 exportGitHubEnv({
-  PILOTDECK_RELEASE_VERSION: version,
-  PILOTDECK_RELEASE_DATE: releaseDate,
-  PILOTDECK_RELEASE_TAG: releaseTag,
-  PILOTDECK_COMMIT_SHA: commitSha,
-  PILOTDECK_RELEASE_BUILD_TIME: buildTime,
-  PILOTDECK_UPDATE_REPOSITORY: repository,
+  EASTYUNDESK_RELEASE_VERSION: version,
+  EASTYUNDESK_RELEASE_DATE: releaseDate,
+  EASTYUNDESK_RELEASE_TAG: releaseTag,
+  EASTYUNDESK_COMMIT_SHA: commitSha,
+  EASTYUNDESK_RELEASE_BUILD_TIME: buildTime,
+  EASTYUNDESK_UPDATE_REPOSITORY: repository,
 });
 exportGitHubOutput({ version, release_date: releaseDate, release_tag: releaseTag, commit_sha: commitSha });
 
-console.log(`PilotDeck desktop version set to ${version}`);
-console.log(`PilotDeck release tag set to ${releaseTag}`);
-console.log(`PilotDeck desktop commit set to ${commitSha}`);
-console.log(`PilotDeck desktop build time set to ${buildTime}`);
+console.log(`EastYunDesk desktop version set to ${version}`);
+console.log(`EastYunDesk release tag set to ${releaseTag}`);
+console.log(`EastYunDesk desktop commit set to ${commitSha}`);
+console.log(`EastYunDesk desktop build time set to ${buildTime}`);
 
 function resolveGitCommit() {
   try {

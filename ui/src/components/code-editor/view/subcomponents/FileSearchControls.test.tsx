@@ -41,10 +41,10 @@ describe('FileSearchControls', () => {
     render(<SearchHarness />);
     const input = screen.getByRole('textbox', { name: 'Search this file' });
 
-    fireEvent.change(input, { target: { value: 'pilot' } });
+    fireEvent.change(input, { target: { value: 'eastyun' } });
 
-    expect((input as HTMLInputElement).value).toBe('pilot');
-    expect(screen.getByTestId('committed-query').textContent).toBe('pilot');
+    expect((input as HTMLInputElement).value).toBe('eastyun');
+    expect(screen.getByTestId('committed-query').textContent).toBe('eastyun');
   });
 
   it('preserves IME draft text until composition ends', () => {

@@ -7,11 +7,11 @@ import { createAgentProjectSessionStorage } from '../../src/session/storage/Proj
 import { readWebSessionMessages } from '../../src/web/server/readSessionMessages.js';
 
 test('backward history pages retain complete turns, stable order and repeated prompts during appends', async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), 'pilotdeck-page-project-'));
-  const pilotHome = await mkdtemp(join(tmpdir(), 'pilotdeck-page-home-'));
+  const projectRoot = await mkdtemp(join(tmpdir(), 'eastyundesk-page-project-'));
+  const eastyunHome = await mkdtemp(join(tmpdir(), 'eastyundesk-page-home-'));
   try {
     const sessionKey = 'web:pagination';
-    const storage = createAgentProjectSessionStorage({ projectRoot, pilotHome, sessionId: sessionKey });
+    const storage = createAgentProjectSessionStorage({ projectRoot, eastyunHome, sessionId: sessionKey });
     const addTurn = async (turnId: string, steps: number) => {
       await storage.transcript.recordAcceptedInput(sessionKey, turnId, [{ role: 'user', content: [{ type: 'text', text: 'Continue with the current information' }] }]);
       for (let step = 0; step < steps; step++) {
@@ -24,7 +24,7 @@ test('backward history pages retain complete turns, stable order and repeated pr
         usage: {}, permissionDenials: [], turns: 1, startedAt: '2026-09-01T00:00:00Z', completedAt: '2026-09-01T00:00:01Z',
       });
     };
-    const read = (input = {}) => readWebSessionMessages({ sessionKey, ...input }, { projectRoot, pilotHome });
+    const read = (input = {}) => readWebSessionMessages({ sessionKey, ...input }, { projectRoot, eastyunHome });
     await addTurn('old', 3);
     await addTurn('long', 110);
     const full = await read();
@@ -63,16 +63,16 @@ test('backward history pages retain complete turns, stable order and repeated pr
     assert.deepEqual(next.messages.map(message => message.id), full.messages.slice(2, 4).map(message => message.id));
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test('backward pages keep mid-turn guidance with the initial request and authoritative timing', async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), 'pilotdeck-steer-page-project-'));
-  const pilotHome = await mkdtemp(join(tmpdir(), 'pilotdeck-steer-page-home-'));
+  const projectRoot = await mkdtemp(join(tmpdir(), 'eastyundesk-steer-page-project-'));
+  const eastyunHome = await mkdtemp(join(tmpdir(), 'eastyundesk-steer-page-home-'));
   try {
     const sessionKey = 'web:steer-pagination';
-    const storage = createAgentProjectSessionStorage({ projectRoot, pilotHome, sessionId: sessionKey });
+    const storage = createAgentProjectSessionStorage({ projectRoot, eastyunHome, sessionId: sessionKey });
     const input = (text: string) => ({ role: 'user' as const, content: [{ type: 'text' as const, text }] });
     await storage.transcript.recordAcceptedInput(sessionKey, 'old', [input('Older task')]);
     await storage.transcript.recordAcceptedInput(sessionKey, 'guided', [input('Original task')]);
@@ -87,17 +87,17 @@ test('backward pages keep mid-turn guidance with the initial request and authori
       type: 'success', sessionId: sessionKey, turnId: 'guided', stopReason: 'completed',
       usage: {}, permissionDenials: [], turns: 1, ...timing,
     });
-    const page = await readWebSessionMessages({ sessionKey, direction: 'backward', limit: 100 }, { projectRoot, pilotHome });
+    const page = await readWebSessionMessages({ sessionKey, direction: 'backward', limit: 100 }, { projectRoot, eastyunHome });
     assert.equal(page.messages[0].text, 'Original task');
     assert.deepEqual(page.messages[0].turnTiming, { ...timing, finishReason: 'completed' });
     assert.equal(page.messages.filter(message => message.role === 'user').length, 2);
     assert.ok(page.messages.every(message => message.turnId === 'guided'));
-    const older = await readWebSessionMessages({ sessionKey, direction: 'backward', limit: 100, cursor: page.nextCursor }, { projectRoot, pilotHome });
+    const older = await readWebSessionMessages({ sessionKey, direction: 'backward', limit: 100, cursor: page.nextCursor }, { projectRoot, eastyunHome });
     assert.equal(older.messages.filter(message => message.role === 'user').length, 1);
     assert.equal(older.messages[0].text, 'Older task');
     await storage.transcript.close();
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });

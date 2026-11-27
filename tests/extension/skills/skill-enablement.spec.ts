@@ -7,11 +7,11 @@ import { SkillManager } from "../../../src/extension/skills/SkillManager.js";
 import { PluginRuntime } from "../../../src/extension/plugins/runtime/PluginRuntime.js";
 
 test("switches persist independently by scope and project and affect an already loaded runtime", async () => {
-  const root = await mkdtemp(join(tmpdir(), "pilotdeck-skill-switch-"));
+  const root = await mkdtemp(join(tmpdir(), "eastyundesk-skill-switch-"));
   try {
-    const pilotHome = join(root, "home"), projectRoot = join(root, "project"), builtinSkillsRoot = join(root, "bundled");
-    const options = { pilotHome, projectRoot, builtinSkillsRoot };
-    for (const [base, label] of [[builtinSkillsRoot, "bundled"], [join(pilotHome, "skills"), "user"], [join(projectRoot, ".pilotdeck/skills"), "project"]]) {
+    const eastyunHome = join(root, "home"), projectRoot = join(root, "project"), builtinSkillsRoot = join(root, "bundled");
+    const options = { eastyunHome, projectRoot, builtinSkillsRoot };
+    for (const [base, label] of [[builtinSkillsRoot, "bundled"], [join(eastyunHome, "skills"), "user"], [join(projectRoot, ".eastyundesk/skills"), "project"]]) {
       await mkdir(join(base!, "notes"), { recursive: true });
       await writeFile(join(base!, "notes/SKILL.md"), `---\nname: notes\ndescription: ${label}\n---\n${label} instructions`);
     }
@@ -39,8 +39,8 @@ test("switches persist independently by scope and project and affect an already 
     assert.match((await runtime.loadSkillPrompt("notes"))!, /user instructions/);
     assert.equal((await restarted.list({ projectKey: projectRoot })).project[0]?.enabled, false);
     const otherRoot = join(root, "other");
-    await mkdir(join(otherRoot, ".pilotdeck/skills/notes"), { recursive: true });
-    await writeFile(join(otherRoot, ".pilotdeck/skills/notes/SKILL.md"), original);
+    await mkdir(join(otherRoot, ".eastyundesk/skills/notes"), { recursive: true });
+    await writeFile(join(otherRoot, ".eastyundesk/skills/notes/SKILL.md"), original);
     assert.equal((await restarted.list({ projectKey: otherRoot })).project[0]?.enabled, true);
     await assert.rejects(manager.setEnabled({ scope: "builtin", slug: "missing", enabled: false }), /not found/);
     await assert.rejects(manager.setEnabled({ scope: "builtin", slug: "notes", enabled: "false" as unknown as boolean }), /boolean/);
@@ -51,17 +51,17 @@ test("switches persist independently by scope and project and affect an already 
 });
 
 test("concurrent switches preserve all entries and corrupt preferences are never overwritten", async () => {
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-skill-preferences-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-skill-preferences-"));
   try {
-    const manager = new SkillManager({ pilotHome });
+    const manager = new SkillManager({ eastyunHome });
     for (const slug of ["one", "two"]) await manager.create({ scope: "user", slug, description: slug });
     await Promise.all(["one", "two"].map(slug => manager.setEnabled({ scope: "user", slug, enabled: false })));
     assert.ok((await manager.list({})).user.every(skill => skill.enabled === false));
-    const file = join(pilotHome, "skill-preferences.json");
+    const file = join(eastyunHome, "skill-preferences.json");
     await writeFile(file, "broken");
     await assert.rejects(manager.setEnabled({ scope: "user", slug: "one", enabled: true }));
     assert.equal(await readFile(file, "utf8"), "broken");
   } finally {
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });

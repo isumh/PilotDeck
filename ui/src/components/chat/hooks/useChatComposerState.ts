@@ -16,8 +16,8 @@ import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
 import { authenticatedFetch } from '../../../utils/api';
 import { isThinkingModeId, thinkingModeToConfig, type ThinkingModeId } from '../constants/thinkingModes';
-import { grantPilotDeckToolPermission } from '../utils/chatPermissions';
-import { getDraftInputStorageKey, getPilotDeckSettings, safeLocalStorage } from '../utils/chatStorage';
+import { grantEastYunDeskToolPermission } from '../utils/chatPermissions';
+import { getDraftInputStorageKey, getEastYunDeskSettings, safeLocalStorage } from '../utils/chatStorage';
 import {
   createTemporarySessionId,
   createUserTurnRunId,
@@ -102,7 +102,7 @@ interface UseChatComposerStateArgs {
   setCanAbortSession: (canAbort: boolean) => void;
   setIsAborting: (aborting: boolean) => void;
   setClaudeStatus: (status: { text: string; tokens: number; can_interrupt: boolean } | null) => void;
-  setPilotDeckStatus: (status: { text: string; tokens: number; can_interrupt: boolean } | null) => void;
+  setEastYunDeskStatus: (status: { text: string; tokens: number; can_interrupt: boolean } | null) => void;
   setIsUserScrolledUp: (isScrolledUp: boolean) => void;
   pendingPermissionRequests: PendingPermissionRequest[];
   setPendingPermissionRequests: Dispatch<SetStateAction<PendingPermissionRequest[]>>;
@@ -304,7 +304,7 @@ export function useChatComposerState({
   setCanAbortSession,
   setIsAborting,
   setClaudeStatus,
-  setPilotDeckStatus,
+  setEastYunDeskStatus,
   setIsUserScrolledUp,
   pendingPermissionRequests,
   setPendingPermissionRequests,
@@ -583,9 +583,9 @@ export function useChatComposerState({
       });
     };
 
-    window.addEventListener('pilotdeck:add-chat-reference', handleAddDocumentReference);
+    window.addEventListener('eastyundesk:add-chat-reference', handleAddDocumentReference);
     return () => {
-      window.removeEventListener('pilotdeck:add-chat-reference', handleAddDocumentReference);
+      window.removeEventListener('eastyundesk:add-chat-reference', handleAddDocumentReference);
     };
   }, []);
 
@@ -795,7 +795,7 @@ export function useChatComposerState({
           }
           if (data.installed) {
             lines.push('');
-            lines.push('_New skill is on disk — open a fresh chat (or `/clear-caches`) to make PilotDeck see it. The UI slash menu picks it up next time you open `/`._');
+            lines.push('_New skill is on disk — open a fresh chat (or `/clear-caches`) to make EastYunDesk see it. The UI slash menu picks it up next time you open `/`._');
           }
           addMessage({
             type: 'assistant',
@@ -1391,7 +1391,7 @@ export function useChatComposerState({
 
       const effectiveSessionId = submitTargetSessionId;
       let runId = createUserTurnRunId();
-      const toolsSettings = getPilotDeckSettings();
+      const toolsSettings = getEastYunDeskSettings();
       const sessionSummary = getNotificationSessionSummary(submitSelectedSession, userVisibleInput);
       const resolvedProjectPath = getSelectedProjectPath(selectedProject);
 
@@ -1659,13 +1659,13 @@ export function useChatComposerState({
     const onHidden = () => { if (document.visibilityState === 'hidden') flushDraft(); };
     window.addEventListener('pagehide', flushDraft);
     window.addEventListener('beforeunload', flushDraft);
-    window.addEventListener('pilotdeck:flush-drafts', flushDraft);
+    window.addEventListener('eastyundesk:flush-drafts', flushDraft);
     document.addEventListener('visibilitychange', onHidden);
     return () => {
       flushDraft();
       window.removeEventListener('pagehide', flushDraft);
       window.removeEventListener('beforeunload', flushDraft);
-      window.removeEventListener('pilotdeck:flush-drafts', flushDraft);
+      window.removeEventListener('eastyundesk:flush-drafts', flushDraft);
       document.removeEventListener('visibilitychange', onHidden);
     };
   }, [flushDraft]);
@@ -1943,17 +1943,17 @@ export function useChatComposerState({
     sendMessage({
       type: 'abort-session',
       sessionId: targetSessionId,
-      provider: 'pilotdeck',
+      provider: 'eastyundesk',
     });
 
     setCanAbortSession(false);
     setIsAborting(true);
-    setPilotDeckStatus({
+    setEastYunDeskStatus({
       text: 'Stopping',
       tokens: 0,
       can_interrupt: false,
     });
-  }, [canAbortSession, currentSessionId, pendingViewSessionRef, selectedSession?.id, sendMessage, setCanAbortSession, setIsAborting, setPilotDeckStatus]);
+  }, [canAbortSession, currentSessionId, pendingViewSessionRef, selectedSession?.id, sendMessage, setCanAbortSession, setIsAborting, setEastYunDeskStatus]);
 
   const handleGrantToolPermission = useCallback(
     (suggestion: { entry: string; toolName: string }) => {
@@ -1963,9 +1963,9 @@ export function useChatComposerState({
       // adapter. After the PolitDeck-only migration every provider
       // routes through the same gateway PermissionContext, so we let
       // every provider persist its grants to localStorage and have the
-      // pilotdeck server pick them up via the gateway PermissionRuntime
+      // eastyundesk server pick them up via the gateway PermissionRuntime
       // on the next turn.
-      return grantPilotDeckToolPermission(suggestion.entry);
+      return grantEastYunDeskToolPermission(suggestion.entry);
     },
     [],
   );
@@ -2073,12 +2073,12 @@ export function useChatComposerState({
         const next = previous.filter((request) => !validIds.includes(request.requestId));
         if (next.length === 0) {
           setClaudeStatus(null);
-          setPilotDeckStatus(null);
+          setEastYunDeskStatus(null);
         }
         return next;
       });
     },
-    [pendingPermissionRequests, sendMessage, setClaudeStatus, setPilotDeckStatus, setPendingPermissionRequests],
+    [pendingPermissionRequests, sendMessage, setClaudeStatus, setEastYunDeskStatus, setPendingPermissionRequests],
   );
 
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -2197,6 +2197,6 @@ function contentReferenceToAttachment(reference: ContentReference): ChatAttachme
       }
       : reference,
     createdAt: reference.createdAt,
-    mimeType: 'application/vnd.pilotdeck.content-reference+json',
+    mimeType: 'application/vnd.eastyundesk.content-reference+json',
   };
 }

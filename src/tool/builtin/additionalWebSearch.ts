@@ -1,4 +1,4 @@
-import { isSerpApiEngine, type SerpApiEngine } from "../../pilot/config/webSearchProviders.js";
+import { isSerpApiEngine, type SerpApiEngine } from "../../eastyun/config/webSearchProviders.js";
 import type { WebSearchOrganicResult } from "./webSearch.js";
 
 export type AdditionalSearchProvider = "deepseek" | "baidu" | "bocha" | "exa" | "serpapi";

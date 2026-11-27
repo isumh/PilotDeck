@@ -32,14 +32,14 @@ describe('sessionLauncher turn identity', () => {
 
     startSessionCommand({
       sendMessage,
-      selectedProject: { name: 'PilotDeck', path: '/workspace/PilotDeck' } as Project,
+      selectedProject: { name: 'EastYunDesk', path: '/workspace/EastYunDesk' } as Project,
       command: 'Continue.',
       runId: 'run-user-1',
       sessionId: 'web:session-1',
     });
 
     expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'pilotdeck-command',
+      type: 'eastyundesk-command',
       options: expect.objectContaining({
         sessionId: 'web:session-1',
         runId: 'run-user-1',
@@ -52,7 +52,7 @@ describe('sessionLauncher turn identity', () => {
 
     const sessionId = startSessionCommand({
       sendMessage,
-      selectedProject: { name: 'PilotDeck', path: '/workspace/PilotDeck' } as Project,
+      selectedProject: { name: 'EastYunDesk', path: '/workspace/EastYunDesk' } as Project,
       command: 'Continue.',
       temporarySessionId: 'new-session-offline',
     });
@@ -66,7 +66,7 @@ describe('sessionLauncher turn identity', () => {
 
     regenerateLastSessionCommand({
       sendMessage,
-      selectedProject: { name: 'PilotDeck', path: '/workspace/PilotDeck' } as Project,
+      selectedProject: { name: 'EastYunDesk', path: '/workspace/EastYunDesk' } as Project,
       requestId: 'replace-request-1',
       sessionId: 'web:session-1',
       expectedTurnId: 'old-turn',
@@ -118,7 +118,7 @@ const generalProject: Project = {
   name: 'general',
   displayName: 'general',
   kind: 'general',
-  fullPath: '/state/pilot-home',
+  fullPath: '/state/eastyun-home',
   workspaceCwd: '/workspaces/general',
 };
 
@@ -135,8 +135,8 @@ describe('General session launching', () => {
 
     expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({
       options: expect.objectContaining({
-        projectPath: '/state/pilot-home',
-        cwd: '/state/pilot-home',
+        projectPath: '/state/eastyun-home',
+        cwd: '/state/eastyun-home',
         workspaceCwd: '/workspaces/general',
       }),
     }));
@@ -157,7 +157,7 @@ describe('General session launching', () => {
 
     expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({
       options: expect.objectContaining({
-        projectPath: '/state/pilot-home',
+        projectPath: '/state/eastyun-home',
         workspaceCwd: '/workspaces/general',
       }),
     }));

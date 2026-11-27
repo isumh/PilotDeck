@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { resolvePilotHome } from "../pilot/paths.js";
+import { resolveEastYunHome } from "../eastyun/paths.js";
 import type { PermissionRule, PermissionRuleSet } from "./protocol/types.js";
 
 export type PermissionSettings = {
@@ -36,7 +36,7 @@ const TOOL_NAME_ALIASES = new Map<string, string>([
 ]);
 
 export function getPermissionSettingsPath(env: NodeJS.ProcessEnv = process.env): string {
-  return join(resolvePilotHome(env), "permissions.json");
+  return join(resolveEastYunHome(env), "permissions.json");
 }
 
 export function readPermissionSettings(env: NodeJS.ProcessEnv = process.env): PermissionSettings {

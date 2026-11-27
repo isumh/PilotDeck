@@ -11,7 +11,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { resolveProjectIdentityPath } from "../../pilot/paths.js";
+import { resolveProjectIdentityPath } from "../../eastyun/paths.js";
 import type { CronRuntimeLogger } from "../runtime/CronRuntime.js";
 import { cronRunEventsPath, resolveCronPaths } from "./CronPaths.js";
 
@@ -28,10 +28,10 @@ type StoreSnapshot = {
 const LOCK_STALE_MS = 10 * 60_000;
 
 export async function migrateCronStores(input: {
-  pilotHome: string;
+  eastyunHome: string;
   logger?: CronRuntimeLogger;
 }): Promise<void> {
-  const rootDir = resolve(input.pilotHome, "cron");
+  const rootDir = resolve(input.eastyunHome, "cron");
   const releaseLock = await acquireMigrationLock(rootDir, input.logger);
   try {
     const snapshots = await readSnapshots(resolve(rootDir, "projects"));
@@ -51,7 +51,7 @@ export async function migrateCronStores(input: {
     for (const snapshot of snapshots) {
       for (const task of snapshot.tasks) {
         const targetDir = resolveTaskTargetDir(
-          input.pilotHome,
+          input.eastyunHome,
           snapshot.dir,
           task,
           blockedTaskDirs,
@@ -64,7 +64,7 @@ export async function migrateCronStores(input: {
       }
       for (const run of snapshot.runs) {
         const targetDir = resolveRunTargetDir(
-          input.pilotHome,
+          input.eastyunHome,
           snapshot.dir,
           run,
           taskProjects,
@@ -188,7 +188,7 @@ function buildTaskProjectIndex(snapshots: StoreSnapshot[]): Map<string, Set<stri
 }
 
 function resolveTaskTargetDir(
-  pilotHome: string,
+  eastyunHome: string,
   sourceDir: string,
   task: unknown,
   blockedTaskDirs: Set<string>,
@@ -196,13 +196,13 @@ function resolveTaskTargetDir(
   if (!isRecord(task)) return sourceDir;
   const projectKey = normalizedProjectKey(task.projectKey);
   const targetDir = projectKey
-    ? resolveCronPaths({ pilotHome, projectKey }).projectDir
+    ? resolveCronPaths({ eastyunHome, projectKey }).projectDir
     : sourceDir;
   return blockedTaskDirs.has(targetDir) ? sourceDir : targetDir;
 }
 
 function resolveRunTargetDir(
-  pilotHome: string,
+  eastyunHome: string,
   sourceDir: string,
   run: JsonRecord,
   taskProjects: Map<string, Set<string>>,
@@ -210,13 +210,13 @@ function resolveRunTargetDir(
 ): string {
   const explicitProject = normalizedProjectKey(run.projectKey);
   if (explicitProject) {
-    const targetDir = resolveCronPaths({ pilotHome, projectKey: explicitProject }).projectDir;
+    const targetDir = resolveCronPaths({ eastyunHome, projectKey: explicitProject }).projectDir;
     return blockedTaskDirs.has(targetDir) ? sourceDir : targetDir;
   }
   if (typeof run.taskId !== "string") return sourceDir;
   const projects = taskProjects.get(run.taskId);
   if (projects?.size !== 1) return sourceDir;
-  const targetDir = resolveCronPaths({ pilotHome, projectKey: [...projects][0] }).projectDir;
+  const targetDir = resolveCronPaths({ eastyunHome, projectKey: [...projects][0] }).projectDir;
   return blockedTaskDirs.has(targetDir) ? sourceDir : targetDir;
 }
 
@@ -329,7 +329,7 @@ async function migrateRunEvents(
 
 function pathsForDir(projectDir: string) {
   return {
-    pilotHome: "",
+    eastyunHome: "",
     projectKey: "",
     projectId: "",
     rootDir: resolve(projectDir, "..", ".."),

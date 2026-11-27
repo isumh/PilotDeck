@@ -1,15 +1,17 @@
-import { dirname, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
+
+import { isHiddenBuiltinSkill } from "../../skills/hiddenBuiltinSkills.js";
 import { isSkillEnabled, readSkillPreferences } from "../../skills/skillPreferences.js";
 import { resolvePluginDirectories } from "../discovery/PluginDirectoryResolver.js";
 import { discoverPluginPaths, discoverSkillPaths } from "../discovery/discoverLocalPlugins.js";
 import { loadPluginFromPath, loadSkillFromPath } from "../loading/PluginLoader.js";
 import { loadPluginHooks } from "../loading/PluginHookLoader.js";
 import type { LoadedPluginCommand } from "../loading/PluginCommandLoader.js";
-import type { PilotDeckLoadedPlugin } from "../protocol/plugin.js";
+import type { EastYunDeskLoadedPlugin } from "../protocol/plugin.js";
 import { PluginRegistry } from "./PluginRegistry.js";
 import { truncateMcpInstructionString } from "./truncateMcpString.js";
-import type { PilotDeckHooksSettings } from "../../hooks/protocol/settings.js";
-import type { PilotDeckCustomRouter } from "../../../router/customRouter/customRouter.js";
+import type { EastYunDeskHooksSettings } from "../../hooks/protocol/settings.js";
+import type { EastYunDeskCustomRouter } from "../../../router/customRouter/customRouter.js";
 import { renderSkillContent } from "../../skills/renderSkillContent.js";
 import type { PluginCommandContribution, PluginSkillContribution, PluginMcpInstruction, PluginPromptContributions } from "../protocol/promptContributions.js";
 export type { PluginCommandContribution, PluginSkillContribution, PluginMcpInstruction, PluginPromptContributions } from "../protocol/promptContributions.js";
@@ -20,7 +22,7 @@ export type { PluginCommandContribution, PluginSkillContribution, PluginMcpInstr
  * this type is *advisory* — the runtime only reads `instructions` and falls
  * back gracefully when missing.
  */
-export type PilotDeckMcpServerStaticSpec = {
+export type EastYunDeskMcpServerStaticSpec = {
   instructions?: string;
   [key: string]: unknown;
 };
@@ -30,33 +32,33 @@ export type PilotDeckMcpServerStaticSpec = {
  * as a stricter alias of {@link PluginMcpInstruction} so callers that only
  * care about *populated* entries keep a non-optional `instructions` field.
  */
-export type PilotDeckMcpInstructionEntry = {
+export type EastYunDeskMcpInstructionEntry = {
   serverName: string;
   instructions: string;
 };
 
 export type PluginRuntimeOptions = {
   projectRoot: string;
-  pilotHome: string;
-  /** Read-only skills shipped with the active PilotDeck build. */
+  eastyunHome: string;
+  /** Read-only skills shipped with the active EastYunDesk build. */
   builtinSkillsRoot?: string;
-  builtinPlugins?: PilotDeckLoadedPlugin[];
+  builtinPlugins?: EastYunDeskLoadedPlugin[];
   builtinPluginsEnabled?: Record<string, boolean>;
 };
 
 export type PluginRefreshResult = {
-  previous: PilotDeckLoadedPlugin[];
-  next: PilotDeckLoadedPlugin[];
-  added: PilotDeckLoadedPlugin[];
-  removed: PilotDeckLoadedPlugin[];
+  previous: EastYunDeskLoadedPlugin[];
+  next: EastYunDeskLoadedPlugin[];
+  added: EastYunDeskLoadedPlugin[];
+  removed: EastYunDeskLoadedPlugin[];
 };
 
 export type PluginContributionSnapshot = {
-  plugins: PilotDeckLoadedPlugin[];
+  plugins: EastYunDeskLoadedPlugin[];
   commands: PluginCommandContribution[];
   skills: PluginSkillContribution[];
   outputStyles: LoadedPluginCommand[];
-  hooks: PilotDeckHooksSettings;
+  hooks: EastYunDeskHooksSettings;
   mcpServers: Record<string, unknown>;
   lspServers: Record<string, unknown>;
   mcpInstructions: PluginMcpInstruction[];
@@ -67,7 +69,7 @@ export class PluginRuntime {
 
   constructor(private readonly options: PluginRuntimeOptions) {}
 
-  snapshot(): PilotDeckLoadedPlugin[] {
+  snapshot(): EastYunDeskLoadedPlugin[] {
     return this.registry.list();
   }
 
@@ -86,8 +88,8 @@ export class PluginRuntime {
    * instructions on top via the same `getAllMcpInstructions` aggregator
    * surface used by `PluginRuntimeExtensionResolver`.
    */
-  getAllMcpInstructions(): PilotDeckMcpInstructionEntry[] {
-    const entries: PilotDeckMcpInstructionEntry[] = [];
+  getAllMcpInstructions(): EastYunDeskMcpInstructionEntry[] {
+    const entries: EastYunDeskMcpInstructionEntry[] = [];
     const seen = new Set<string>();
     for (const plugin of this.registry.list()) {
       const servers = plugin.mcpServers;
@@ -95,7 +97,7 @@ export class PluginRuntime {
       for (const [serverName, raw] of Object.entries(servers)) {
         if (seen.has(serverName)) continue;
         if (!raw || typeof raw !== "object") continue;
-        const candidate = (raw as PilotDeckMcpServerStaticSpec).instructions;
+        const candidate = (raw as EastYunDeskMcpServerStaticSpec).instructions;
         if (typeof candidate !== "string") continue;
         const trimmed = candidate.trim();
         if (trimmed.length === 0) continue;
@@ -147,7 +149,7 @@ export class PluginRuntime {
     };
   }
 
-  lookupRouter(extensionId: string): PilotDeckCustomRouter | undefined {
+  lookupRouter(extensionId: string): EastYunDeskCustomRouter | undefined {
     for (const plugin of this.registry.list()) {
       for (const contribution of plugin.routerContributions ?? []) {
         if (contribution.id !== extensionId) {
@@ -195,8 +197,8 @@ export class PluginRuntime {
   }
 
   /** Existing sessions honor switches immediately, without waiting for a watcher. */
-  private enabledPlugins(): PilotDeckLoadedPlugin[] {
-    const preferences = readSkillPreferences(this.options.pilotHome);
+  private enabledPlugins(): EastYunDeskLoadedPlugin[] {
+    const preferences = readSkillPreferences(this.options.eastyunHome);
     const paths = resolvePluginDirectories(this.options);
     return this.registry.list().filter(plugin => {
       const parent = dirname(resolve(plugin.path));
@@ -207,7 +209,7 @@ export class PluginRuntime {
     });
   }
 
-  async refresh(): Promise<PilotDeckLoadedPlugin[]> {
+  async refresh(): Promise<EastYunDeskLoadedPlugin[]> {
     return (await this.refreshWithReport()).next;
   }
 
@@ -215,7 +217,7 @@ export class PluginRuntime {
     const previous = this.registry.list();
     const paths = resolvePluginDirectories({
       projectRoot: this.options.projectRoot,
-      pilotHome: this.options.pilotHome,
+      eastyunHome: this.options.eastyunHome,
     });
     const [discovered, discoveredSkills, loadedBuiltins] = await Promise.all([
       discoverPluginPaths([
@@ -228,7 +230,11 @@ export class PluginRuntime {
           : []),
         { path: paths.globalSkillsDir, source: "global" },
         { path: paths.projectSkillsDir, source: "project" },
-      ]),
+      ]).then((found) =>
+        // EastYunDesk hides some upstream builtin skills from prompts and
+        // `read_skill` alike; user/project skills with the same slug still load.
+        found.filter((entry) => entry.source !== "builtin" || !isHiddenBuiltinSkill(basename(entry.path))),
+      ),
       Promise.all(
         (this.options.builtinPlugins ?? []).map((plugin) =>
           loadPluginFromPath(plugin.path, "builtin").catch(() => plugin),
@@ -258,23 +264,23 @@ export class PluginRuntime {
   }
 }
 
-function isLoadedPlugin(value: PilotDeckLoadedPlugin | undefined): value is PilotDeckLoadedPlugin {
+function isLoadedPlugin(value: EastYunDeskLoadedPlugin | undefined): value is EastYunDeskLoadedPlugin {
   return value !== undefined;
 }
 
 function enabledBuiltinPlugins(
-  plugins: PilotDeckLoadedPlugin[],
+  plugins: EastYunDeskLoadedPlugin[],
   enabled: Record<string, boolean>,
-): PilotDeckLoadedPlugin[] {
+): EastYunDeskLoadedPlugin[] {
   return plugins.filter((plugin) => plugin.source !== "builtin" || enabled[plugin.name] !== false);
 }
 
-function hasPlugin(plugins: PilotDeckLoadedPlugin[], plugin: PilotDeckLoadedPlugin): boolean {
+function hasPlugin(plugins: EastYunDeskLoadedPlugin[], plugin: EastYunDeskLoadedPlugin): boolean {
   return plugins.some((candidate) => candidate.name === plugin.name && candidate.source === plugin.source);
 }
 
 function toCommandContribution(
-  plugin: PilotDeckLoadedPlugin,
+  plugin: EastYunDeskLoadedPlugin,
   command: LoadedPluginCommand,
 ): PluginCommandContribution {
   return {
@@ -289,7 +295,7 @@ function toCommandContribution(
 }
 
 function toSkillContribution(
-  plugin: PilotDeckLoadedPlugin,
+  plugin: EastYunDeskLoadedPlugin,
   skill: LoadedPluginCommand,
 ): PluginSkillContribution {
   return {
@@ -300,7 +306,7 @@ function toSkillContribution(
   };
 }
 
-function sourcePriority(source: PilotDeckLoadedPlugin["source"]): number {
+function sourcePriority(source: EastYunDeskLoadedPlugin["source"]): number {
   switch (source) {
     case "project":
       return 2;
@@ -312,11 +318,11 @@ function sourcePriority(source: PilotDeckLoadedPlugin["source"]): number {
   }
 }
 
-function sortByResolutionPriority(plugins: PilotDeckLoadedPlugin[]): PilotDeckLoadedPlugin[] {
+function sortByResolutionPriority(plugins: EastYunDeskLoadedPlugin[]): EastYunDeskLoadedPlugin[] {
   return [...plugins].sort((a, b) => sourcePriority(b.source) - sourcePriority(a.source));
 }
 
-function collectSkillContributions(plugins: PilotDeckLoadedPlugin[]): PluginSkillContribution[] {
+function collectSkillContributions(plugins: EastYunDeskLoadedPlugin[]): PluginSkillContribution[] {
   const selected = new Map<string, { contribution: PluginSkillContribution; priority: number }>();
   for (const plugin of plugins) {
     const priority = sourcePriority(plugin.source);

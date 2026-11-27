@@ -2,7 +2,7 @@ import { access, readdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, join, resolve } from "node:path";
 
-import { getPilotExtensionPaths } from "../../pilot/paths.js";
+import { getEastYunExtensionPaths } from "../../eastyun/paths.js";
 import { SkillManager, SkillManagerError, SkillValidationError } from "./SkillManager.js";
 import type { SkillImportResult, SkillScope, SkillValidationResult } from "./types.js";
 
@@ -41,8 +41,8 @@ export type SkillMigrationReport = {
   items: SkillMigrationItem[];
 };
 
-export type MigrateSkillsToPilotDeckOptions = {
-  pilotHome: string;
+export type MigrateSkillsToEastYunDeskOptions = {
+  eastyunHome: string;
   projectRoot?: string;
   include?: Array<Exclude<SkillMigrationSourceKind, "custom">>;
   customSources?: string[];
@@ -58,19 +58,19 @@ const DEFAULT_INCLUDE: Array<Exclude<SkillMigrationSourceKind, "custom">> = [
   "hermes",
 ];
 
-export async function migrateSkillsToPilotDeck(
-  options: MigrateSkillsToPilotDeckOptions,
+export async function migrateSkillsToEastYunDesk(
+  options: MigrateSkillsToEastYunDeskOptions,
 ): Promise<SkillMigrationReport> {
-  const pilotHome = resolve(options.pilotHome);
+  const eastyunHome = resolve(options.eastyunHome);
   const scope = options.scope ?? "user";
   const projectKey = options.projectKey ?? options.projectRoot ?? null;
   const targetRoot =
     scope === "project" && projectKey
-      ? getPilotExtensionPaths(resolve(projectKey), pilotHome).projectSkillsDir
-      : getPilotExtensionPaths(pilotHome, pilotHome).globalSkillsDir;
+      ? getEastYunExtensionPaths(resolve(projectKey), eastyunHome).projectSkillsDir
+      : getEastYunExtensionPaths(eastyunHome, eastyunHome).globalSkillsDir;
   const execute = options.execute === true;
   const conflictMode = options.conflictMode ?? "skip";
-  const manager = new SkillManager({ pilotHome });
+  const manager = new SkillManager({ eastyunHome });
   const sources = dedupeSources(buildSources(options));
   const items: SkillMigrationItem[] = [];
 
@@ -183,7 +183,7 @@ export async function migrateSkillsToPilotDeck(
   };
 }
 
-function buildSources(options: MigrateSkillsToPilotDeckOptions): SkillMigrationSource[] {
+function buildSources(options: MigrateSkillsToEastYunDeskOptions): SkillMigrationSource[] {
   const home = homedir();
   const projectRoot = options.projectRoot ? resolve(options.projectRoot) : resolve(process.cwd());
   const include = options.include ?? DEFAULT_INCLUDE;

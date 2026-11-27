@@ -9,18 +9,18 @@ import { TuiApp } from "../../src/adapters/channel/tui/app/TuiApp.js";
 import { writePermissionSettings, readPermissionSettings } from "../../src/permission/settings.js";
 import type { Gateway, GatewayEvent, GatewaySubmitTurnInput } from "../../src/gateway/index.js";
 
-let previousPilotHome: string | undefined;
-let testPilotHome: string;
+let previousEastYunHome: string | undefined;
+let testEastYunHome: string;
 beforeEach(() => {
-  previousPilotHome = process.env.PILOT_HOME;
-  testPilotHome = mkdtempSync(join(tmpdir(), "pilotdeck-tui-permissions-"));
-  process.env.PILOT_HOME = testPilotHome;
+  previousEastYunHome = process.env.EASTYUN_HOME;
+  testEastYunHome = mkdtempSync(join(tmpdir(), "eastyundesk-tui-permissions-"));
+  process.env.EASTYUN_HOME = testEastYunHome;
   writePermissionSettings({ allowedTools: [], askTools: [], disallowedTools: [], skipPermissions: false });
 });
 afterEach(() => {
-  if (previousPilotHome === undefined) delete process.env.PILOT_HOME;
-  else process.env.PILOT_HOME = previousPilotHome;
-  rmSync(testPilotHome, { recursive: true, force: true });
+  if (previousEastYunHome === undefined) delete process.env.EASTYUN_HOME;
+  else process.env.EASTYUN_HOME = previousEastYunHome;
+  rmSync(testEastYunHome, { recursive: true, force: true });
 });
 
 type PendingPermission = {

@@ -7,7 +7,7 @@ import { createLocalGateway } from '../../src/cli/createLocalGateway.js';
 import { createCronManager, defaultCronConfig } from '../../src/cron/index.js';
 import { SessionConfigOverrides } from '../../src/always-on/runtime/SessionConfigOverrides.js';
 import { createModelRuntime, type CanonicalModelEvent, type CanonicalModelRequest } from '../../src/model/index.js';
-import { createProjectId } from '../../src/pilot/paths.js';
+import { createProjectId } from '../../src/eastyun/paths.js';
 import type { GatewayEvent } from '../../src/gateway/index.js';
 import { writePermissionSettings } from '../../src/permission/settings.js';
 
@@ -28,24 +28,24 @@ telemetry: { enabled: false }
 `;
 
 async function syntheticProject(t: test.TestContext) {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-task-dialog-'));
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-task-dialog-'));
   t.after(() => rm(home, { recursive: true, force: true }));
   const project = join(home, 'project'), skills = join(home, 'skills');
   await mkdir(project); await mkdir(skills);
   const projectRecord = join(home, 'projects', createProjectId(project));
   await mkdir(projectRecord, { recursive: true });
-  const configPath = join(home, 'pilotdeck.yaml');
+  const configPath = join(home, 'eastyundesk.yaml');
   await writeFile(join(projectRecord, '.cwd'), project);
   await writeFile(configPath, SYNTHETIC_CONFIG);
-  return { home, project, skills, env: { PILOT_HOME: home, PILOTDECK_CONFIG_PATH: configPath } };
+  return { home, project, skills, env: { EASTYUN_HOME: home, EASTYUNDESK_CONFIG_PATH: configPath } };
 }
 
 test('task chat and scheduled execution share history and trusted workspace, with per-turn interaction capabilities', async (t) => {
   const { home, project, skills, env } = await syntheticProject(t);
   const sessionOverrides = new SessionConfigOverrides();
-  const cron = createCronManager({ config: defaultCronConfig(), pilotHome: home, sessionOverrides });
+  const cron = createCronManager({ config: defaultCronConfig(), eastyunHome: home, sessionOverrides });
   const requests: CanonicalModelRequest[] = [];
-  const local = createLocalGateway({ pilotHome: home, projectRoot: project, builtinSkillsRoot: skills,
+  const local = createLocalGateway({ eastyunHome: home, projectRoot: project, builtinSkillsRoot: skills,
     env, cron, sessionOverrides, extraTools: cron.getTools(),
     __testModelFactory(snapshot) { return { ...createModelRuntime(snapshot.config.model),
       async *stream(request): AsyncIterable<CanonicalModelEvent> {
@@ -93,11 +93,11 @@ test('task chat and scheduled execution share history and trusted workspace, wit
 
 test('saved cron permissions control approval, completion reminders, and interruption', async (t) => {
   const { home, project, skills, env } = await syntheticProject(t);
-  const previousHome = process.env.PILOT_HOME;
-  process.env.PILOT_HOME = home;
+  const previousHome = process.env.EASTYUN_HOME;
+  process.env.EASTYUN_HOME = home;
   t.after(() => {
-    if (previousHome === undefined) delete process.env.PILOT_HOME;
-    else process.env.PILOT_HOME = previousHome;
+    if (previousHome === undefined) delete process.env.EASTYUN_HOME;
+    else process.env.EASTYUN_HOME = previousHome;
   });
   const events: GatewayEvent[] = [];
   let now = new Date();
@@ -105,10 +105,10 @@ test('saved cron permissions control approval, completion reminders, and interru
   let executed = 0;
   let useSubagent = true;
   const cron = createCronManager({
-    config: defaultCronConfig(), pilotHome: home, now: () => now,
+    config: defaultCronConfig(), eastyunHome: home, now: () => now,
     onTurnEvent(_sessionKey, _channelKey, event) { events.push(event); },
   });
-  const local = createLocalGateway({ pilotHome: home, projectRoot: project, builtinSkillsRoot: skills, env, cron,
+  const local = createLocalGateway({ eastyunHome: home, projectRoot: project, builtinSkillsRoot: skills, env, cron,
     extraTools: [{
       name: 'synthetic_approval', kind: 'custom', description: 'Return a synthetic result after approval.',
       inputSchema: { type: 'object', properties: {} },

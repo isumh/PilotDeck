@@ -28,7 +28,7 @@ import type { AgentTranscriptEntry } from "../../session/transcript/TranscriptEn
 import { activeTranscriptEntries } from "../../session/transcript/CompactSnapshot.js";
 import { readModelContextSnapshot } from '../../session/context/ModelContextSnapshot.js';
 import { dirname, isAbsolute, relative, resolve } from "node:path";
-import { getPilotProjectChatDir } from "../../pilot/index.js";
+import { getEastYunProjectChatDir } from "../../eastyun/index.js";
 import { sanitizeSessionIdForPath } from "../../session/storage/ProjectSessionStorage.js";
 import type {
   WebReadSessionMessagesInput,
@@ -38,7 +38,7 @@ import type { WebMessage, WebMessageKind, WebMessageRole } from "../client/webMe
 
 export type ReadWebSessionMessagesOptions = {
   projectRoot: string;
-  pilotHome: string;
+  eastyunHome: string;
   maxContextTokens?: number;
   maxOutputTokens?: number;
   /** Override clock for deterministic tests. */
@@ -52,7 +52,7 @@ export async function readWebSessionMessages(
   options: ReadWebSessionMessagesOptions,
 ): Promise<WebReadSessionMessagesResult> {
   const effectiveProjectRoot = input.projectKey ?? options.projectRoot;
-  const chatDir = getPilotProjectChatDir(effectiveProjectRoot, options.pilotHome);
+  const chatDir = getEastYunProjectChatDir(effectiveProjectRoot, options.eastyunHome);
   const transcriptPath = resolveTranscriptPath(input, chatDir);
   const isBackgroundTask = isBackgroundTaskInput(input);
   const sessionInfo = isBackgroundTask ? undefined : await locateSession(input.sessionKey, {
@@ -63,7 +63,7 @@ export async function readWebSessionMessages(
   const entries = activeTranscriptEntries(allEntries);
   let modelContext: Awaited<ReturnType<typeof readModelContextSnapshot>> = null;
   if (input.includeModelContext) {
-    const context = await readModelContextSnapshot(transcriptPath, resolve(options.pilotHome, 'projects'));
+    const context = await readModelContextSnapshot(transcriptPath, resolve(options.eastyunHome, 'projects'));
     for (let index = entries.length - 1; context && index >= 0; index--) {
       if (entries[index].type !== 'accepted_input') continue;
       if (context.turnId === entries[index].turnId) modelContext = context;
@@ -104,7 +104,7 @@ export async function readWebSessionMessages(
   );
   const subagentToolUses = attachSubagentIds(entries, allMessages);
   recoverCompletedSubagentToolResults(entries, allMessages, subagentToolUses);
-  if (resolve(effectiveProjectRoot) !== resolve(options.pilotHome)) {
+  if (resolve(effectiveProjectRoot) !== resolve(options.eastyunHome)) {
     injectFileArtifactMessages(entries, allMessages, input.sessionKey, input.projectKey);
   }
   injectAgentStatusMessages(entries, allMessages, input.sessionKey, input.projectKey);
@@ -385,7 +385,7 @@ export async function readSubagentWebMessages(
   options: ReadWebSessionMessagesOptions,
 ): Promise<{ messages: WebMessage[]; total: number }> {
   const effectiveProjectRoot = input.projectKey ?? options.projectRoot;
-  const chatDir = getPilotProjectChatDir(effectiveProjectRoot, options.pilotHome);
+  const chatDir = getEastYunProjectChatDir(effectiveProjectRoot, options.eastyunHome);
   const parentTranscriptPath = resolveTranscriptPath(input, chatDir);
 
   const { entries: parentEntries } = await readTranscript(parentTranscriptPath);
@@ -490,7 +490,7 @@ function createIncompleteTurnStatusMessage(
     sessionKey: input.sessionKey,
     projectKey: input.projectKey,
     createdAt: stamp,
-    provider: "pilotdeck",
+    provider: "eastyundesk",
     role: "system",
     kind: "status",
     text: "本轮记录尚未写入最终结果，已恢复当时产生的工具调用和输出。",
@@ -523,7 +523,7 @@ async function locateSession(
 ): Promise<SessionInfo | undefined> {
   const sessions = await listProjectSessions({
     projectRoot: options.projectRoot,
-    pilotHome: options.pilotHome,
+    eastyunHome: options.eastyunHome,
   });
   // sessionId in SessionInfo is the on-disk filename (already sanitized);
   // the incoming sessionKey may still be the raw form (e.g. tui:project=/foo:default).
@@ -586,7 +586,7 @@ export function flattenCanonicalMessage(
       sessionKey: context.sessionKey,
       projectKey: context.projectKey,
       createdAt: stamp,
-      provider: "pilotdeck",
+      provider: "eastyundesk",
       role,
       kind: "text",
       text: textBuffer,
@@ -685,7 +685,7 @@ function flushBlock(
         sessionKey: context.sessionKey,
         projectKey: context.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "assistant",
         kind: "thinking",
         text: block.text,
@@ -700,7 +700,7 @@ function flushBlock(
         sessionKey: context.sessionKey,
         projectKey: context.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "tool",
         kind: "tool_use",
         toolCallId: block.id,
@@ -727,7 +727,7 @@ function flushBlock(
         sessionKey: context.sessionKey,
         projectKey: context.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "tool",
         kind: "tool_result",
         toolCallId: block.toolCallId,
@@ -748,7 +748,7 @@ function flushBlock(
         sessionKey: context.sessionKey,
         projectKey: context.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "tool",
         kind: "tool_result",
         toolCallId: block.toolCallId,
@@ -772,7 +772,7 @@ function flushBlock(
         sessionKey: context.sessionKey,
         projectKey: context.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "tool",
         kind: "tool_result",
         toolCallId: block.toolCallId,
@@ -802,7 +802,7 @@ function flushBlock(
         sessionKey: context.sessionKey,
         projectKey: context.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role,
         kind: "status",
         text: `[${block.type} attachment]`,
@@ -819,7 +819,7 @@ function flushBlock(
         sessionKey: context.sessionKey,
         projectKey: context.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role,
         kind,
         text: `[${block.type} attachment]`,
@@ -1047,7 +1047,7 @@ function injectCompactBoundaryMessages(
       sessionKey,
       projectKey,
       createdAt: boundary.timestamp,
-      provider: "pilotdeck",
+      provider: "eastyundesk",
       role: "system",
       kind: "compact_boundary",
       ...(boundary.metadata?.timeline ? { timeline: boundary.metadata.timeline as WebMessage["timeline"] } : {}),
@@ -1150,7 +1150,7 @@ function recoverCompletedSubagentToolResults(
       sessionKey: toolUse.sessionKey,
       projectKey: toolUse.projectKey,
       createdAt: entry.createdAt,
-      provider: "pilotdeck",
+      provider: "eastyundesk",
       role: "tool",
       kind: "tool_result",
       turnId: toolUse.turnId ?? entry.turnId,
@@ -1193,7 +1193,7 @@ function injectFileArtifactMessages(
       sessionKey,
       projectKey,
       createdAt: entry.createdAt,
-      provider: "pilotdeck",
+      provider: "eastyundesk",
       role: "assistant",
       kind: "file_artifacts",
       turnId: entry.turnId,
@@ -1248,7 +1248,7 @@ function injectErrorTurnMessages(
       sessionKey,
       projectKey,
       createdAt: entry.createdAt,
-      provider: "pilotdeck",
+      provider: "eastyundesk",
       role: "error",
       kind: "error",
       turnId: entry.turnId,
@@ -1286,7 +1286,7 @@ function injectAgentStatusMessages(
       sessionKey,
       projectKey,
       createdAt: entry.createdAt,
-      provider: "pilotdeck",
+      provider: "eastyundesk",
       role: cronResult ? "assistant" : entry.kind === "error" ? "error" : "system",
       kind: cronResult ? "text" : entry.kind,
       turnId: entry.turnId,

@@ -4,8 +4,8 @@ import {
   SessionConfigOverrides,
 } from "../../always-on/runtime/SessionConfigOverrides.js";
 import type { Gateway } from "../../gateway/index.js";
-import { resolveProjectIdentityPath } from "../../pilot/paths.js";
-import type { PilotDeckToolDefinition } from "../../tool/index.js";
+import { resolveProjectIdentityPath } from "../../eastyun/paths.js";
+import type { EastYunDeskToolDefinition } from "../../tool/index.js";
 import type { CronConfig } from "../config/parseCronConfig.js";
 import type {
   CronCreateInput,
@@ -43,7 +43,7 @@ export type CronRuntimeLogger = {
 
 export type CreateCronRuntimeOptions = {
   config: CronConfig;
-  pilotHome: string;
+  eastyunHome: string;
   projectKey: string;
   now?: () => Date;
   uuid?: () => string;
@@ -82,7 +82,7 @@ export class CronRuntime {
   private readonly onTurnEvent?: CronTurnEventHandler;
   private readonly onReminder?: CreateCronRuntimeOptions["onReminder"];
   private readonly sessionOverrides: SessionConfigOverrides;
-  private readonly tools: PilotDeckToolDefinition[];
+  private readonly tools: EastYunDeskToolDefinition[];
   private readonly activeRuns = new Map<string, CronActiveRun>();
   private readonly sharedActiveRunCount?: () => number;
   private readonly onRunFinished?: () => void;
@@ -95,7 +95,7 @@ export class CronRuntime {
     this.config = options.config;
     this.generateTaskDetails = options.generateTaskDetails;
     this.projectKey = resolve(options.projectKey);
-    this.paths = resolveCronPaths({ pilotHome: options.pilotHome, projectKey: this.projectKey });
+    this.paths = resolveCronPaths({ eastyunHome: options.eastyunHome, projectKey: this.projectKey });
     this.store = options.store ?? new CronTaskStore(this.paths);
     if (options.onTaskChange) this.store.subscribe(options.onTaskChange);
     this.now = options.now ?? (() => new Date());
@@ -111,7 +111,7 @@ export class CronRuntime {
     this.tools = options.skipToolCreation ? [] : createCronTools(this);
   }
 
-  getTools(): PilotDeckToolDefinition[] {
+  getTools(): EastYunDeskToolDefinition[] {
     if (!this.config.enabled) return [];
     return [...this.tools];
   }
@@ -231,7 +231,7 @@ export class CronRuntime {
 
   async createTask(input: CronCreateInput): Promise<CronCreateResult> {
     if (!this.config.enabled) {
-      throw new Error("Cron is disabled. Enable it in pilotdeck.yaml to create tasks.");
+      throw new Error("Cron is disabled. Enable it in eastyundesk.yaml to create tasks.");
     }
     validateTaskOptions(input);
     if (!input.message?.trim()) throw new Error("Cron task message is required.");
@@ -363,7 +363,7 @@ export class CronRuntime {
   }
 
   async updateTask(input: CronUpdateInput): Promise<CronUpdateResult> {
-    if (!this.config.enabled) throw new Error("Cron is disabled. Enable it in pilotdeck.yaml to update tasks.");
+    if (!this.config.enabled) throw new Error("Cron is disabled. Enable it in eastyundesk.yaml to update tasks.");
     if (typeof input.projectKey !== "string" || !input.projectKey.trim() || !this.matchesProject(input.projectKey)) return { updated: false, reason: "not_found" };
     if (!Number.isSafeInteger(input.expectedRevision) || input.expectedRevision < 0) throw new Error("Cron task expectedRevision must be a non-negative integer.");
     if (!input.message?.trim()) throw new Error("Cron task message is required.");

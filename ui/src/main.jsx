@@ -38,7 +38,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 void mountApplication().catch(error => {
   const diagnostic = recordUiDiagnostic('bootstrap-failed', { errorName: error?.name || 'Error' });
   const root = document.getElementById('root');
-  const status = window.pilotdeckDesktop?.getRuntimeStatus?.();
-  if (window.__pilotdeckStartupUpdate) window.__pilotdeckStartupUpdate({ phase: 'error', error: diagnostic.code, logPath: status?.logPath || '~/.pilotdeck/logs/runtime.log' });
-  else if (root) root.textContent = `${diagnostic.code}\nRuntime log: ${status?.logPath || '~/.pilotdeck/logs/runtime.log'}`;
+  const status = window.eastyundeskDesktop?.getRuntimeStatus?.();
+  if (window.__eastyundeskStartupUpdate) window.__eastyundeskStartupUpdate({ phase: 'error', error: diagnostic.code, logPath: status?.logPath || '~/.eastyundesk/logs/runtime.log' });
+  else if (root) root.textContent = `${diagnostic.code}\nRuntime log: ${status?.logPath || '~/.eastyundesk/logs/runtime.log'}`;
 });

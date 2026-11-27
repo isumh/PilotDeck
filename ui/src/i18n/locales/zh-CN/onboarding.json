@@ -1,5 +1,5 @@
 {
-  "brand": "PilotDeck",
+  "brand": "EastYunDesk",
   "sidebar": {
     "kicker": "首次使用设置",
     "title": "准备好你的 AI 工作空间",
@@ -7,12 +7,11 @@
   },
   "steps": {
     "language": "语言",
-    "provider": "模型服务商",
     "connection": "模型接入配置",
     "workspace": "工作区"
   },
   "language": {
-    "eyebrow": "欢迎使用 PilotDeck",
+    "eyebrow": "欢迎使用 EastYunDesk",
     "title": "连接你的模型，开始真正的智能协作",
     "intro": "只需几步完成模型配置。之后你可以随时在设置中更换服务商、模型或密钥。",
     "legend": "选择界面语言",
@@ -28,7 +27,7 @@
   },
   "provider": {
     "title": "选择你的模型服务商",
-    "intro": "先选择一个服务商。PilotDeck 会为你填好推荐的接口格式。",
+    "intro": "先选择一个服务商。EastYunDesk 会为你填好推荐的接口格式。",
     "customTitle": "自定义",
     "customHint": "OpenAI / Anthropic / Google"
   },
@@ -79,7 +78,8 @@
     "manualSupported": "支持",
     "manualUnsupported": "不支持",
     "manualCancel": "取消",
-    "manualConfirm": "确定"
+    "manualConfirm": "确定",
+    "testRequired": "请先完成一次连接测试并通过，然后再继续。"
   },
   "workspace": {
     "title": "创建你的工作区",
@@ -89,14 +89,11 @@
     "existingTitle": "已有文件夹",
     "existingHint": "添加这台机器上已经存在的目录。",
     "newTitle": "新建文件夹",
-    "newHint": "创建新目录，也可以从 GitHub 仓库克隆。",
+    "newHint": "创建新目录作为工作区。",
     "pathLabel": "工作区",
     "pathHint": "工作区与项目同名。",
     "pathRequired": "请填写工作区路径。",
     "browse": "选择文件夹",
-    "githubLabel": "GitHub URL",
-    "githubPlaceholder": "https://github.com/username/repository",
-    "githubHint": "提供 GitHub URL 以克隆仓库。",
     "startChatting": "直接对话",
     "createWorkspace": "创建工作区"
   },

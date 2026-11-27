@@ -1,4 +1,4 @@
-// Isolated disk-only fixture; never reads or modifies a user's PilotHome.
+// Isolated disk-only fixture; never reads or modifies a user's EastYunHome.
 import { mkdtemp, mkdir, writeFile, utimes, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
@@ -10,16 +10,16 @@ const sourceRoot = resolve(process.argv.includes('--root')
   : fileURLToPath(new URL('..', import.meta.url)));
 const { listProjectSessions } = await import(pathToFileURL(join(sourceRoot, 'dist/src/session/storage/SessionList.js')));
 const { listWebProjects, describeWebProject } = await import(pathToFileURL(join(sourceRoot, 'dist/src/web/server/listProjects.js')));
-const { getPilotProjectChatDir } = await import(pathToFileURL(join(sourceRoot, 'dist/src/pilot/paths.js')));
+const { getEastYunProjectChatDir } = await import(pathToFileURL(join(sourceRoot, 'dist/src/eastyun/paths.js')));
 
 const count = Number(process.argv[2] || 1000);
 if (!Number.isInteger(count) || count < 1 || count > 10000) throw new Error('Expected 1..10000 sessions');
-const root = await mkdtemp(join(tmpdir(), 'pilotdeck-session-benchmark-'));
+const root = await mkdtemp(join(tmpdir(), 'eastyundesk-session-benchmark-'));
 try {
-  const pilotHome = join(root, '.pilotdeck');
+  const eastyunHome = join(root, '.eastyundesk');
   const projectRoot = join(root, 'workspace');
   await mkdir(projectRoot);
-  const chatDir = getPilotProjectChatDir(projectRoot, pilotHome);
+  const chatDir = getEastYunProjectChatDir(projectRoot, eastyunHome);
   await mkdir(chatDir, { recursive: true });
   await writeFile(join(chatDir, '..', '.cwd'), projectRoot);
   // Older transcripts require the metadata fallback; recent sessions have a
@@ -36,16 +36,16 @@ try {
   }
   for (let run = 0; run < 3; run++) {
     const started = performance.now();
-    const { projects } = await listWebProjects({ pilotHome });
+    const { projects } = await listWebProjects({ eastyunHome });
     const listed = performance.now();
-    const sessions = await listProjectSessions({ pilotHome, projectRoot, limit: 5 });
+    const sessions = await listProjectSessions({ eastyunHome, projectRoot, limit: 5 });
     const previewed = performance.now();
-    const summary = await describeWebProject(projectRoot, { pilotHome });
+    const summary = await describeWebProject(projectRoot, { eastyunHome });
     if (projects[0]?.sessionCount !== count || summary.sessionCount !== count || sessions.length !== Math.min(5, count)) throw new Error('Fixture result mismatch');
     console.log(JSON.stringify({ count, run, projectListMs: +(listed - started).toFixed(1), listAndPreviewMs: +(previewed - started).toFixed(1), summaryMs: +(performance.now() - previewed).toFixed(1), rssMiB: +(process.memoryUsage().rss / 1024 ** 2).toFixed(1) }));
   }
 } finally {
   const target = resolve(root);
-  if (!target.startsWith(resolve(tmpdir()) + sep) || !target.split(sep).at(-1).startsWith('pilotdeck-session-benchmark-')) throw new Error('Unsafe fixture cleanup');
+  if (!target.startsWith(resolve(tmpdir()) + sep) || !target.split(sep).at(-1).startsWith('eastyundesk-session-benchmark-')) throw new Error('Unsafe fixture cleanup');
   await rm(target, { recursive: true, force: true });
 }

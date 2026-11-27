@@ -14,9 +14,9 @@ new Function('module', 'exports', 'require', ts.transpileModule(fs.readFileSync(
 const { desktopInstallationRoot, withRuntimeCommandPath } = mod.exports;
 
 for (const [platform, resources, expected] of [
-  ['win32', 'C:\\Program Files\\PilotDeck\\resources', 'C:\\Program Files\\PilotDeck'],
-  ['darwin', '/Applications/PilotDeck.app/Contents/Resources', '/Applications/PilotDeck.app'],
-  ['linux', '/opt/PilotDeck/resources', '/opt/PilotDeck'],
+  ['win32', 'C:\\Program Files\\EastYunDesk\\resources', 'C:\\Program Files\\EastYunDesk'],
+  ['darwin', '/Applications/EastYunDesk.app/Contents/Resources', '/Applications/EastYunDesk.app'],
+  ['linux', '/opt/EastYunDesk/resources', '/opt/EastYunDesk'],
 ]) test(`protect the complete packaged ${platform} installation`, () => {
   assert.equal(desktopInstallationRoot(resources, platform), expected);
 });
@@ -29,8 +29,8 @@ test('Windows duplicate keys retain Node selection while bundled tools win comma
   assert.equal(next.PATH, 'C:\\App 中文\\node;C:\\App 中文\\git\\cmd;C:\\App 中文\\runtime\\node_modules\\.bin;existing-upper');
   assert.equal(next.TEMP, 'chosen-temp');
   assert.equal(next.Temp, undefined);
-  assert.equal(next.PILOTDECK_GIT_BASH_PATH, git.bash);
-  assert.equal(next.PILOTDECK_BUNDLED_GIT, '1');
+  assert.equal(next.EASTYUNDESK_GIT_BASH_PATH, git.bash);
+  assert.equal(next.EASTYUNDESK_BUNDLED_GIT, '1');
   assert.equal(env.Path, 'wrong-lower');
 });
 
@@ -56,7 +56,7 @@ test('an unset uppercase override does not erase a defined Windows Path', () => 
 });
 
 test('real Windows runtime starts from a Unicode/spaced path despite stale PATH and a failing preload', { skip: process.platform !== 'win32' }, () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pilotdeck-env-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'eastyundesk-env-'));
   try {
     const directory = path.join(root, '用户 with spaces & (test)');
     fs.mkdirSync(directory);

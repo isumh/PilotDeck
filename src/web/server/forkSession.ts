@@ -15,7 +15,7 @@ import { chmod, cp, mkdir, readdir, readFile, realpath, stat, unlink, writeFile 
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { platform } from "node:process";
 import type { CanonicalContentBlock, CanonicalMessage } from "../../model/index.js";
-import { getPilotProjectChatDir } from "../../pilot/index.js";
+import { getEastYunProjectChatDir } from "../../eastyun/index.js";
 import { readCompactSnapshot, readRestoreSnapshot } from "../../session/transcript/CompactSnapshot.js";
 import { readTranscript } from "../../session/transcript/TranscriptReader.js";
 import {
@@ -31,7 +31,7 @@ import { ImageStore, type GeneratedImage } from "../../tool/builtin/images/Image
 
 export type ForkWebSessionOptions = {
   projectRoot: string;
-  pilotHome: string;
+  eastyunHome: string;
   now?: () => Date;
 };
 
@@ -593,7 +593,7 @@ export async function forkWebSession(
   options: ForkWebSessionOptions,
 ): Promise<WebForkSessionResult> {
   const effectiveProjectRoot = input.projectKey ?? options.projectRoot;
-  const chatDir = getPilotProjectChatDir(effectiveProjectRoot, options.pilotHome);
+  const chatDir = getEastYunProjectChatDir(effectiveProjectRoot, options.eastyunHome);
   const sourceSafeId = sanitizeSessionIdForPath(input.sessionKey);
   const sourceTranscriptPath = resolve(chatDir, `${sourceSafeId}.jsonl`);
   const sourceSessionDir = resolve(chatDir, sourceSafeId);
@@ -633,7 +633,7 @@ export async function forkWebSession(
   await mkdir(chatDir, { recursive: true, mode: 0o700 });
   await mkdir(newSessionDir, { recursive: true, mode: 0o700 });
   await copySessionAuxDirs(sourceSessionDir, newSessionDir);
-  const images = new ForkMediaInheritance(new ImageStore(join(options.pilotHome, "generated-images")), newSessionKey, new VideoStore(join(options.pilotHome, "generated-videos")), input.sessionKey);
+  const images = new ForkMediaInheritance(new ImageStore(join(options.eastyunHome, "generated-images")), newSessionKey, new VideoStore(join(options.eastyunHome, "generated-videos")), input.sessionKey);
   try {
     preserved = await images.rewrite(preserved);
     await images.rewriteSubagents(preserved, chatDir, newSessionDir, forkPoint.target.createdAt);

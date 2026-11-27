@@ -1,15 +1,15 @@
-# PilotDeck Docker
+# EastYunDesk Docker
 
 简体中文版本：[README_DOCKER.zh.md](./README_DOCKER.zh.md)
 
-PilotDeck runs as two cooperating Node.js processes in the container:
+EastYunDesk runs as two cooperating Node.js processes in the container:
 
-- **Gateway**: agent runtime on `PILOTDECK_GATEWAY_PORT` (default `18789`)
+- **Gateway**: agent runtime on `EASTYUNDESK_GATEWAY_PORT` (default `18789`)
 - **UI Server**: web frontend + REST/WebSocket adapter on `SERVER_PORT` (default `3001`)
 
-The Docker Compose setup persists the full `PILOT_HOME` directory, including generated config, auth DB, permissions, sessions/projects, memory, skills/plugins, and router stats.
+The Docker Compose setup persists the full `EASTYUN_HOME` directory, including generated config, auth DB, permissions, sessions/projects, memory, skills/plugins, and router stats.
 
-Login is required by default for REST and WebSocket access, including the `/shell` terminal. On first launch, create the owner account over a trusted connection before exposing the service. Do not set `PILOTDECK_DISABLE_LOCAL_AUTH=1/true` or `VITE_IS_PLATFORM=true` on publicly accessible deployments: these options bypass local authentication. Existing deployments with an automatically created `local` user must set a known password for that user (or back up the auth database and set up the account again) before upgrading to avoid being locked out.
+Login is required by default for REST and WebSocket access, including the `/shell` terminal. On first launch, create the owner account over a trusted connection before exposing the service. Do not set `EASTYUNDESK_DISABLE_LOCAL_AUTH=1/true` or `VITE_IS_PLATFORM=true` on publicly accessible deployments: these options bypass local authentication. Existing deployments with an automatically created `local` user must set a known password for that user (or back up the auth database and set up the account again) before upgrading to avoid being locked out.
 
 ## Quick Start with Docker Compose
 
@@ -18,7 +18,7 @@ Login is required by default for REST and WebSocket access, including the `/shel
 - [Docker](https://docs.docker.com/get-docker/) v20+
 - [Docker Compose](https://docs.docker.com/compose/) v2+
 
-Make sure the Docker daemon is running before starting PilotDeck. On macOS/Windows, start Docker Desktop first and wait until the engine is ready:
+Make sure the Docker daemon is running before starting EastYunDesk. On macOS/Windows, start Docker Desktop first and wait until the engine is ready:
 
 ```bash
 docker info
@@ -26,7 +26,7 @@ docker info
 
 The first build pulls base images such as `node:22-bookworm` and `node:22-bookworm-slim` from Docker Hub. If pulling images is slow or fails with `context deadline exceeded`, configure a Docker registry mirror or Docker Desktop proxy, then retry `docker compose up -d --build`. On Docker Desktop, registry mirrors can be configured in **Settings → Docker Engine**. On Linux, add mirrors to `/etc/docker/daemon.json`, then restart Docker.
 
-The container installs dependencies with Node.js 22 and the committed `pnpm-lock.yaml` inside the image, so it does not use the host Node.js runtime or host CPU architecture for native Node modules. The legacy `sqlite`/`sqlite3` packages are not required by PilotDeck and are not part of the source install path.
+The container installs dependencies with Node.js 22 and the committed `pnpm-lock.yaml` inside the image, so it does not use the host Node.js runtime or host CPU architecture for native Node modules. The legacy `sqlite`/`sqlite3` packages are not required by EastYunDesk and are not part of the source install path.
 
 As a one-off workaround, you can pre-pull the required Node images from a reachable mirror and tag them with the names used by the Dockerfile:
 
@@ -44,9 +44,9 @@ The Docker build also downloads Debian and npm packages inside the image, so slo
 Set the model provider variables in `docker-compose.yml` or an `.env` file:
 
 ```env
-PILOTDECK_MODEL=openai/gpt-4.1
-PILOTDECK_API_KEY=sk-your-api-key
-PILOTDECK_API_URL=https://api.openai.com/v1
+EASTYUNDESK_MODEL=openai/gpt-4.1
+EASTYUNDESK_API_KEY=sk-your-api-key
+EASTYUNDESK_API_URL=https://api.openai.com/v1
 ```
 
 Then start:
@@ -55,15 +55,15 @@ Then start:
 docker compose up -d --build
 ```
 
-If `/root/.pilotdeck/pilotdeck.yaml` does not exist in the `pilotdeck-home` volume, the entrypoint generates it from the `PILOTDECK_*` environment variables on first start.
+If `/root/.eastyundesk/eastyundesk.yaml` does not exist in the `eastyundesk-home` volume, the entrypoint generates it from the `EASTYUNDESK_*` environment variables on first start.
 
 ### Option B: Configure via YAML file
 
 Create the host config file first:
 
 ```bash
-mkdir -p ~/.pilotdeck
-cat > ~/.pilotdeck/pilotdeck.yaml <<'YAML'
+mkdir -p ~/.eastyundesk
+cat > ~/.eastyundesk/eastyundesk.yaml <<'YAML'
 schemaVersion: 1
 agent:
   model: openai/gpt-4.1
@@ -82,8 +82,8 @@ Then uncomment the config bind mount in `docker-compose.yml`:
 
 ```yaml
 volumes:
-  - pilotdeck-home:/root/.pilotdeck
-  - ${PILOTDECK_CONFIG:-${HOME}/.pilotdeck/pilotdeck.yaml}:/root/.pilotdeck/pilotdeck.yaml:ro
+  - eastyundesk-home:/root/.eastyundesk
+  - ${EASTYUNDESK_CONFIG:-${HOME}/.eastyundesk/eastyundesk.yaml}:/root/.eastyundesk/eastyundesk.yaml:ro
 ```
 
 Start the service:
@@ -100,82 +100,82 @@ Agents run inside the container. To let them access a host project, mount it int
 
 ```yaml
 volumes:
-  - pilotdeck-home:/root/.pilotdeck
-  - ${PILOTDECK_WORKSPACE:-${PWD}}:/workspace
+  - eastyundesk-home:/root/.eastyundesk
+  - ${EASTYUNDESK_WORKSPACE:-${PWD}}:/workspace
 ```
 
-You can set `PILOTDECK_WORKSPACE=/path/to/project` before running `docker compose up`.
+You can set `EASTYUNDESK_WORKSPACE=/path/to/project` before running `docker compose up`.
 
 ## Manual Docker Build & Run
 
 ### Build the image
 
 ```bash
-docker build -t pilotdeck:latest .
+docker build -t eastyundesk:latest .
 ```
 
 ### Run with environment variables
 
 ```bash
-docker run -d --name pilotdeck \
+docker run -d --name eastyundesk \
   -p 3001:3001 \
-  -v pilotdeck-home:/root/.pilotdeck \
-  -e PILOTDECK_MODEL=openai/gpt-4.1 \
-  -e PILOTDECK_API_KEY=sk-your-api-key \
-  -e PILOTDECK_API_URL=https://api.openai.com/v1 \
-  pilotdeck:latest
+  -v eastyundesk-home:/root/.eastyundesk \
+  -e EASTYUNDESK_MODEL=openai/gpt-4.1 \
+  -e EASTYUNDESK_API_KEY=sk-your-api-key \
+  -e EASTYUNDESK_API_URL=https://api.openai.com/v1 \
+  eastyundesk:latest
 ```
 
 ### Run with a config file
 
 ```bash
-docker run -d --name pilotdeck \
+docker run -d --name eastyundesk \
   -p 3001:3001 \
-  -v pilotdeck-home:/root/.pilotdeck \
-  -v ~/.pilotdeck/pilotdeck.yaml:/root/.pilotdeck/pilotdeck.yaml:ro \
-  pilotdeck:latest
+  -v eastyundesk-home:/root/.eastyundesk \
+  -v ~/.eastyundesk/eastyundesk.yaml:/root/.eastyundesk/eastyundesk.yaml:ro \
+  eastyundesk:latest
 ```
 
 ### Run with a workspace mount
 
 ```bash
-docker run -d --name pilotdeck \
+docker run -d --name eastyundesk \
   -p 3001:3001 \
-  -v pilotdeck-home:/root/.pilotdeck \
+  -v eastyundesk-home:/root/.eastyundesk \
   -v "$PWD":/workspace \
-  -e PILOTDECK_MODEL=openai/gpt-4.1 \
-  -e PILOTDECK_API_KEY=sk-your-api-key \
-  -e PILOTDECK_API_URL=https://api.openai.com/v1 \
-  pilotdeck:latest
+  -e EASTYUNDESK_MODEL=openai/gpt-4.1 \
+  -e EASTYUNDESK_API_KEY=sk-your-api-key \
+  -e EASTYUNDESK_API_URL=https://api.openai.com/v1 \
+  eastyundesk:latest
 ```
 
 ### Run with a proxy
 
 ```bash
-docker run -d --name pilotdeck \
+docker run -d --name eastyundesk \
   -p 3001:3001 \
-  -v pilotdeck-home:/root/.pilotdeck \
-  -e PILOTDECK_MODEL=openai/gpt-4.1 \
-  -e PILOTDECK_API_KEY=sk-your-api-key \
-  -e PILOTDECK_API_URL=https://api.openai.com/v1 \
-  -e PILOTDECK_PROXY=http://host.docker.internal:7890 \
-  pilotdeck:latest
+  -v eastyundesk-home:/root/.eastyundesk \
+  -e EASTYUNDESK_MODEL=openai/gpt-4.1 \
+  -e EASTYUNDESK_API_KEY=sk-your-api-key \
+  -e EASTYUNDESK_API_URL=https://api.openai.com/v1 \
+  -e EASTYUNDESK_PROXY=http://host.docker.internal:7890 \
+  eastyundesk:latest
 ```
 
 ## Environment Variables
 
 | Variable | Description | Default |
 |---|---|---|
-| `PILOT_HOME` | PilotDeck state directory inside the container | `/root/.pilotdeck` |
-| `PILOTDECK_MODEL` | Main model identifier, formatted as `provider/model` | `openrouter/deepseek/deepseek-v4-flash` |
-| `PILOTDECK_LIGHT_MODEL` | Lightweight routing/judge model identifier | `openrouter/qwen/qwen3-8b` |
-| `PILOTDECK_API_KEY` | API key for the main model provider; when omitted, configure it in onboarding | — |
-| `PILOTDECK_API_URL` | Base URL for the main model provider API | `https://openrouter.ai/api/v1` |
-| `PILOTDECK_LIGHT_API_KEY` | API key for a different light-model provider | Falls back to `PILOTDECK_API_KEY` |
-| `PILOTDECK_LIGHT_API_URL` | Base URL for a different light-model provider | Falls back to `PILOTDECK_API_URL` |
-| `PILOTDECK_PROXY` | HTTP/HTTPS proxy URL | — |
+| `EASTYUN_HOME` | EastYunDesk state directory inside the container | `/root/.eastyundesk` |
+| `EASTYUNDESK_MODEL` | Main model identifier, formatted as `provider/model` | `openrouter/deepseek/deepseek-v4-flash` |
+| `EASTYUNDESK_LIGHT_MODEL` | Lightweight routing/judge model identifier | `openrouter/qwen/qwen3-8b` |
+| `EASTYUNDESK_API_KEY` | API key for the main model provider; when omitted, configure it in onboarding | — |
+| `EASTYUNDESK_API_URL` | Base URL for the main model provider API | `https://openrouter.ai/api/v1` |
+| `EASTYUNDESK_LIGHT_API_KEY` | API key for a different light-model provider | Falls back to `EASTYUNDESK_API_KEY` |
+| `EASTYUNDESK_LIGHT_API_URL` | Base URL for a different light-model provider | Falls back to `EASTYUNDESK_API_URL` |
+| `EASTYUNDESK_PROXY` | HTTP/HTTPS proxy URL | — |
 | `SERVER_PORT` | UI server port | `3001` |
-| `PILOTDECK_GATEWAY_PORT` | Gateway port used by the UI bridge | `18789` |
+| `EASTYUNDESK_GATEWAY_PORT` | Gateway port used by the UI bridge | `18789` |
 
 ## Architecture
 

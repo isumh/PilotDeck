@@ -13,18 +13,18 @@ export class UsageCounter {
   private pending: Promise<void> = Promise.resolve();
   private directoryReady = false;
 
-  constructor(private readonly pilotHome: string, private readonly now = () => new Date()) {}
+  constructor(private readonly eastyunHome: string, private readonly now = () => new Date()) {}
 
   record(tokens: number): void {
     if (!Number.isSafeInteger(tokens) || tokens < 0) return;
-    const directory = join(this.pilotHome, "usage", "daily");
+    const directory = join(this.eastyunHome, "usage", "daily");
     const file = join(directory, `${dayFormatter.format(this.now())}.jsonl`);
     this.pending = this.pending.then(async () => {
       if (!this.directoryReady) {
         await mkdir(directory, { recursive: true });
         this.directoryReady = true;
       }
-      // Append also preserves counts when several instances share a Pilot home.
+      // Append also preserves counts when several instances share a EastYun home.
       await appendFile(file, `${tokens}\n`, "utf8");
     }).catch(() => {
       this.directoryReady = false;

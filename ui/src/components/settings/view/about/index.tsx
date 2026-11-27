@@ -19,7 +19,7 @@ export default function AboutSections(props: AboutSectionsProps) {
 
 function WebAboutSections({ versionInfo }: { versionInfo: DesktopVersionCheckResult }) {
   const { t } = useTranslation("settings");
-  const currentVersion = versionInfo.currentVersion === "unknown" ? "-" : versionInfo.currentVersion;
+  const currentVersion = versionInfo.currentVersion === "unknown" ? "1.0" : versionInfo.currentVersion;
 
   return (
     <div className="about-page-content">
@@ -31,7 +31,7 @@ function WebAboutSections({ versionInfo }: { versionInfo: DesktopVersionCheckRes
         <div className="space-y-3 border-t border-border px-5 py-4 text-sm text-muted-foreground">
           <p>{t("settingsPage.about.webReleaseHint")}</p>
           <a
-            href="https://github.com/OpenBMB/PilotDeck/releases/latest"
+            href="https://www.ceairyn.com"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block font-medium text-[var(--pd-accent-strong,#2563eb)] underline-offset-2 hover:underline"

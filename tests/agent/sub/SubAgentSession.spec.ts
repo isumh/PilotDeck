@@ -27,18 +27,18 @@ import {
   createDefaultPermissionContext,
 } from "../../../src/permission/index.js";
 import { createBashTool } from "../../../src/tool/builtin/bash.js";
-import type { PilotDeckCommandRunner } from "../../../src/tool/builtin/bash/commandRunner.js";
+import type { EastYunDeskCommandRunner } from "../../../src/tool/builtin/bash/commandRunner.js";
 import { createExecuteCodeTool } from "../../../src/tool/builtin/executeCode.js";
 import { ToolRuntime } from "../../../src/tool/execution/ToolRuntime.js";
 import {
   ToolRegistry,
-  type PilotDeckSubagentForkApi,
-  type PilotDeckToolDefinition,
-  type PilotDeckToolRuntimeContext,
+  type EastYunDeskSubagentForkApi,
+  type EastYunDeskToolDefinition,
+  type EastYunDeskToolRuntimeContext,
 } from "../../../src/tool/index.js";
 import type { CanonicalMessage } from "../../../src/model/index.js";
-import { loadPilotConfig } from "../../../src/pilot/index.js";
-import { PilotConfigError } from "../../../src/pilot/config/types.js";
+import { loadEastYunConfig } from "../../../src/eastyun/index.js";
+import { EastYunConfigError } from "../../../src/eastyun/config/types.js";
 
 const FINAL_REPORT = [
   "Scope: inspected inputs",
@@ -48,10 +48,10 @@ const FINAL_REPORT = [
   "Issues: none",
 ].join("\n");
 
-const tempPilotHomes: string[] = [];
+const tempEastYunHomes: string[] = [];
 
 afterEach(() => {
-  for (const dir of tempPilotHomes.splice(0)) {
+  for (const dir of tempEastYunHomes.splice(0)) {
     rmSync(dir, { recursive: true, force: true });
   }
 });
@@ -65,13 +65,13 @@ type TestableAgentLoop = {
   buildSubagentForkApi(
     input: AgentLoopInput,
     messages: CanonicalMessage[],
-  ): PilotDeckSubagentForkApi;
+  ): EastYunDeskSubagentForkApi;
 };
 
 function createNoopTool(
   name: string,
-  isReadOnly: PilotDeckToolDefinition["isReadOnly"],
-): PilotDeckToolDefinition {
+  isReadOnly: EastYunDeskToolDefinition["isReadOnly"],
+): EastYunDeskToolDefinition {
   return {
     name,
     description: `${name} test tool`,
@@ -155,7 +155,7 @@ function parentConfig(): AgentRuntimeConfig {
 
 function createSubagentForkHarness(router: AgentRouterRuntime): {
   events: AgentEvent[];
-  fork: PilotDeckSubagentForkApi;
+  fork: EastYunDeskSubagentForkApi;
 } {
   const events: AgentEvent[] = [];
   const loop = new AgentLoop(parentConfig(), {
@@ -241,7 +241,7 @@ test("subagent catalog refresh uses its child registry and preserves its tool al
   assert.deepEqual(parent.list(), [existing]);
 });
 
-function runtimeContext(config: AgentRuntimeConfig): PilotDeckToolRuntimeContext {
+function runtimeContext(config: AgentRuntimeConfig): EastYunDeskToolRuntimeContext {
   return {
     sessionId: "child-session",
     turnId: "child-turn",
@@ -253,19 +253,19 @@ function runtimeContext(config: AgentRuntimeConfig): PilotDeckToolRuntimeContext
   };
 }
 
-function writePilotConfig(raw: string): string {
-  const pilotHome = mkdtempSync(join(tmpdir(), "pilotdeck-subagent-config-"));
-  tempPilotHomes.push(pilotHome);
-  writeFileSync(join(pilotHome, "pilotdeck.yaml"), raw, "utf8");
-  return pilotHome;
+function writeEastYunConfig(raw: string): string {
+  const eastyunHome = mkdtempSync(join(tmpdir(), "eastyundesk-subagent-config-"));
+  tempEastYunHomes.push(eastyunHome);
+  writeFileSync(join(eastyunHome, "eastyundesk.yaml"), raw, "utf8");
+  return eastyunHome;
 }
 
-function loadInlinePilotConfig(raw: string) {
-  const pilotHome = writePilotConfig(raw);
-  return loadPilotConfig({ env: { PILOT_HOME: pilotHome } });
+function loadInlineEastYunConfig(raw: string) {
+  const eastyunHome = writeEastYunConfig(raw);
+  return loadEastYunConfig({ env: { EASTYUN_HOME: eastyunHome } });
 }
 
-function pilotConfigWithSubagentDefault(defaultValue: string): string {
+function eastyunConfigWithSubagentDefault(defaultValue: string): string {
   return `
 schemaVersion: 1
 agent:
@@ -290,14 +290,14 @@ model:
 }
 
 test("agent.subagents.default inherit keeps subagent model unset", () => {
-  const snapshot = loadInlinePilotConfig(pilotConfigWithSubagentDefault("inherit"));
+  const snapshot = loadInlineEastYunConfig(eastyunConfigWithSubagentDefault("inherit"));
 
   assert.equal(snapshot.config.agent.subagents?.default, undefined);
   assert.equal(snapshot.diagnostics.some((diagnostic) => diagnostic.path === "agent.subagents.default"), false);
 });
 
 test("agent.subagents.params is reported as unsupported instead of being silently discarded", () => {
-  const snapshot = loadInlinePilotConfig(`
+  const snapshot = loadInlineEastYunConfig(`
 schemaVersion: 1
 agent:
   model: main/main-model
@@ -328,7 +328,7 @@ model:
 });
 
 test("empty agent.subagents.params does not create a warning", () => {
-  const snapshot = loadInlinePilotConfig(`
+  const snapshot = loadInlineEastYunConfig(`
 schemaVersion: 1
 agent:
   model: main/main-model
@@ -351,7 +351,7 @@ model:
 });
 
 test("agent.subagents.default resolves a configured model", () => {
-  const snapshot = loadInlinePilotConfig(pilotConfigWithSubagentDefault("child/child-model"));
+  const snapshot = loadInlineEastYunConfig(eastyunConfigWithSubagentDefault("child/child-model"));
 
   assert.deepEqual(snapshot.config.agent.subagents?.default, {
     id: "child/child-model",
@@ -361,7 +361,7 @@ test("agent.subagents.default resolves a configured model", () => {
 });
 
 test("agent.subagents.default inherits with a warning when provider is missing", () => {
-  const snapshot = loadInlinePilotConfig(pilotConfigWithSubagentDefault("missing/child-model"));
+  const snapshot = loadInlineEastYunConfig(eastyunConfigWithSubagentDefault("missing/child-model"));
 
   assert.equal(snapshot.config.agent.subagents?.default, undefined);
   assert.deepEqual(
@@ -377,7 +377,7 @@ test("agent.subagents.default inherits with a warning when provider is missing",
 });
 
 test("agent.subagents.default inherits with a warning when model is missing", () => {
-  const snapshot = loadInlinePilotConfig(pilotConfigWithSubagentDefault("child/missing-model"));
+  const snapshot = loadInlineEastYunConfig(eastyunConfigWithSubagentDefault("child/missing-model"));
 
   assert.equal(snapshot.config.agent.subagents?.default, undefined);
   assert.equal(
@@ -387,7 +387,7 @@ test("agent.subagents.default inherits with a warning when model is missing", ()
 });
 
 test("agent.subagents.default inherits with a warning when malformed", () => {
-  const snapshot = loadInlinePilotConfig(pilotConfigWithSubagentDefault("missing-format"));
+  const snapshot = loadInlineEastYunConfig(eastyunConfigWithSubagentDefault("missing-format"));
 
   assert.equal(snapshot.config.agent.subagents?.default, undefined);
   assert.equal(
@@ -398,7 +398,7 @@ test("agent.subagents.default inherits with a warning when malformed", () => {
 
 test("agent.model still fails fast when provider is missing", () => {
   assert.throws(
-    () => loadInlinePilotConfig(`
+    () => loadInlineEastYunConfig(`
 schemaVersion: 1
 agent:
   model: missing/main-model
@@ -414,7 +414,7 @@ model:
         child-model: {}
 `),
     (error) =>
-      error instanceof PilotConfigError &&
+      error instanceof EastYunConfigError &&
       error.diagnostics.some((diagnostic) => diagnostic.code === "CONFIG_AGENT_PROVIDER_NOT_FOUND"),
   );
 });
@@ -674,7 +674,7 @@ test("configured subagent default remains a router baseline, not a router overri
 
 test("read-only subagent evaluates bash safety from the real command", async () => {
   const commands: string[] = [];
-  const runner: PilotDeckCommandRunner = {
+  const runner: EastYunDeskCommandRunner = {
     async run(command) {
       commands.push(command);
       return {
@@ -727,7 +727,7 @@ test("read-only execute_code checks the real code instead of crashing on registr
       id: "write-code",
       name: "execute_code",
       input: {
-        code: "from pilotdeck_tools import write_file\nwrite_file('blocked.txt', 'no')",
+        code: "from eastyundesk_tools import write_file\nwrite_file('blocked.txt', 'no')",
       },
     },
     runtimeContext(config),

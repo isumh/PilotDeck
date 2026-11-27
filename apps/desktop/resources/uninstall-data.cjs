@@ -1,5 +1,5 @@
 // Used before Windows removes the bundled Node, and after Linux package removal.
-// Deliberately accepts only PilotDeck-owned directory names, never arbitrary homes.
+// Deliberately accepts only EastYunDesk-owned directory names, never arbitrary homes.
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -7,22 +7,22 @@ function containsWorkspace(directory) {
   const pending = [directory];
   while (pending.length) {
     for (const entry of fs.readdirSync(pending.pop(), { withFileTypes: true })) {
-      if (entry.name === '.pilotdeck-workspace') return true;
+      if (entry.name === '.eastyundesk-workspace') return true;
       if (entry.isDirectory() && !entry.isSymbolicLink()) pending.push(path.join(entry.parentPath || entry.path, entry.name));
     }
   }
   return false;
 }
 
-function cleanupPersonalData({ profile, appData, localAppData, pilotHome }) {
+function cleanupPersonalData({ profile, appData, localAppData, eastyunHome }) {
   const home = path.resolve(profile), targets = new Set(), skipped = [], removed = [];
   if (home === path.parse(home).root) return { removed, skipped: [home] };
   const same = (a, b) => process.platform === 'win32' ? a.toLowerCase() === b.toLowerCase() : a === b;
   const inside = (base, target) => { const relative = path.relative(base, target); return relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative); };
-  const pilot = path.resolve(pilotHome || path.join(home, '.pilotdeck'));
-  if (path.basename(pilot).toLowerCase() === '.pilotdeck' && !same(pilot, home) && !same(pilot, path.parse(pilot).root)) targets.add(pilot);
-  else skipped.push(pilot);
-  for (const [base, names] of [[appData, ['PilotDeck', 'pilotdeck-desktop']], [localAppData, ['PilotDeck', 'pilotdeck-desktop', 'pilotdeck-desktop-updater', 'pilotdeck-updater']]]) {
+  const eastyun = path.resolve(eastyunHome || path.join(home, '.eastyundesk'));
+  if (path.basename(eastyun).toLowerCase() === '.eastyundesk' && !same(eastyun, home) && !same(eastyun, path.parse(eastyun).root)) targets.add(eastyun);
+  else skipped.push(eastyun);
+  for (const [base, names] of [[appData, ['EastYunDesk', 'eastyundesk-desktop']], [localAppData, ['EastYunDesk', 'eastyundesk-desktop', 'eastyundesk-desktop-updater', 'eastyundesk-updater']]]) {
     if (!base) continue;
     const absolute = path.resolve(base);
     if (!inside(home, absolute)) { skipped.push(absolute); continue; }
@@ -49,7 +49,7 @@ function readClientLanguage({ profile, appData }) {
   if (!appData) return '';
   const relative = path.relative(path.resolve(profile), path.resolve(appData));
   if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) return '';
-  const files = ['PilotDeck', 'pilotdeck-desktop'].map(name => path.join(appData, name, 'appearance.json'));
+  const files = ['EastYunDesk', 'eastyundesk-desktop'].map(name => path.join(appData, name, 'appearance.json'));
   const candidates = files.flatMap(file => { try { const stat = fs.lstatSync(file); return stat.isFile() && stat.size < 65536 ? [{ file, at: stat.mtimeMs }] : []; } catch { return []; } }).sort((a,b) => b.at - a.at);
   for (const { file } of candidates) {
     try { const value = JSON.parse(fs.readFileSync(file, 'utf8')).language; if (value === 'en' || value === 'zh-CN') return value; } catch {}
@@ -65,7 +65,7 @@ if (require.main === module) {
   else if (args.includes('--language')) {
     process.stdout.write(readClientLanguage({ profile, appData: get('--app-data') }));
   } else {
-    const result = cleanupPersonalData({ profile, appData: get('--app-data'), localAppData: get('--local-app-data'), pilotHome: get('--pilot-home') });
+    const result = cleanupPersonalData({ profile, appData: get('--app-data'), localAppData: get('--local-app-data'), eastyunHome: get('--eastyun-home') });
     process.stdout.write(JSON.stringify(result));
     if (result.skipped.length) process.exitCode = 2;
   }

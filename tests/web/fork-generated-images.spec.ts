@@ -5,14 +5,14 @@ import { dirname, join } from "node:path";
 import test, { type TestContext } from "node:test";
 import sharp from "sharp";
 import type { CanonicalMessage } from "../../src/model/index.js";
-import { getPilotProjectChatDir } from "../../src/pilot/paths.js";
+import { getEastYunProjectChatDir } from "../../src/eastyun/paths.js";
 import { JsonlTranscriptWriter } from "../../src/session/transcript/JsonlTranscriptWriter.js";
 import { readTranscript } from "../../src/session/transcript/TranscriptReader.js";
 import { sanitizeSessionIdForPath } from "../../src/session/storage/ProjectSessionStorage.js";
 import { toCanonicalToolResultBlock } from "../../src/tool/protocol/result.js";
 import { createImageGenerationTools } from "../../src/tool/builtin/imageGeneration.js";
 import { ImageStore, type GeneratedImage } from "../../src/tool/builtin/images/ImageStore.js";
-import type { PilotDeckToolRuntimeContext } from "../../src/tool/protocol/types.js";
+import type { EastYunDeskToolRuntimeContext } from "../../src/tool/protocol/types.js";
 import { forkWebSession } from "../../src/web/server/forkSession.js";
 import { readWebSessionMessages } from "../../src/web/server/readSessionMessages.js";
 
@@ -25,14 +25,14 @@ async function fixture(t: TestContext) {
   t.after(() => rm(home, { recursive: true, force: true }));
   const projectRoot = join(home, "project"); await mkdir(projectRoot);
   const sourceId = "web:source";
-  const chatDir = getPilotProjectChatDir(projectRoot, home);
+  const chatDir = getEastYunProjectChatDir(projectRoot, home);
   const transcriptPath = join(chatDir, sanitizeSessionIdForPath(sourceId) + ".jsonl");
   let time = Date.parse("2026-11-02T00:00:00Z");
   const now = () => new Date(time++);
   const writer = new JsonlTranscriptWriter({ path: transcriptPath, now });
   const store = new ImageStore(join(home, "generated-images"));
   const png = await sharp({ create: { width: 24, height: 16, channels: 3, background: "red" } }).png().toBuffer();
-  const options = { projectRoot, pilotHome: home, now };
+  const options = { projectRoot, eastyunHome: home, now };
   const finish = () => writer.recordTurnResult(sourceId, "draw", { type: "success", sessionId: sourceId, turnId: "draw", stopReason: "completed",
     usage: {}, permissionDenials: [], turns: 1, startedAt: now().toISOString(), completedAt: now().toISOString() });
   const forkPoint = async () => {
@@ -87,8 +87,8 @@ for (const storage of ["ordinary", "snapshot", "restore"] as const) {
         return new Response(JSON.stringify({ data: [{ b64_json: f.png.toString("base64") }] }));
       },
     });
-    const context: PilotDeckToolRuntimeContext = { sessionId: fork.newSessionKey, turnId: "edit", cwd: f.projectRoot,
-      permissionMode: "default", env: { PILOT_HOME: f.home },
+    const context: EastYunDeskToolRuntimeContext = { sessionId: fork.newSessionKey, turnId: "edit", cwd: f.projectRoot,
+      permissionMode: "default", env: { EASTYUN_HOME: f.home },
       permissionContext: { mode: "default", cwd: f.projectRoot, additionalWorkingDirectories: [], rules: { allow: [], deny: [], ask: [] }, canPrompt: false, bypassAvailable: false } };
     await tools[2]!.execute({ image_id: first.imageId, output_path: "saved.png" }, context);
     assert.deepEqual(await readFile(join(f.projectRoot, "saved.png")), f.png);

@@ -1,6 +1,6 @@
 import type { CronTaskSchedule } from '../../../src/cron/protocol/schedules';
 
-export type SessionProvider = 'claude' | 'cursor' | 'codex' | 'gemini' | 'pilotdeck';
+export type SessionProvider = 'claude' | 'cursor' | 'codex' | 'gemini' | 'eastyundesk';
 export type ProjectSessionKind = 'background_task';
 export type SessionMessagesUpdateTarget = {
   projectName: string;

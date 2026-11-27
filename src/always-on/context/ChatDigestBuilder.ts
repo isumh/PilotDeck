@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { getPilotProjectChatDir } from "../../pilot/paths.js";
+import { getEastYunProjectChatDir } from "../../eastyun/paths.js";
 import { listProjectSessions, type SessionInfo } from "../../session/storage/SessionList.js";
 import { readSessionLite } from "../../session/storage/SessionLiteReader.js";
 
@@ -20,7 +20,7 @@ export type ChatDigest = {
 
 export type BuildChatDigestOptions = {
   projectRoot: string;
-  pilotHome: string;
+  eastyunHome: string;
   maxSessions?: number;
   maxPromptsPerSession?: number;
   maxPromptLength?: number;
@@ -49,14 +49,14 @@ export async function buildChatDigest(
 
   const allSessions = await listProjectSessions({
     projectRoot: options.projectRoot,
-    pilotHome: options.pilotHome,
+    eastyunHome: options.eastyunHome,
     includeInternal: false,
   });
   const sessions = allSessions.filter(
     (s) => !DIGEST_EXCLUDED_PREFIXES.some((p) => s.sessionId.startsWith(p)),
   );
 
-  const chatDir = getPilotProjectChatDir(options.projectRoot, options.pilotHome);
+  const chatDir = getEastYunProjectChatDir(options.projectRoot, options.eastyunHome);
   const digests: ChatSessionDigest[] = [];
   const aliasMap = new Map<string, string>();
   let aliasCounter = 0;

@@ -9,8 +9,8 @@ import { PluginRuntime } from "../../../src/extension/plugins/runtime/PluginRunt
 import { parsePluginMcpServers } from "../../../src/mcp/runtime/parsePluginMcpServers.js";
 import {
   patchProjectScopedMcpSpec,
-  PILOTDECK_NODE_EXECUTABLE_MARKER,
-  PILOTDECK_PLAYWRIGHT_MCP_ENTRYPOINT_MARKER,
+  EASTYUNDESK_NODE_EXECUTABLE_MARKER,
+  EASTYUNDESK_PLAYWRIGHT_MCP_ENTRYPOINT_MARKER,
 } from "../../../src/mcp/runtime/projectMcpSpec.js";
 
 test("browser-use resolves its local Playwright MCP entrypoint", () => {
@@ -20,10 +20,10 @@ test("browser-use resolves its local Playwright MCP entrypoint", () => {
   assert.deepEqual(diagnostics, []);
   assert.equal(servers[0]?.transport, "stdio");
   if (servers[0]?.transport !== "stdio") throw new Error("expected stdio MCP spec");
-  assert.equal(servers[0].command, PILOTDECK_NODE_EXECUTABLE_MARKER);
-  assert.ok(servers[0].args?.includes(PILOTDECK_PLAYWRIGHT_MCP_ENTRYPOINT_MARKER));
+  assert.equal(servers[0].command, EASTYUNDESK_NODE_EXECUTABLE_MARKER);
+  assert.ok(servers[0].args?.includes(EASTYUNDESK_PLAYWRIGHT_MCP_ENTRYPOINT_MARKER));
 
-  const patched = patchProjectScopedMcpSpec(servers[0]!, "/tmp/project", "/tmp/pilot-home");
+  const patched = patchProjectScopedMcpSpec(servers[0]!, "/tmp/project", "/tmp/eastyun-home");
   assert.equal(patched.transport, "stdio");
   if (patched.transport !== "stdio") throw new Error("expected stdio MCP spec");
   assert.equal(patched.command, process.execPath);
@@ -31,11 +31,11 @@ test("browser-use resolves its local Playwright MCP entrypoint", () => {
 });
 
 test("builtin plugin skills are hydrated by PluginRuntime", async () => {
-  const root = await mkdtemp(join(tmpdir(), "pilotdeck-browser-use-plugin-"));
+  const root = await mkdtemp(join(tmpdir(), "eastyundesk-browser-use-plugin-"));
   try {
     const runtime = new PluginRuntime({
       projectRoot: root,
-      pilotHome: join(root, "pilot-home"),
+      eastyunHome: join(root, "eastyun-home"),
       builtinPlugins: loadBuiltinPlugins(),
     });
     await runtime.refresh();

@@ -11,7 +11,7 @@ import {
 } from "node:fs";
 import { readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { getPilotProjectChatDir } from "../../pilot/index.js";
+import { getEastYunProjectChatDir } from "../../eastyun/index.js";
 import { mergeMetadata } from "../../session/metadata/SessionMetadataStore.js";
 import { sanitizeSessionIdForPath } from "../../session/storage/ProjectSessionStorage.js";
 import { readTranscript } from "../../session/transcript/TranscriptReader.js";
@@ -32,7 +32,7 @@ import type {
 
 export type ReplaceLastWebSessionTurnOptions = {
   projectRoot: string;
-  pilotHome: string;
+  eastyunHome: string;
   now?: () => Date;
   /** Identifies the live Gateway process that owns a prepared transaction. */
   transactionOwner?: ReplacementTransactionOwner;
@@ -85,10 +85,10 @@ function findLatestAcceptedInput(
 function replacementPaths(
   sessionKey: string,
   projectKey: string,
-  pilotHome: string,
+  eastyunHome: string,
   transactionId?: string,
 ): { transcriptPath: string; safeId: string; backupPath?: string; journalPath?: string } {
-  const chatDir = getPilotProjectChatDir(projectKey, pilotHome);
+  const chatDir = getEastYunProjectChatDir(projectKey, eastyunHome);
   const safeId = sanitizeSessionIdForPath(sessionKey);
   const transcriptPath = resolve(chatDir, `${safeId}.jsonl`);
   return {
@@ -294,7 +294,7 @@ function isProcessAlive(pid: number): boolean {
  * no transcript writer can race the recovery pass.
  */
 export function recoverPendingLastTurnReplacements(
-  pilotHome: string,
+  eastyunHome: string,
   options: RecoverLastTurnReplacementsOptions = {},
 ): RecoverLastTurnReplacementsResult {
   const result: RecoverLastTurnReplacementsResult = {
@@ -306,7 +306,7 @@ export function recoverPendingLastTurnReplacements(
   };
   const processIsAlive = options.isProcessAlive ?? isProcessAlive;
   const groups = new Map<string, { transcriptPath: string; artifacts: ReplacementArtifact[] }>();
-  const projectsDir = resolve(pilotHome, "projects");
+  const projectsDir = resolve(eastyunHome, "projects");
   let projectDirNames: string[];
   try {
     projectDirNames = readdirSync(projectsDir, { withFileTypes: true, encoding: "utf8" })
@@ -356,7 +356,7 @@ export function recoverPendingLastTurnReplacements(
       const latest = states[0];
       if (!latest) continue;
 
-      // Another local Gateway can share PILOT_HOME (for example server + TUI).
+      // Another local Gateway can share EASTYUN_HOME (for example server + TUI).
       // A live owner's transaction is still in flight and is not crash debris.
       const owner = latest.journal?.owner;
       if (owner && processIsAlive(owner.pid)) {
@@ -445,7 +445,7 @@ export async function replaceLastWebSessionTurn(
   const { transcriptPath, safeId } = replacementPaths(
     input.sessionKey,
     effectiveProjectRoot,
-    options.pilotHome,
+    options.eastyunHome,
   );
   const { entries, diagnostics } = await readTranscript(transcriptPath);
   if (diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -500,7 +500,7 @@ export async function replaceLastWebSessionTurn(
   const { backupPath, journalPath } = replacementPaths(
     input.sessionKey,
     effectiveProjectRoot,
-    options.pilotHome,
+    options.eastyunHome,
     transactionId,
   );
   if (!backupPath || !journalPath) throw new Error("Replacement transaction paths were not created.");
@@ -515,7 +515,7 @@ export async function replaceLastWebSessionTurn(
       ...(options.transactionOwner ? { owner: options.transactionOwner } : {}),
     };
     // Publish owner metadata before the backup or transcript becomes visible.
-    // A second Gateway scanning the shared PILOT_HOME will therefore skip this
+    // A second Gateway scanning the shared EASTYUN_HOME will therefore skip this
     // transaction throughout its entire preparation window.
     await writeFile(journalPath, `${JSON.stringify(journal)}\n`, {
       encoding: "utf8",
@@ -564,7 +564,7 @@ export async function finalizeLastWebSessionTurnReplacement(
   const { transcriptPath, safeId, backupPath, journalPath } = replacementPaths(
     input.sessionKey,
     effectiveProjectRoot,
-    options.pilotHome,
+    options.eastyunHome,
     input.transactionId,
   );
   if (!backupPath || !journalPath) throw new Error("Replacement transaction paths were not created.");

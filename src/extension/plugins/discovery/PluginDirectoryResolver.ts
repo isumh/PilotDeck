@@ -1,11 +1,11 @@
-import type { PilotExtensionPaths } from "../../../pilot/paths.js";
-import { getPilotExtensionPaths } from "../../../pilot/paths.js";
+import type { EastYunExtensionPaths } from "../../../eastyun/paths.js";
+import { getEastYunExtensionPaths } from "../../../eastyun/paths.js";
 
 export type PluginDirectoryResolverInput = {
   projectRoot: string;
-  pilotHome: string;
+  eastyunHome: string;
 };
 
-export function resolvePluginDirectories(input: PluginDirectoryResolverInput): PilotExtensionPaths {
-  return getPilotExtensionPaths(input.projectRoot, input.pilotHome);
+export function resolvePluginDirectories(input: PluginDirectoryResolverInput): EastYunExtensionPaths {
+  return getEastYunExtensionPaths(input.projectRoot, input.eastyunHome);
 }

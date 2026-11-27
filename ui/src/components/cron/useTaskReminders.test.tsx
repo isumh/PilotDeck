@@ -30,7 +30,7 @@ function setup(pending = [reminder]) {
 }
 const emit = (message: any) => act(() => { for (const listener of mock.listeners) listener(message); });
 const focus = () => act(() => window.dispatchEvent(new Event('focus')));
-afterEach(() => { cleanup(); vi.useRealTimers(); mock.listeners.clear(); mock.fetch.mockReset(); mock.show.mockReset(); mock.worker.mockReset(); localStorage.clear(); window.pilotdeckDesktop = undefined; });
+afterEach(() => { cleanup(); vi.useRealTimers(); mock.listeners.clear(); mock.fetch.mockReset(); mock.show.mockReset(); mock.worker.mockReset(); localStorage.clear(); window.eastyundeskDesktop = undefined; });
 
 it('replays worker dismissals after the last page closed and retains them through a failed server acknowledgement', async () => {
   const dismissal = { scope: '1', id: reminder.id };
@@ -59,7 +59,7 @@ it('uses system delivery without cards, task-read acknowledgement or periodic qu
   expect(view.container.querySelector('[role="alert"]')).toBeNull();
   vi.useFakeTimers(); act(() => { vi.advanceTimersByTime(60_000); }); vi.useRealTimers();
   expect(mock.fetch).toHaveBeenCalledOnce();
-  act(() => window.dispatchEvent(new CustomEvent('pilotdeck:notification-navigate', { detail: payload.data })));
+  act(() => window.dispatchEvent(new CustomEvent('eastyundesk:notification-navigate', { detail: payload.data })));
   expect(mock.fetch.mock.calls.some(call => call[1]?.method === 'POST')).toBe(false);
   view.unmount(); render(<Probe />);
   await waitFor(() => expect(mock.fetch).toHaveBeenCalledTimes(2));
@@ -86,7 +86,7 @@ it('deduplicates live events, ignores ordinary chat and other accounts, and clos
 });
 it('binds the server scope for account-free clients and retries a failed explicit native dismissal acknowledgement', async () => {
   const view = setup([]); view.unmount(); mock.user = {};
-  window.pilotdeckDesktop = { setNotificationScope: vi.fn(async () => {}), onSystemNotificationDismiss: (callback: (value: { scope: string; id: string }) => void) => { mock.close = callback; return () => { mock.close = undefined; }; } } as any;
+  window.eastyundeskDesktop = { setNotificationScope: vi.fn(async () => {}), onSystemNotificationDismiss: (callback: (value: { scope: string; id: string }) => void) => { mock.close = callback; return () => { mock.close = undefined; }; } } as any;
   render(<Probe />); await act(async () => {});
   emit({ type: 'cron-reminder-changed', scope: '1', id: reminder.id, reminder });
   await waitFor(() => expect(mock.show).toHaveBeenCalledOnce());

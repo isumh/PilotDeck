@@ -19,66 +19,66 @@ async function writeSkill(root: string, slug: string, body: string): Promise<voi
 }
 
 test("legacy bundled migration backs up only byte-identical bootstrap copies", async () => {
-  const root = await mkdtemp(join(tmpdir(), "pilotdeck-legacy-bundled-"));
+  const root = await mkdtemp(join(tmpdir(), "eastyundesk-legacy-bundled-"));
   try {
-    const pilotHome = join(root, "pilot-home");
+    const eastyunHome = join(root, "eastyun-home");
     const builtinSkillsRoot = join(root, "bundled-skills");
     const backupRoot = join(root, "backups");
 
     await writeSkill(builtinSkillsRoot, "unchanged", "bundled body");
-    await writeSkill(join(pilotHome, "skills"), "unchanged", "bundled body");
+    await writeSkill(join(eastyunHome, "skills"), "unchanged", "bundled body");
     await writeSkill(builtinSkillsRoot, "customized", "new bundled body");
-    await writeSkill(join(pilotHome, "skills"), "customized", "user edited body");
-    await writeSkill(join(pilotHome, "skills"), "user-only", "user-owned body");
+    await writeSkill(join(eastyunHome, "skills"), "customized", "user edited body");
+    await writeSkill(join(eastyunHome, "skills"), "user-only", "user-owned body");
 
-    const report = migrateLegacyBundledSkillCopies({ pilotHome, builtinSkillsRoot, backupRoot });
+    const report = migrateLegacyBundledSkillCopies({ eastyunHome, builtinSkillsRoot, backupRoot });
 
     assert.deepEqual(report.failures, []);
     assert.deepEqual(report.migrated.map((item) => item.slug), ["unchanged"]);
-    await assert.rejects(access(join(pilotHome, "skills", "unchanged")));
+    await assert.rejects(access(join(eastyunHome, "skills", "unchanged")));
     assert.match(await readFile(join(backupRoot, "unchanged", "SKILL.md"), "utf8"), /bundled body/);
     assert.match(
-      await readFile(join(pilotHome, "skills", "customized", "SKILL.md"), "utf8"),
+      await readFile(join(eastyunHome, "skills", "customized", "SKILL.md"), "utf8"),
       /user edited body/,
     );
     assert.match(
-      await readFile(join(pilotHome, "skills", "user-only", "SKILL.md"), "utf8"),
+      await readFile(join(eastyunHome, "skills", "user-only", "SKILL.md"), "utf8"),
       /user-owned body/,
     );
 
-    const secondRun = migrateLegacyBundledSkillCopies({ pilotHome, builtinSkillsRoot, backupRoot });
+    const secondRun = migrateLegacyBundledSkillCopies({ eastyunHome, builtinSkillsRoot, backupRoot });
     assert.deepEqual(secondRun, { migrated: [], failures: [] });
 
     // An explicitly created override after migration must never be mistaken
     // for another bootstrap copy, even while it is still byte-identical.
-    await writeSkill(join(pilotHome, "skills"), "unchanged", "bundled body");
+    await writeSkill(join(eastyunHome, "skills"), "unchanged", "bundled body");
     const afterUserOverride = migrateLegacyBundledSkillCopies({
-      pilotHome,
+      eastyunHome,
       builtinSkillsRoot,
       backupRoot,
     });
     assert.deepEqual(afterUserOverride, { migrated: [], failures: [] });
-    await access(join(pilotHome, "skills", "unchanged", "SKILL.md"));
+    await access(join(eastyunHome, "skills", "unchanged", "SKILL.md"));
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
 test("legacy bundled migration leaves user skills untouched when the release bundle is missing", async () => {
-  const root = await mkdtemp(join(tmpdir(), "pilotdeck-legacy-missing-bundle-"));
+  const root = await mkdtemp(join(tmpdir(), "eastyundesk-legacy-missing-bundle-"));
   try {
-    const pilotHome = join(root, "pilot-home");
-    await writeSkill(join(pilotHome, "skills"), "user-skill", "keep me");
+    const eastyunHome = join(root, "eastyun-home");
+    await writeSkill(join(eastyunHome, "skills"), "user-skill", "keep me");
 
     const report = migrateLegacyBundledSkillCopies({
-      pilotHome,
+      eastyunHome,
       builtinSkillsRoot: join(root, "missing-bundled-skills"),
     });
 
     assert.equal(report.migrated.length, 0);
     assert.equal(report.failures.length, 1);
     assert.match(report.failures[0]?.message ?? "", /left untouched/);
-    await access(join(pilotHome, "skills", "user-skill", "SKILL.md"));
+    await access(join(eastyunHome, "skills", "user-skill", "SKILL.md"));
   } finally {
     await rm(root, { recursive: true, force: true });
   }

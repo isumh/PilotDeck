@@ -32,7 +32,7 @@ export function compareVersions(current, latest) {
 
 async function requestJson(url, { fetchImpl = fetch } = {}) {
   const response = await fetchImpl(url, {
-    headers: { Accept: 'application/json', 'User-Agent': 'PilotDeck-Updater' },
+    headers: { Accept: 'application/json', 'User-Agent': 'EastYunDesk-Updater' },
     signal: AbortSignal.timeout(15_000),
   });
   if (!response.ok) throw new Error(`Release request failed (${response.status}).`);

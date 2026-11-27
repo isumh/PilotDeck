@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { getPilotProjectChatDir } from "../../src/pilot/paths.js";
+import { getEastYunProjectChatDir } from "../../src/eastyun/paths.js";
 import { searchChatHistory } from "../../src/session/search/searchChatHistory.js";
 import { listProjectSessions, searchSessionsByTitle } from "../../src/session/storage/SessionList.js";
 
@@ -17,14 +17,14 @@ function entry(type: string, sessionId: string, sequence: number, extra: Record<
 }
 
 test("lists historical sessions whose large inline image hides metadata from the lite preview", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-session-list-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-session-list-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-session-list-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-session-list-home-"));
   try {
-    const chatDir = getPilotProjectChatDir(projectRoot, pilotHome);
+    const chatDir = getEastYunProjectChatDir(projectRoot, eastyunHome);
     await mkdir(chatDir, { recursive: true });
 
     const largeSessionId = "web_s_large-image";
-    const largeTitle = "Recovered PilotDeck session title";
+    const largeTitle = "Recovered EastYunDesk session title";
     const largeInput = entry("accepted_input", largeSessionId, 1, {
       messages: [{
         role: "user",
@@ -68,7 +68,7 @@ test("lists historical sessions whose large inline image hides metadata from the
         + `${JSON.stringify(invalidTail)}\n`,
     );
 
-    const sessions = await listProjectSessions({ projectRoot, pilotHome });
+    const sessions = await listProjectSessions({ projectRoot, eastyunHome });
     assert.deepEqual(
       sessions.map((session) => [session.sessionId, session.summary]).sort((a, b) => a[0].localeCompare(b[0])),
       [
@@ -77,21 +77,21 @@ test("lists historical sessions whose large inline image hides metadata from the
       ],
     );
 
-    const search = await searchChatHistory({ projectRoot, pilotHome, query: "findable" });
+    const search = await searchChatHistory({ projectRoot, eastyunHome, query: "findable" });
     assert.equal(search.matches.length, 1);
     assert.equal(search.matches[0].sessionId, largeSessionId);
     assert.equal(search.matches[0].sessionTitle, largeTitle);
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("prefers a newer oversized metadata title over an older title in the lite head", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-session-list-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-session-list-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-session-list-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-session-list-home-"));
   try {
-    const chatDir = getPilotProjectChatDir(projectRoot, pilotHome);
+    const chatDir = getEastYunProjectChatDir(projectRoot, eastyunHome);
     await mkdir(chatDir, { recursive: true });
 
     const sessionId = "web_s_new-fork-title";
@@ -109,19 +109,19 @@ test("prefers a newer oversized metadata title over an older title in the lite h
       `${JSON.stringify(oldMetadata)}\n${JSON.stringify(filler)}\n${JSON.stringify(newMetadata)}\n`,
     );
 
-    const sessions = await listProjectSessions({ projectRoot, pilotHome });
+    const sessions = await listProjectSessions({ projectRoot, eastyunHome });
     assert.deepEqual(sessions.map((session) => [session.sessionId, session.summary]), [[sessionId, "New fork title"]]);
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("preserves createdAt when metadata recovery has no lite summary", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-session-list-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-session-list-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-session-list-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-session-list-home-"));
   try {
-    const chatDir = getPilotProjectChatDir(projectRoot, pilotHome);
+    const chatDir = getEastYunProjectChatDir(projectRoot, eastyunHome);
     await mkdir(chatDir, { recursive: true });
 
     const sessionId = "web_s_recovered-created-at";
@@ -145,20 +145,20 @@ test("preserves createdAt when metadata recovery has no lite summary", async () 
       `${JSON.stringify(largeInput)}\n${JSON.stringify(largeMetadata)}\n${JSON.stringify(largeTail)}\n`,
     );
 
-    const [session] = await listProjectSessions({ projectRoot, pilotHome });
+    const [session] = await listProjectSessions({ projectRoot, eastyunHome });
     assert.equal(session?.summary, "Recovered title");
     assert.equal(session?.createdAt, Date.parse(NOW));
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("does not trust a trailing metadata patch as a full title snapshot", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-session-list-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-session-list-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-session-list-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-session-list-home-"));
   try {
-    const chatDir = getPilotProjectChatDir(projectRoot, pilotHome);
+    const chatDir = getEastYunProjectChatDir(projectRoot, eastyunHome);
     await mkdir(chatDir, { recursive: true });
 
     const sessionId = "web_s_tail-patch";
@@ -179,19 +179,19 @@ test("does not trust a trailing metadata patch as a full title snapshot", async 
       `${JSON.stringify(oldMetadata)}\n${JSON.stringify(filler)}\n${JSON.stringify(newMetadata)}\n${JSON.stringify(trailingPatch)}\n`,
     );
 
-    const [session] = await listProjectSessions({ projectRoot, pilotHome });
+    const [session] = await listProjectSessions({ projectRoot, eastyunHome });
     assert.equal(session?.summary, "Recovered title");
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("uses firstPrompt from a titled tail snapshot for title search", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-session-list-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-session-list-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-session-list-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-session-list-home-"));
   try {
-    const chatDir = getPilotProjectChatDir(projectRoot, pilotHome);
+    const chatDir = getEastYunProjectChatDir(projectRoot, eastyunHome);
     await mkdir(chatDir, { recursive: true });
 
     const sessionId = "web_s_tail-snapshot-prompt";
@@ -215,20 +215,20 @@ test("uses firstPrompt from a titled tail snapshot for title search", async () =
     });
     await writeFile(join(chatDir, `${sessionId}.jsonl`), `${JSON.stringify(largeInput)}\n${JSON.stringify(snapshot)}\n`);
 
-    const sessions = await searchSessionsByTitle({ projectRoot, pilotHome, query: "original presentation" });
+    const sessions = await searchSessionsByTitle({ projectRoot, eastyunHome, query: "original presentation" });
     assert.deepEqual(sessions.map((session) => session.sessionId), [sessionId]);
     assert.equal(sessions[0]?.firstPrompt, originalPrompt);
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("uses a prompt-only tail snapshot without requiring a generated title", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-session-list-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-session-list-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-session-list-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-session-list-home-"));
   try {
-    const chatDir = getPilotProjectChatDir(projectRoot, pilotHome);
+    const chatDir = getEastYunProjectChatDir(projectRoot, eastyunHome);
     await mkdir(chatDir, { recursive: true });
 
     const sessionId = "web_s_prompt-snapshot";
@@ -250,20 +250,20 @@ test("uses a prompt-only tail snapshot without requiring a generated title", asy
     });
     await writeFile(join(chatDir, `${sessionId}.jsonl`), `${JSON.stringify(largeInput)}\n${JSON.stringify(snapshot)}\n`);
 
-    const [session] = await listProjectSessions({ projectRoot, pilotHome });
+    const [session] = await listProjectSessions({ projectRoot, eastyunHome });
     assert.equal(session?.summary, "Latest prompt");
     assert.equal(session?.firstPrompt, "First prompt");
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("task transcripts stay out of ordinary lists, counts and search while remaining readable as internal history", async () => {
-  const root = await mkdtemp(join(tmpdir(), 'pilotdeck-task-scope-'));
-  const pilotHome = join(root, 'state'), projectRoot = join(root, 'project');
+  const root = await mkdtemp(join(tmpdir(), 'eastyundesk-task-scope-'));
+  const eastyunHome = join(root, 'state'), projectRoot = join(root, 'project');
   try {
-    const chatDir = getPilotProjectChatDir(projectRoot, pilotHome);
+    const chatDir = getEastYunProjectChatDir(projectRoot, eastyunHome);
     await mkdir(chatDir, { recursive: true });
     for (const sessionId of ['web-normal', 'cron-task-owned', 'cron:task-owned:legacy-run']) {
       if (process.platform === 'win32' && sessionId.includes(':')) continue;
@@ -272,10 +272,10 @@ test("task transcripts stay out of ordinary lists, counts and search while remai
         entry('accepted_input', sessionId, 2, { messages: [{ role: 'user', content: [{ type: 'text', text: 'Findable task scope' }] }] }),
       ].map(value => JSON.stringify(value)).join('\n') + '\n');
     }
-    assert.deepEqual((await listProjectSessions({ projectRoot, pilotHome })).map(item => item.sessionId), ['web-normal']);
-    const search = await searchChatHistory({ projectRoot, pilotHome, query: 'Findable' });
+    assert.deepEqual((await listProjectSessions({ projectRoot, eastyunHome })).map(item => item.sessionId), ['web-normal']);
+    const search = await searchChatHistory({ projectRoot, eastyunHome, query: 'Findable' });
     assert.ok(search.matches.length > 0); assert.ok(search.matches.every(match => match.sessionId === 'web-normal'));
-    assert.equal((await searchSessionsByTitle({ projectRoot, pilotHome, query: 'Findable' })).some(item => item.sessionId.startsWith('cron')), false);
-    assert.ok((await listProjectSessions({ projectRoot, pilotHome, includeInternal: true })).length > 1);
+    assert.equal((await searchSessionsByTitle({ projectRoot, eastyunHome, query: 'Findable' })).some(item => item.sessionId.startsWith('cron')), false);
+    assert.ok((await listProjectSessions({ projectRoot, eastyunHome, includeInternal: true })).length > 1);
   } finally { await rm(root, { recursive: true, force: true }); }
 });

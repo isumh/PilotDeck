@@ -70,7 +70,7 @@ test('OBS publication follows the exact completed release and retains manual rep
   assert.equal(evaluate({ github: upstream, inputs: { release_tag: 'v2026.10.29' }, vars: {} }), true);
   assert.equal(evaluate({ github: upstream, inputs: { release_tag: '' }, vars: {} }), false);
   assert.equal(evaluate({ github: { ...upstream, ref: 'refs/pull/1/merge', event_name: 'pull_request' }, inputs: { release_tag: '' }, vars: {} }), false);
-  assert.equal(evaluate({ github: { ...upstream, repository: 'fork/PilotDeck' }, inputs: { release_tag: 'v2026.10.29' }, vars: {} }), false);
+  assert.equal(evaluate({ github: { ...upstream, repository: 'fork/EastYunDesk' }, inputs: { release_tag: 'v2026.10.29' }, vars: {} }), false);
   const steps = obs.jobs.sync.steps;
   const verify = steps.findIndex(s => s.run?.includes('verify-release-assets.mjs'));
   const publish = steps.findIndex(s => s.run?.includes('release_to_obs.py'));
@@ -106,7 +106,7 @@ test('RPM container retains system command lookup after Actions prepends tool pa
   const container = workflow('desktop-linux').jobs.rpm.container;
   // The runner combines added tool paths with PATH from the container config.
   // Images without a declared PATH otherwise leave only Node/pnpm searchable.
-  const searchPath = ['/pilotdeck-test/node/bin', '/pilotdeck-test/pnpm/bin', container.env?.PATH].filter(Boolean).join(':');
+  const searchPath = ['/eastyundesk-test/node/bin', '/eastyundesk-test/pnpm/bin', container.env?.PATH].filter(Boolean).join(':');
   const result = spawnSync('sh', ['-ec', 'command -v sh; command -v env; command -v tar'], {
     env: { PATH: searchPath }, encoding: 'utf8',
   });
@@ -177,7 +177,7 @@ test('Windows release signing failures block artifact upload and publication', (
   assert.equal(evaluate(steps[signed].if, false), false);
   assert.equal(evaluate(unsigned.if, true), false);
   assert.equal(evaluate(unsigned.if, false), true);
-  assert.equal(steps[signed].env.PILOTDECK_WINDOWS_SIGNING, 'required');
+  assert.equal(steps[signed].env.EASTYUNDESK_WINDOWS_SIGNING, 'required');
   assert.match(steps[signed].run, /windows-signing\.cjs verify/);
   assert.match(steps[signed].run, /throw 'Windows signature verification failed\.'/);
   assert.notEqual(windows['continue-on-error'], true);
@@ -196,5 +196,5 @@ test('Windows and macOS publish blockmaps and run real differential qualificatio
     assert.ok(uploads.some(step => step.with.path.includes(platform === 'windows' ? '.exe.blockmap' : '.zip.blockmap')));
   }
   const createManifest = workflow('release').jobs.release.steps.find(step => step.name === 'Create release manifest and checksums');
-  assert.equal(createManifest.env.PILOTDECK_DIFFERENTIAL_UPDATES, '${{ vars.PILOTDECK_DIFFERENTIAL_UPDATES }}');
+  assert.equal(createManifest.env.EASTYUNDESK_DIFFERENTIAL_UPDATES, '${{ vars.EASTYUNDESK_DIFFERENTIAL_UPDATES }}');
 });

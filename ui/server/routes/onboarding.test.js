@@ -25,8 +25,8 @@ describe('onboarding routes', () => {
   });
 
   it.each([false, true])('saving onboarding preserves advanced features and channels enabled=%s', async (enabled) => {
-    const { buildDefaultPilotDeckConfig } = await vi.importActual('../services/pilotdeckConfig.js');
-    const config = buildDefaultPilotDeckConfig();
+    const { buildDefaultEastYunDeskConfig } = await vi.importActual('../services/eastyundeskConfig.js');
+    const config = buildDefaultEastYunDeskConfig();
     if (enabled) {
       config.memory.enabled = true;
       config.router.enabled = true;
@@ -34,15 +34,15 @@ describe('onboarding routes', () => {
       config.alwaysOn.projects = { '/existing-project': { enabled: true } };
       for (const adapter of Object.values(config.adapters)) adapter.enabled = true;
     }
-    const writePilotDeckConfig = vi.fn(async (next) => ({ config: next }));
-    const { request } = await createOnboardingApp({ config, writePilotDeckConfig, probe: vi.fn().mockResolvedValue({ ok: true }) });
+    const writeEastYunDeskConfig = vi.fn(async (next) => ({ config: next }));
+    const { request } = await createOnboardingApp({ config, writeEastYunDeskConfig, probe: vi.fn().mockResolvedValue({ ok: true }) });
     const payload = { providerId: 'ollama', apiKey: '', models: ['local'], retryPolicy: retryPolicy() };
     const tested = await request('/api/v1/model-connection-tests', { method: 'POST', body: JSON.stringify(payload) });
     const saved = await request('/api/v1/model-configuration', { method: 'PUT', body: JSON.stringify({
       ...payload, testId: tested.body.testId, models: [{ modelId: 'local', textInput: true, imageInput: true }],
     }) });
     expect(saved.status).toBe(200);
-    const next = writePilotDeckConfig.mock.calls[0][0];
+    const next = writeEastYunDeskConfig.mock.calls[0][0];
     expect(next.agent.model).toBe('ollama/local');
     for (const key of ['memory', 'router', 'tools', 'alwaysOn', 'adapters']) {
       expect(next[key]).toEqual(config[key]);
@@ -134,8 +134,8 @@ describe('onboarding routes', () => {
   });
 
   it('keeps a mixed-case keyless preset ID when probing and saving onboarding', async () => {
-    const writePilotDeckConfig = vi.fn(async (config) => ({ config }));
-    const { request } = await createOnboardingApp({ probe: vi.fn().mockResolvedValue({ ok: true }), writePilotDeckConfig });
+    const writeEastYunDeskConfig = vi.fn(async (config) => ({ config }));
+    const { request } = await createOnboardingApp({ probe: vi.fn().mockResolvedValue({ ok: true }), writeEastYunDeskConfig });
     const payload = { providerId: 'Ollama', apiKey: '', models: ['local'], retryPolicy: retryPolicy() };
     const tested = await request('/api/v1/model-connection-tests', { method: 'POST', body: JSON.stringify(payload) });
     expect(tested.body.status).toBe('passed');
@@ -143,16 +143,16 @@ describe('onboarding routes', () => {
       ...payload, testId: tested.body.testId, models: [{ modelId: 'local', textInput: true, imageInput: true }],
     }) });
     expect(saved.status).toBe(200);
-    expect(writePilotDeckConfig.mock.calls[0][0].agent.model).toBe('Ollama/local');
-    expect(Object.keys(writePilotDeckConfig.mock.calls[0][0].model.providers)).toContain('Ollama');
-    expect(writePilotDeckConfig.mock.calls[0][0].model.providers).not.toHaveProperty('ollama');
+    expect(writeEastYunDeskConfig.mock.calls[0][0].agent.model).toBe('Ollama/local');
+    expect(Object.keys(writeEastYunDeskConfig.mock.calls[0][0].model.providers)).toContain('Ollama');
+    expect(writeEastYunDeskConfig.mock.calls[0][0].model.providers).not.toHaveProperty('ollama');
   });
 
   it('isolates test IDs by user and writes the tested model configuration', async () => {
-    const writePilotDeckConfig = vi.fn(async (config) => ({ config }));
+    const writeEastYunDeskConfig = vi.fn(async (config) => ({ config }));
     const { request } = await createOnboardingApp({
       probe: vi.fn().mockResolvedValue({ ok: true }),
-      writePilotDeckConfig,
+      writeEastYunDeskConfig,
       config: {
         schemaVersion: 1,
         agent: {},
@@ -173,7 +173,7 @@ describe('onboarding routes', () => {
       }),
     });
     expect(saved.status).toBe(200);
-    expect(writePilotDeckConfig).toHaveBeenCalledWith(expect.objectContaining({
+    expect(writeEastYunDeskConfig).toHaveBeenCalledWith(expect.objectContaining({
       agent: expect.objectContaining({ model: 'openai/gpt-test' }),
       model: expect.objectContaining({ providers: expect.objectContaining({ openai: expect.objectContaining({ retry: expect.objectContaining({ requestMaxRetries: 2, jitter: true, repeatedChunkLimit: 4 }), models: expect.objectContaining({ 'keep-me': { multimodal: { input: ['text'] } }, 'gpt-test': { multimodal: { input: ['text', 'image'] } } }) }) }) }),
     }), expect.objectContaining({ expectedRevision: 'test-revision' }));
@@ -410,11 +410,11 @@ describe('onboarding routes', () => {
     expect(response).toMatchObject({ status: 409, body: { code: 'GIT_CLONE_FAILED' } });
     expect(cloneGitHubRepository).toHaveBeenCalledWith(
       'https://github.com/openbmb/PilotDeck.git',
-      expect.stringMatching(/^[\\/]tmp[\\/]onboarding-workspace[\\/]\.PilotDeck\.pilotdeck-clone-/),
+      expect.stringMatching(/^[\\/]tmp[\\/]onboarding-workspace[\\/]\.PilotDeck\.eastyundesk-clone-/),
       null,
       expect.objectContaining({ signal: expect.any(AbortSignal), timeoutMs: 300000 }),
     );
-    expect(rm).toHaveBeenCalledWith(expect.stringMatching(/^[\\/]tmp[\\/]onboarding-workspace[\\/]\.PilotDeck\.pilotdeck-clone-/), { recursive: true, force: true });
+    expect(rm).toHaveBeenCalledWith(expect.stringMatching(/^[\\/]tmp[\\/]onboarding-workspace[\\/]\.PilotDeck\.eastyundesk-clone-/), { recursive: true, force: true });
     mkdir.mockRestore();
     access.mockRestore();
     rm.mockRestore();
@@ -456,17 +456,17 @@ describe('onboarding routes', () => {
 
 async function createOnboardingApp(overrides = {}) {
   const probe = overrides.probe ?? vi.fn();
-  const writePilotDeckConfig = overrides.writePilotDeckConfig ?? vi.fn(async (config) => ({ config }));
+  const writeEastYunDeskConfig = overrides.writeEastYunDeskConfig ?? vi.fn(async (config) => ({ config }));
   const config = overrides.config ?? { schemaVersion: 1, agent: {}, model: { providers: {} }, webui: {} };
   vi.doMock('../services/modelConnectionProbe.js', () => ({ probeModelConnection: probe }));
-  vi.doMock('../services/pilotdeckConfig.js', () => ({
+  vi.doMock('../services/eastyundeskConfig.js', () => ({
     configRevision: vi.fn(() => 'test-revision'),
-    readPilotDeckConfigFile: vi.fn(() => ({ config, raw: 'test-config' })),
-    withPilotDeckConfigWrite: vi.fn(async (operation) => operation()),
-    writePilotDeckConfig,
+    readEastYunDeskConfigFile: vi.fn(() => ({ config, raw: 'test-config' })),
+    withEastYunDeskConfigWrite: vi.fn(async (operation) => operation()),
+    writeEastYunDeskConfig,
   }));
-  vi.doMock('../services/pilotdeckConfigReloader.js', () => ({ reloadPilotDeckConfig: vi.fn(async () => undefined) }));
-  vi.doMock('../services/pilotdeckConfigWatcher.js', () => ({ suppressNextWatchEvent: vi.fn() }));
+  vi.doMock('../services/eastyundeskConfigReloader.js', () => ({ reloadEastYunDeskConfig: vi.fn(async () => undefined) }));
+  vi.doMock('../services/eastyundeskConfigWatcher.js', () => ({ suppressNextWatchEvent: vi.fn() }));
   vi.doMock('../projects.js', () => ({ addProjectManually: overrides.addProjectManually ?? vi.fn(async (workspacePath) => ({ name: 'id', path: workspacePath })) }));
   vi.doMock('./projects.js', () => ({
     validateWorkspacePath: overrides.validateWorkspacePath ?? vi.fn(async (workspacePath) => ({ valid: true, resolvedPath: workspacePath })),

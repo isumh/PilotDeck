@@ -10,8 +10,8 @@ import type { GatewayEvent } from '../../src/gateway/protocol/types.js';
 const deferred = () => { let resolve!: () => void; const promise = new Promise<void>(done => { resolve = done; }); return { promise, resolve }; };
 
 test('a hot-reloaded turn retains its task runtime through empty lists and task completion', { timeout: 30_000 }, async t => {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-task-reload-'));
-  const configPath = join(home, 'pilotdeck.yaml');
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-task-reload-'));
+  const configPath = join(home, 'eastyundesk.yaml');
   await writeFile(configPath, `schemaVersion: 1
 agent: { model: test/model }
 model:
@@ -27,9 +27,9 @@ telemetry: { enabled: false }
 `);
   const entered = deferred(), firstTask = deferred(), createFirst = deferred(), createDetached = deferred();
   let round = 0;
-  const local = createLocalGateway({ pilotHome: home, projectRoot: home, builtinSkillsRoot: join(home, 'skills'),
+  const local = createLocalGateway({ eastyunHome: home, projectRoot: home, builtinSkillsRoot: join(home, 'skills'),
     permissionMode: 'bypassPermissions',
-    env: { ...process.env, PILOT_HOME: home, PILOTDECK_CONFIG_PATH: configPath, PILOT_AGENT_MODEL: undefined },
+    env: { ...process.env, EASTYUN_HOME: home, EASTYUNDESK_CONFIG_PATH: configPath, EASTYUN_AGENT_MODEL: undefined },
     __testModelFactory(snapshot) {
       return { ...createModelRuntime(snapshot.config.model),
         async *stream(): AsyncIterable<CanonicalModelEvent> {

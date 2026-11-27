@@ -3,7 +3,7 @@ import { createHmac, randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { resolvePilotHome } from "../pilot/paths.js";
+import { resolveEastYunHome } from "../eastyun/paths.js";
 
 /** Diagnostic attribution only. Never use these values for authorization. */
 export type RequestContext = {
@@ -25,8 +25,8 @@ let packageVersion: string | undefined;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type RequestHeadersMode = "full" | "basic" | "off";
 export function requestHeadersMode(providerMode?: RequestHeadersMode): RequestHeadersMode {
-  if (process.env.PILOTDECK_REQUEST_HEADERS === "off") return "off";
-  const mode = providerMode ?? process.env.PILOTDECK_REQUEST_HEADERS;
+  if (process.env.EASTYUNDESK_REQUEST_HEADERS === "off") return "off";
+  const mode = providerMode ?? process.env.EASTYUNDESK_REQUEST_HEADERS;
   return mode === "off" || mode === "basic" ? mode : "full";
 }
 
@@ -43,8 +43,8 @@ export function safeHeaderValue(value: unknown): string | undefined {
 }
 
 /** Shared by the gateway and Web server; independent of credentials and hardware. */
-function identitySeed(pilotHome = resolvePilotHome()): string {
-  const home = resolve(pilotHome);
+function identitySeed(eastyunHome = resolveEastYunHome()): string {
+  const home = resolve(eastyunHome);
   const cached = identities.get(home);
   if (cached) return cached;
   const path = join(home, "request-identity");
@@ -70,16 +70,16 @@ function identitySeed(pilotHome = resolvePilotHome()): string {
   return id;
 }
 
-export function anonymousRequestId(kind: string, value: string, pilotHome?: string): string {
-  return createHmac("sha256", identitySeed(pilotHome)).update(`${kind}\0${value}`).digest("hex").slice(0, 32);
+export function anonymousRequestId(kind: string, value: string, eastyunHome?: string): string {
+  return createHmac("sha256", identitySeed(eastyunHome)).update(`${kind}\0${value}`).digest("hex").slice(0, 32);
 }
 
-export function installationId(pilotHome?: string): string {
-  return anonymousRequestId("installation", "local", pilotHome);
+export function installationId(eastyunHome?: string): string {
+  return anonymousRequestId("installation", "local", eastyunHome);
 }
 
 export function requestAppVersion(env: NodeJS.ProcessEnv = process.env): string {
-  const configured = /^[a-zA-Z0-9][a-zA-Z0-9.+_-]{0,79}$/.test(env.PILOTDECK_VERSION ?? "") ? env.PILOTDECK_VERSION : undefined;
+  const configured = /^[a-zA-Z0-9][a-zA-Z0-9.+_-]{0,79}$/.test(env.EASTYUNDESK_VERSION ?? "") ? env.EASTYUNDESK_VERSION : undefined;
   if (configured) return configured;
   if (packageVersion) return packageVersion;
   // Works from both src/network and dist/src/network, without using the user's cwd.
@@ -87,7 +87,7 @@ export function requestAppVersion(env: NodeJS.ProcessEnv = process.env): string 
   for (let depth = 0; depth < 5; depth++, directory = dirname(directory)) {
     try {
       const pkg = JSON.parse(readFileSync(join(directory, "package.json"), "utf8"));
-      if (pkg.name === "pilotdeck" && safeHeaderValue(pkg.version)) return packageVersion = pkg.version;
+      if (pkg.name === "eastyundesk" && safeHeaderValue(pkg.version)) return packageVersion = pkg.version;
     } catch { /* continue towards the application root */ }
   }
   return packageVersion = "0.0.0";
@@ -107,31 +107,31 @@ export function requestContextHeaders(context: RequestContext = {}, options: {
   if (mode === "off") return {};
   const version = requestAppVersion();
   const headers: Record<string, string> = {
-    "x-pilotdeck-client": "pilotdeck",
-    "x-pilotdeck-version": version,
-    "x-pilotdeck-platform": process.platform,
-    "x-pilotdeck-arch": process.arch,
-    "x-pilotdeck-schema-version": "1",
-    "x-pilotdeck-request-id": safeHeaderValue(options.requestId) ?? randomUUID(),
+    "x-eastyundesk-client": "eastyundesk",
+    "x-eastyundesk-version": version,
+    "x-eastyundesk-platform": process.platform,
+    "x-eastyundesk-arch": process.arch,
+    "x-eastyundesk-schema-version": "1",
+    "x-eastyundesk-request-id": safeHeaderValue(options.requestId) ?? randomUUID(),
   };
-  if (options.userAgent !== false) headers["user-agent"] = `PilotDeck/${version} (${process.platform}; ${process.arch})`;
-  const build = safeHeaderValue(process.env.PILOTDECK_GIT_SHA);
-  if (build) headers["x-pilotdeck-build"] = build;
+  if (options.userAgent !== false) headers["user-agent"] = `EastYunDesk/${version} (${process.platform}; ${process.arch})`;
+  const build = safeHeaderValue(process.env.EASTYUNDESK_GIT_SHA);
+  if (build) headers["x-eastyundesk-build"] = build;
   if (mode === "basic") return headers;
   const ctx = { ...currentRequestContext(), ...context };
-  headers["x-pilotdeck-installation-id"] = installationId();
-  headers["x-pilotdeck-instance-id"] = instanceId;
-  headers["x-pilotdeck-device-id"] = ctx.deviceId && UUID.test(ctx.deviceId) ? ctx.deviceId : installationId();
-  headers["x-pilotdeck-user-id"] = /^[0-9a-f]{32}$/.test(ctx.userId ?? "") ? ctx.userId! : anonymousRequestId("user", "local-profile");
+  headers["x-eastyundesk-installation-id"] = installationId();
+  headers["x-eastyundesk-instance-id"] = instanceId;
+  headers["x-eastyundesk-device-id"] = ctx.deviceId && UUID.test(ctx.deviceId) ? ctx.deviceId : installationId();
+  headers["x-eastyundesk-user-id"] = /^[0-9a-f]{32}$/.test(ctx.userId ?? "") ? ctx.userId! : anonymousRequestId("user", "local-profile");
   const project = typeof ctx.projectPath === "string" && ctx.projectPath.length > 0 && ctx.projectPath.length <= 4096 ? resolve(ctx.projectPath) : undefined;
   const values = {
-    "x-pilotdeck-project-id": project ? anonymousRequestId("project", process.platform === "win32" ? project.toLowerCase() : project) : undefined,
-    "x-pilotdeck-session-id": opaqueId("session", ctx.sessionId),
-    "x-pilotdeck-turn-id": opaqueId("turn", ctx.turnId),
-    "x-pilotdeck-operation-id": safeHeaderValue(ctx.operationId),
-    "x-pilotdeck-parent-request-id": safeHeaderValue(ctx.parentRequestId),
-    "x-pilotdeck-client-version": safeHeaderValue(ctx.clientVersion),
-    "x-pilotdeck-purpose": safeHeaderValue(ctx.purpose),
+    "x-eastyundesk-project-id": project ? anonymousRequestId("project", process.platform === "win32" ? project.toLowerCase() : project) : undefined,
+    "x-eastyundesk-session-id": opaqueId("session", ctx.sessionId),
+    "x-eastyundesk-turn-id": opaqueId("turn", ctx.turnId),
+    "x-eastyundesk-operation-id": safeHeaderValue(ctx.operationId),
+    "x-eastyundesk-parent-request-id": safeHeaderValue(ctx.parentRequestId),
+    "x-eastyundesk-client-version": safeHeaderValue(ctx.clientVersion),
+    "x-eastyundesk-purpose": safeHeaderValue(ctx.purpose),
   };
   for (const [name, value] of Object.entries(values)) if (value) headers[name] = value;
   return headers;

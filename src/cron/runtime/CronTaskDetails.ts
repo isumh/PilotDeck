@@ -1,5 +1,5 @@
 import type { ModelRuntime } from "../../model/index.js";
-import type { PilotAgentModelSelection } from "../../pilot/config/types.js";
+import type { EastYunAgentModelSelection } from "../../eastyun/config/types.js";
 import { normalizeSessionTitleInput, SESSION_TITLE_TIMEOUT_MS } from "../../session/title/SessionTitleGenerator.js";
 
 export type CronTaskDetailsMode = "title" | "title-and-instructions";
@@ -19,7 +19,7 @@ Preserve the user's explicit scope, sources, time windows, recipients, output fo
 Draft the instructions only. Do not execute the task. Return only a JSON object with two string fields, title and instructions.`;
 
 export async function generateCronTaskDetails(input: {
-  text: string; modelRuntime: Pick<ModelRuntime, "complete">; model: Pick<PilotAgentModelSelection, "provider" | "model">;
+  text: string; modelRuntime: Pick<ModelRuntime, "complete">; model: Pick<EastYunAgentModelSelection, "provider" | "model">;
   sessionId: string; taskId: string; signal: AbortSignal; mode: CronTaskDetailsMode;
   onFallback?: (reason: GenerationFallback) => void;
 }): Promise<CronTaskDetails | null> {

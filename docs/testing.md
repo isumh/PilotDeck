@@ -14,16 +14,16 @@ Run from the repository root unless noted.
 | Checkpoint execution and restore | `pnpm test:checkpoints` (build Core first) |
 | Changed/related imports | `pnpm --dir ui test:changed` or `pnpm --dir ui test:related src/path/to/file.ts` |
 | Model protocol/streaming | `node --import tsx --test "tests/model/**/*.spec.ts"` |
-| Desktop helpers | `pnpm --filter pilotdeck-desktop test` |
+| Desktop helpers | `pnpm --filter eastyundesk-desktop test` |
 | Complete built backend suite | `pnpm test` |
 | UI type check / build | `pnpm --dir ui typecheck` / `pnpm --dir ui build` |
-| Desktop TypeScript | `pnpm --filter pilotdeck-desktop compile` |
+| Desktop TypeScript | `pnpm --filter eastyundesk-desktop compile` |
 
 Changed/related selection follows import edges, not every dynamically read template, workflow, icon or plugin. Broaden checks for shared protocols, native resources, dependency locks and build inputs. Real browser acceptance belongs under ui/e2e/ and is separate from Vitest discovery.
 
-Run chat browser regressions with `pnpm --dir ui exec playwright test -c e2e/streaming-scroll.config.mjs`. With desktop Electron installed, set `PILOTDECK_SCROLL_ELECTRON=1` and select `streaming-scroll.spec.mjs chat-media-scroll.spec.mjs chat-navigation.spec.mjs` to repeat scroll gestures, keyboard navigation, live generation/disclosure interactions and media reflow in isolated native renderer profiles. These fixtures start no application services or model providers.
+Run chat browser regressions with `pnpm --dir ui exec playwright test -c e2e/streaming-scroll.config.mjs`. With desktop Electron installed, set `EASTYUNDESK_SCROLL_ELECTRON=1` and select `streaming-scroll.spec.mjs chat-media-scroll.spec.mjs chat-navigation.spec.mjs` to repeat scroll gestures, keyboard navigation, live generation/disclosure interactions and media reflow in isolated native renderer profiles. These fixtures start no application services or model providers.
 
-For VM renderer tests, `PILOTDECK_SCROLL_ELECTRON_PATH` selects a guest-native Electron executable and `PILOTDECK_SCROLL_BASE_URL` selects an already-running synthetic fixture server instead of starting Vite in the guest. Serve it on a host-only interface. Linux requires a display or `xvfb-run`; media cases also require a Playwright Chromium installation. The scroll suite includes delayed native input under a busy renderer, so timer-based gesture expiry cannot silently restore an obsolete reading position.
+For VM renderer tests, `EASTYUNDESK_SCROLL_ELECTRON_PATH` selects a guest-native Electron executable and `EASTYUNDESK_SCROLL_BASE_URL` selects an already-running synthetic fixture server instead of starting Vite in the guest. Serve it on a host-only interface. Linux requires a display or `xvfb-run`; media cases also require a Playwright Chromium installation. The scroll suite includes delayed native input under a busy renderer, so timer-based gesture expiry cannot silently restore an obsolete reading position.
 
 ## Pull request CI selection
 
@@ -63,7 +63,7 @@ production build with synthetic APIs and checks editor/PDF requests and tab stat
 
 - Every retained case must identify a meaningful regression it would catch. Assert user outcomes, wire payloads, persisted contents, exit results and resource release.
 - Mock external providers and uncontrolled systems while exercising the target implementation. Do not preserve obsolete implementation-text assertions after a feature is removed, or delete unique safety cases because they are slow.
-- Use isolated PILOT_HOME, profiles, databases and workspaces. Some server modules open a database at import time, so establish isolation before importing them. Declare real Git, Python, shell, symlink and platform prerequisites.
+- Use isolated EASTYUN_HOME, profiles, databases and workspaces. Some server modules open a database at import time, so establish isolation before importing them. Declare real Git, Python, shell, symlink and platform prerequisites.
 - Use readiness signals, controlled clocks and observable state instead of fixed sleeps. Keep distinct timing, authorization, path-escape, rollback and account-isolation cases; avoid multiplying every language/theme/platform combination without a distinct behavior.
 - Small fixtures may be shared; do not create one giant test file or an end-to-end flow for unrelated behavior. Real provider calls require explicit opt-in and synthetic credentials must not be mistaken for production secrets.
 - Follow [CONTRIBUTING](../CONTRIBUTING.md) for placement, English documentation and artifact rules. New module tests remain visible to Git; only root test/ and test.ts drafts are ignored.
@@ -87,13 +87,13 @@ First build the relevant Core/Desktop/Web outputs when a command consumes compil
 | Real desktop fault injection | `node scripts/benchmark-startup.mjs --desktop --fault slow-start --artifacts artifacts/startup --hold-ms 180000`; also abort, oom, module-missing, web-module-missing and config-invalid; a stop file ends the isolated instance |
 | Windows installer/shortcut | `node apps/desktop/scripts/verify-installer.cjs` and `node apps/desktop/scripts/verify-installer-shortcut.cjs`; require Windows and desktop build dependencies |
 | Windows uninstall boundary | `node apps/desktop/scripts/verify-uninstaller.cjs`; verifies default data retention, localization and update guards |
-| Windows native notifications | `pnpm --filter pilotdeck-desktop exec electron scripts/verify-windows-notifications.cjs`; compiled Desktop and an isolated notification identity |
+| Windows native notifications | `pnpm --filter eastyundesk-desktop exec electron scripts/verify-windows-notifications.cjs`; compiled Desktop and an isolated notification identity |
 | TUI permissions | `node --import tsx --test tests/adapters/tui-permissions.spec.tsx`; automatic temporary profile, mocked Gateway, no model calls |
 | UI import/export analysis | `node scripts/audit-ui-reachability.mjs --exports`; read-only candidates, not automatic deletion authority |
 
 Appearance, native file selection and window chrome acceptance use ui/e2e/appearance.smoke.mjs, file-picker.smoke.mjs and desktop-chrome.smoke.mjs. With Vite on port 5187, run `node ui/e2e/theme-components.smoke.mjs` for all six light/dark palettes on the real chat menus and skills screen, including warning semantics, selected states, placeholders and text contrast. `node ui/e2e/dialog-appearance.smoke.mjs` checks confirmation actions and image overlays. Prepare their Vite/Desktop prerequisites and isolated profiles. Preview pages do not replace the real startup-flow regression. Native package installation, update, signing and OS permission acceptance remain platform-specific.
 
-Desktop sidebar drag acceptance waits for `#root[data-pilotdeck-startup]` to clear
+Desktop sidebar drag acceptance waits for `#root[data-eastyundesk-startup]` to clear
 before input. Width probes exceed the 3px drag activation threshold while
 retaining exact boundary-width and title-bar alignment assertions.
 
@@ -113,6 +113,6 @@ loopback ports. Route-level failure cases remain in
 
 Native file-picker acceptance waits for DevTools readiness and uses the pinned
 Chromium browser for its ordinary file-input fallback. Set
-`PILOTDECK_TEST_BROWSER_CHANNEL` to opt into an installed browser such as Edge.
+`EASTYUNDESK_TEST_BROWSER_CHANNEL` to opt into an installed browser such as Edge.
 
 Record commands, outcomes and limits in the PR/CI artifacts. Put temporary screenshots, logs, request dumps and benchmark data in ignored artifacts/<topic>/ or outputs/<topic>/, never in a new tracked delivery report. The [session timeline](architecture/session-timeline.md) and [reasoning reference](reasoning-settings.md) are durable contracts, not test-run logs.

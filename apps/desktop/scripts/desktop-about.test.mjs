@@ -50,7 +50,7 @@ test('Windows and Linux Help route to the rich dialog while macOS keeps its nati
   for (const platform of ['win32', 'linux', 'darwin']) {
     const requests = [];
     const items = buildApplicationMenu(platform, 'en', undefined, { help: action => requests.push(action) }).flatMap(menu => menu.submenu);
-    const about = items.find(item => item.label === 'About PilotDeck');
+    const about = items.find(item => item.label === 'About EastYunDesk');
     if (platform === 'darwin') assert.equal(about.role, 'about');
     else { assert.equal(about.id, 'help-about'); about.click(); assert.deepEqual(requests, ['about']); }
   }

@@ -103,8 +103,8 @@ async function generateSnapshotCopyDiff(
     "--exclude=.git",
     "--exclude=node_modules",
     "--exclude=dist",
-    "--exclude=.pilotdeck",
-    "--exclude=.pilotdeck-always-on",
+    "--exclude=.eastyundesk",
+    "--exclude=.eastyundesk-always-on",
     projectRoot,
     workspaceCwd,
   ]);

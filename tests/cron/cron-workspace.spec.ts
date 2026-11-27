@@ -11,7 +11,7 @@ import type { CronTask } from "../../src/cron/protocol/types.js";
 const execute = promisify(execFile);
 
 test("isolated scheduled work starts at committed HEAD and leaves the user's branch and dirty files untouched", async () => {
-  const root = await mkdtemp(join(tmpdir(), "pilotdeck-cron-worktree-"));
+  const root = await mkdtemp(join(tmpdir(), "eastyundesk-cron-worktree-"));
   const git = (...args: string[]) => execute("git", ["-C", root, ...args]);
   try {
     await git("init", "-q");

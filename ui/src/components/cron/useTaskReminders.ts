@@ -20,7 +20,7 @@ export function useTaskReminders() {
     let delivered = new Set<string>(), dismissals = new Set<string>();
     const inFlight = new Map<string, Promise<void>>();
     const changes = new Map<string, ScheduledTaskReminder | null>();
-    const key = () => `pilotdeck-task-system-notifications-v1:${scope}`;
+    const key = () => `eastyundesk-task-system-notifications-v1:${scope}`;
     const read = () => {
       delivered = new Set(); dismissals = new Set();
       try { const saved = JSON.parse(localStorage.getItem(key()) || '{}'); delivered = new Set(saved.delivered || []); dismissals = new Set(saved.dismissals || []); } catch {}
@@ -36,7 +36,7 @@ export function useTaskReminders() {
     };
     const closeSystem = (id: string) => {
       if (!scope) return;
-      void window.pilotdeckDesktop?.dismissSystemNotification?.({ scope, id }).catch(() => {});
+      void window.eastyundeskDesktop?.dismissSystemNotification?.({ scope, id }).catch(() => {});
       void notificationWorkerMessage('notification:task-dismiss', { scope, id });
     };
     const acknowledge = async (value: { scope: string; id: string }) => {
@@ -52,12 +52,12 @@ export function useTaskReminders() {
       } catch (error) { console.warn('Scheduled reminder acknowledgement deferred:', error); }
     };
     const deliver = (reminder: ScheduledTaskReminder, recovery: boolean) => {
-      if (!active || !scope || !preferences.enabled || (!window.pilotdeckDesktop && delivered.has(reminder.id)) || changes.get(reminder.id) === null) return Promise.resolve();
+      if (!active || !scope || !preferences.enabled || (!window.eastyundeskDesktop && delivered.has(reminder.id)) || changes.get(reminder.id) === null) return Promise.resolve();
       if (inFlight.has(reminder.id)) return inFlight.get(reminder.id)!;
       const expectedScope = scope;
       const work = (async () => {
         try {
-          await window.pilotdeckDesktop?.setNotificationScope?.(expectedScope);
+          await window.eastyundeskDesktop?.setNotificationScope?.(expectedScope);
           if (!active || scope !== expectedScope || changes.get(reminder.id) === null) return;
           const payload = buildTaskReminderNotification(reminder, preferences, i18n.language, expectedScope);
           if (recovery) payload.silent = true;
@@ -90,8 +90,8 @@ export function useTaskReminders() {
         const merged = new Map<string, ScheduledTaskReminder>((snapshot.reminders || []).map((item: ScheduledTaskReminder) => [item.id, item]));
         for (const [key, item] of changes) { if (item) merged.set(key, item); else merged.delete(key); }
         const identities = { scope: snapshot.scope, ids: [...merged.keys()] };
-        await window.pilotdeckDesktop?.setNotificationScope?.(snapshot.scope);
-        await window.pilotdeckDesktop?.reconcileSystemNotifications?.(identities);
+        await window.eastyundeskDesktop?.setNotificationScope?.(snapshot.scope);
+        await window.eastyundeskDesktop?.reconcileSystemNotifications?.(identities);
         await notificationWorkerMessage('notification:task-reconcile', identities);
         // Recover only notifications this client never successfully handed to the OS.
         for (const item of merged.values()) await deliver(item, true);
@@ -110,7 +110,7 @@ export function useTaskReminders() {
       if (event.data?.type === 'notification:task-dismissed') void acknowledge(event.data);
       else receive(event.data);
     };
-    const unsubscribeDismiss = window.pilotdeckDesktop?.onSystemNotificationDismiss?.(value => { void acknowledge(value); });
+    const unsubscribeDismiss = window.eastyundeskDesktop?.onSystemNotificationDismiss?.(value => { void acknowledge(value); });
     const focused = () => { if (document.visibilityState === 'visible') void reload(); };
     navigator.serviceWorker?.addEventListener('message', worker);
     navigator.serviceWorker?.addEventListener('controllerchange', focused);

@@ -1,11 +1,11 @@
-import type { PilotDeckHooksSettings } from "../../hooks/protocol/settings.js";
-import type { PilotDeckLoadedPlugin } from "../protocol/plugin.js";
+import type { EastYunDeskHooksSettings } from "../../hooks/protocol/settings.js";
+import type { EastYunDeskLoadedPlugin } from "../protocol/plugin.js";
 
-export function loadPluginHooks(plugins: PilotDeckLoadedPlugin[]): PilotDeckHooksSettings {
-  const settings: PilotDeckHooksSettings = {};
+export function loadPluginHooks(plugins: EastYunDeskLoadedPlugin[]): EastYunDeskHooksSettings {
+  const settings: EastYunDeskHooksSettings = {};
   for (const plugin of plugins) {
     for (const [event, matchers] of Object.entries(plugin.hooksConfig ?? {}) as Array<
-      [keyof PilotDeckHooksSettings, NonNullable<PilotDeckHooksSettings[keyof PilotDeckHooksSettings]>]
+      [keyof EastYunDeskHooksSettings, NonNullable<EastYunDeskHooksSettings[keyof EastYunDeskHooksSettings]>]
     >) {
       settings[event] = [
         ...(settings[event] ?? []),

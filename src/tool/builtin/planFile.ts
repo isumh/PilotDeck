@@ -2,12 +2,12 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import {
   ensureWritableDirectory,
-  ensurePilotProjectGitIgnore,
+  ensureEastYunProjectGitIgnore,
   isVirtualProjectRoot,
-  PILOT_PROJECT_DIR_NAME,
-  resolvePilotHomeProjectArtifactDir,
+  EASTYUN_PROJECT_DIR_NAME,
+  resolveEastYunHomeProjectArtifactDir,
   resolveRuntimeArtifactFallbackDir,
-} from "../../pilot/index.js";
+} from "../../eastyun/index.js";
 
 export type PlanFileManager = {
   getPlanDirectoryPath(): string;
@@ -17,29 +17,29 @@ export type PlanFileManager = {
 
 export function createPlanFileManager(options: {
   projectRoot: string;
-  pilotHome: string;
+  eastyunHome: string;
   env?: Record<string, string | undefined>;
 }): PlanFileManager {
   const virtualProject = isVirtualProjectRoot({
     projectRoot: options.projectRoot,
-    pilotHome: options.pilotHome,
+    eastyunHome: options.eastyunHome,
     env: options.env,
   });
   const preferredPlanDir = virtualProject
-    ? resolvePilotHomeProjectArtifactDir({
-        pilotHome: options.pilotHome,
+    ? resolveEastYunHomeProjectArtifactDir({
+        eastyunHome: options.eastyunHome,
         projectRoot: options.projectRoot,
         artifact: "plans",
       })
-    : resolve(options.projectRoot, PILOT_PROJECT_DIR_NAME, "plans");
+    : resolve(options.projectRoot, EASTYUN_PROJECT_DIR_NAME, "plans");
   const fallbackPlanDir = resolveRuntimeArtifactFallbackDir({
-    pilotHome: options.pilotHome,
+    eastyunHome: options.eastyunHome,
     purpose: "plans",
   });
   let resolvedPlanDir: string | undefined;
 
   function getPlanDirectoryPath(): string {
-    if (!virtualProject) ensurePilotProjectGitIgnore(options.projectRoot);
+    if (!virtualProject) ensureEastYunProjectGitIgnore(options.projectRoot);
     resolvedPlanDir ??= virtualProject
       ? ensureWritableDirectory({
           preferredDir: preferredPlanDir,

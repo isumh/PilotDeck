@@ -18,7 +18,7 @@ def listing(client, prefix):
 def check(client, run_id, directory, report):
     if not re.fullmatch(r"[0-9]+", run_id):
         raise RuntimeError("A numeric GitHub run ID is required")
-    prefix = f"PilotDeck/_debug/retention-delete/{run_id}/"
+    prefix = f"EastYunDesk/_debug/retention-delete/{run_id}/"
     keys = [prefix + name for name in ("first.txt", "second.txt")]
     report.update(prefix=prefix, keys=keys, result="failed")
     started = time.monotonic()

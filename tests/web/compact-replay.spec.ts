@@ -28,14 +28,14 @@ function completedTurn(sessionId: string, turnId: string): AgentTurnResult {
 }
 
 test("web history restores structured records around a visible compact boundary", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-compact-web-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-compact-web-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-compact-web-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-compact-web-home-"));
   try {
     const sessionKey = "web:s_compact_replay";
     const subagentId = "subagent-before-compact";
     const storage = createAgentProjectSessionStorage({
       projectRoot,
-      pilotHome,
+      eastyunHome,
       sessionId: sessionKey,
       // Intentionally give every entry the same timestamp. Ordering must come
       // from the transcript sequence, not timestamp insertion heuristics.
@@ -124,7 +124,7 @@ test("web history restores structured records around a visible compact boundary"
       completedTurn(sessionKey, "turn-new"),
     );
 
-    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, pilotHome });
+    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, eastyunHome });
     const text = replay.messages.map((message) => message.text ?? "").join("\n");
     const compactBoundaries = replay.messages.filter((message) => message.kind === "compact_boundary");
     const compactBoundary = compactBoundaries[0];
@@ -173,19 +173,19 @@ test("web history restores structured records around a visible compact boundary"
     assert.deepEqual(sequences, [...sequences].sort((a, b) => a - b));
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("subagent history keeps execution messages around its compact boundary", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-subagent-compact-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-subagent-compact-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-subagent-compact-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-subagent-compact-home-"));
   try {
     const sessionKey = "web:s_subagent_compact";
     const subagentId = "subagent-compact";
     const storage = createAgentProjectSessionStorage({
       projectRoot,
-      pilotHome,
+      eastyunHome,
       sessionId: sessionKey,
       now: () => new Date(createdAt),
     });
@@ -240,7 +240,7 @@ test("subagent history keeps execution messages around its compact boundary", as
 
     const replay = await readSubagentWebMessages(
       { sessionKey, subagentId },
-      { projectRoot, pilotHome },
+      { projectRoot, eastyunHome },
     );
     const text = replay.messages.map((message) => message.text ?? "").join("\n");
     const boundaryIndex = replay.messages.findIndex((message) => message.kind === "compact_boundary");
@@ -257,6 +257,6 @@ test("subagent history keeps execution messages around its compact boundary", as
     assert.ok(boundaryIndex < afterIndex);
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });

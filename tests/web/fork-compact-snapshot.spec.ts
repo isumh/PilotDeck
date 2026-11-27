@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import type { CanonicalMessage } from "../../src/model/index.js";
-import { getPilotProjectChatDir } from "../../src/pilot/paths.js";
+import { getEastYunProjectChatDir } from "../../src/eastyun/paths.js";
 import { sanitizeSessionIdForPath } from "../../src/session/storage/ProjectSessionStorage.js";
 import { JsonlTranscriptWriter } from "../../src/session/transcript/JsonlTranscriptWriter.js";
 import { readTranscript } from "../../src/session/transcript/TranscriptReader.js";
@@ -16,7 +16,7 @@ for (const storage of ["snapshot", "ordinary", "restore"] as const) {
   test(`fork retargets ${storage} references and marks inherited messages as fork carryover`, async (t) => {
     const root = await mkdtemp(join(tmpdir(), "fork-compact-"));
     t.after(() => rm(root, { recursive: true, force: true }));
-    const chatDir = getPilotProjectChatDir(root, root);
+    const chatDir = getEastYunProjectChatDir(root, root);
     const sourceId = "source";
     const sourceDir = join(chatDir, sourceId);
     const sourcePath = join(chatDir, `${sourceId}.jsonl`);
@@ -56,7 +56,7 @@ for (const storage of ["snapshot", "ordinary", "restore"] as const) {
     await writer.recordAcceptedInput(sourceId, "next", [{ role: "user", content: [{ type: "text", text: "next" }] }]);
     const sourceBefore = await readFile(sourcePath, "utf8");
     const fromEntryId = (await readTranscript(sourcePath)).entries.at(-1)!.entryId!;
-    const fork = await forkWebSession({ sessionKey: sourceId, fromEntryId }, { projectRoot: root, pilotHome: root });
+    const fork = await forkWebSession({ sessionKey: sourceId, fromEntryId }, { projectRoot: root, eastyunHome: root });
     const forkDir = join(chatDir, sanitizeSessionIdForPath(fork.newSessionKey));
     const replay = replayTranscriptEntries((await readTranscript(`${forkDir}.jsonl`)).entries);
     for (const message of replay.messages) {

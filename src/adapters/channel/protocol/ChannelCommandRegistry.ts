@@ -12,7 +12,7 @@
  */
 
 import type { Gateway } from "../../../gateway/index.js";
-import { resolvePilotHome } from "../../../pilot/index.js";
+import { resolveEastYunHome } from "../../../eastyun/index.js";
 import { runChatSearchFormatted } from "../../../cli/commands/chatSearch.js";
 
 // ---------------------------------------------------------------------------
@@ -158,7 +158,7 @@ const commands: ChannelCommand[] = [
   {
     name: "status",
     aliases: ["状态"],
-    description: "Show PilotDeck status and version",
+    description: "Show EastYunDesk status and version",
     systemLevel: true,
     handler: async (ctx, _arg) => {
       const { execFile } = await import("node:child_process");
@@ -179,7 +179,7 @@ const commands: ChannelCommand[] = [
         const uptimeStr = uptimeH > 0 ? `${uptimeH}h ${uptimeMin % 60}m` : `${uptimeMin}m`;
 
         const lines = [
-          "📊 PilotDeck Status",
+          "📊 EastYunDesk Status",
           "",
           `分支: ${branch.trim()}`,
           `提交: ${commit.trim()}`,
@@ -212,7 +212,7 @@ const commands: ChannelCommand[] = [
       const { text } = await runChatSearchFormatted({
         arg: parsed,
         projectRoot,
-        pilotHome: resolvePilotHome(process.env),
+        eastyunHome: resolveEastYunHome(process.env),
         locale: "zh",
       });
       await ctx.reply(text);

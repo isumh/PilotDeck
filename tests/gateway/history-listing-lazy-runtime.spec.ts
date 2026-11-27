@@ -5,11 +5,11 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createLocalGateway } from '../../src/cli/createLocalGateway.js';
 import { createModelRuntime } from '../../src/model/index.js';
-import { getPilotProjectChatDir } from '../../src/pilot/paths.js';
+import { getEastYunProjectChatDir } from '../../src/eastyun/paths.js';
 
 test('Gateway browsing history does not initialize models/plugins for each project', async (t) => {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-lazy-history-'));
-  const configPath = join(home, 'pilotdeck.yaml');
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-lazy-history-'));
+  const configPath = join(home, 'eastyundesk.yaml');
   await writeFile(configPath, `schemaVersion: 1
 agent: { model: test/model }
 model:
@@ -25,8 +25,8 @@ telemetry: { enabled: false }
 `);
   let modelInitializations = 0;
   const local = createLocalGateway({
-    pilotHome: home, projectRoot: home, builtinSkillsRoot: join(home, 'skills'),
-    env: { PILOT_HOME: home, PILOTDECK_CONFIG_PATH: configPath },
+    eastyunHome: home, projectRoot: home, builtinSkillsRoot: join(home, 'skills'),
+    env: { EASTYUN_HOME: home, EASTYUNDESK_CONFIG_PATH: configPath },
     __testModelFactory(snapshot) {
       modelInitializations += 1;
       return createModelRuntime(snapshot.config.model);
@@ -37,7 +37,7 @@ telemetry: { enabled: false }
   for (let i = 0; i < 3; i++) {
     const project = join(home, `workspace-${i}`);
     await mkdir(project);
-    const chats = getPilotProjectChatDir(project, home);
+    const chats = getEastYunProjectChatDir(project, home);
     await mkdir(chats, { recursive: true });
     await writeFile(join(chats, '..', '.cwd'), project);
     await writeFile(join(chats, 'web_saved.jsonl'), JSON.stringify({ type: 'session_metadata', metadata: { title: 'Saved' } }) + '\n');

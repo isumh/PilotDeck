@@ -79,7 +79,7 @@ async function assertInside(root, directory) {
 
 async function publishFile(source, stat, destination, roots) {
     await assertInside(roots.destination, path.dirname(destination));
-    const temporary = path.join(path.dirname(destination), `.pilotdeck-migration-${randomUUID()}.tmp`);
+    const temporary = path.join(path.dirname(destination), `.eastyundesk-migration-${randomUUID()}.tmp`);
     const input = await openRegularFile(source, stat, roots.source);
     let created = false;
     try {
@@ -104,7 +104,7 @@ async function copyTree(source, destination, roots, report) {
     await assertInside(roots.destination, destination);
     for (const name of (await fs.readdir(source)).sort()) {
         // Workspace ownership belongs to the destination, never to an old copy.
-        if (source === roots.source && name === '.pilotdeck-workspace') continue;
+        if (source === roots.source && name === '.eastyundesk-workspace') continue;
         const from = path.join(source, name);
         const sourceStat = await fs.lstat(from);
         const relativeSource = path.relative(roots.source, from);
@@ -144,23 +144,23 @@ async function copyTree(source, destination, roots, report) {
     }
 }
 
-async function migrate({ source, destination, pilotHome, sourceLabel = 'general' }) {
+async function migrate({ source, destination, eastyunHome, sourceLabel = 'general' }) {
     const sourceStat = await statOrNull(source);
     if (!sourceStat) return;
     if (sourceStat.isSymbolicLink() || !sourceStat.isDirectory()) throw unsafe('Legacy General workspace is not a safe directory.');
     const destinationStat = await fs.lstat(destination);
     if (destinationStat.isSymbolicLink() || !destinationStat.isDirectory()) throw unsafe('New General workspace is not a safe directory.');
-    const [realSource, realDestination, realPilotHome] = await Promise.all([
-        fs.realpath(source), fs.realpath(destination), physicalPath(path.resolve(pilotHome)),
+    const [realSource, realDestination, realEastYunHome] = await Promise.all([
+        fs.realpath(source), fs.realpath(destination), physicalPath(path.resolve(eastyunHome)),
     ]);
-    for (const [left, right] of [[realSource, realDestination], [realSource, realPilotHome], [realDestination, realPilotHome]]) {
+    for (const [left, right] of [[realSource, realDestination], [realSource, realEastYunHome], [realDestination, realEastYunHome]]) {
         if (isPathInsideOrEqual(left, right) || isPathInsideOrEqual(right, left)) {
-            throw unsafe('General migration directories must be separate from each other and PILOT_HOME.');
+            throw unsafe('General migration directories must be separate from each other and EASTYUN_HOME.');
         }
     }
     const destinationIdentity = identity(await fs.stat(realDestination));
     const key = createHash('sha256').update(`${realSource}\0${realDestination}`).digest('hex').slice(0, 24);
-    const stateDirectory = path.join(realPilotHome, 'migrations');
+    const stateDirectory = path.join(realEastYunHome, 'migrations');
     const marker = path.join(stateDirectory, `general-workspace-v1-${key}.json`);
     const stateStat = await statOrNull(stateDirectory);
     if (stateStat && (stateStat.isSymbolicLink() || !stateStat.isDirectory())) throw unsafe('General migration state directory is unsafe.');
@@ -176,7 +176,7 @@ async function migrate({ source, destination, pilotHome, sourceLabel = 'general'
     const report = { version: 1, source: realSource, destination: realDestination, destinationIdentity, copied: 0, conflicts: [], skipped: [] };
     await copyTree(realSource, realDestination, { source: realSource, destination: realDestination, sourceLabel }, report);
     await fs.mkdir(stateDirectory, { recursive: true, mode: 0o700 });
-    await assertInside(realPilotHome, stateDirectory);
+    await assertInside(realEastYunHome, stateDirectory);
     const temporary = path.join(stateDirectory, `${key}-${randomUUID()}.tmp`);
     try {
         await fs.writeFile(temporary, JSON.stringify({ ...report, completedAt: new Date().toISOString() }, null, 2), { flag: 'wx', mode: 0o600 });

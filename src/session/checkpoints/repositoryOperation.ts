@@ -5,7 +5,7 @@ import { promises as fs } from "node:fs";
 import { createHash } from "node:crypto";
 import { runLegacyRepositoryOperation } from "./legacyRepositoryOperation.js";
 import { CheckpointError } from "./WorkspaceCheckpoints.js";
-import { ensurePilotProjectGitIgnore } from "../../pilot/paths.js";
+import { ensureEastYunProjectGitIgnore } from "../../eastyun/paths.js";
 
 const execute = promisify(execFile);
 import type { RepositoryOperation } from "./types.js";
@@ -29,7 +29,7 @@ export async function runRepositoryOperation(workspace: string, input: Repositor
   const git = (args: string[], cwd = workspace) => execute("git", args, { cwd, timeout: 90_000, maxBuffer: 4 * 1024 * 1024, windowsHide: true });
   if (input.operation === "init") {
     const result = await git(["init"]);
-    ensurePilotProjectGitIgnore(workspace);
+    ensureEastYunProjectGitIgnore(workspace);
     return { success: true, output: result.stdout };
   }
   const root = (await git(["rev-parse", "--show-toplevel"])).stdout.trim();

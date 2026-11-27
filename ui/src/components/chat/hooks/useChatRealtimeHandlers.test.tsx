@@ -18,13 +18,13 @@ vi.mock('../../../contexts/WebSocketContext', () => ({
   useWebSocket: () => ({ sendMessage: mocks.sendMessage, subscribe: mocks.subscribe }),
 }));
 
-const provider = 'pilotdeck' as SessionProvider;
+const provider = 'eastyundesk' as SessionProvider;
 const noop = () => undefined;
 let gatewayEventToFrames: (event: Record<string, unknown>, sessionId: string, provider: SessionProvider) => unknown[];
 beforeAll(async () => {
   // Keep cold backend initialization outside React test lifetimes and the
   // per-assertion timeout while still exercising the real transport mapper.
-  const bridgePath = '../../../../server/pilotdeck-bridge.js';
+  const bridgePath = '../../../../server/eastyundesk-bridge.js';
   ({ gatewayEventToFrames } = await import(bridgePath));
 }, 60_000);
 afterEach(cleanup);
@@ -66,7 +66,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       selectedProject: { name: 'fixture', fullPath: '/fixture', displayName: 'Fixture' },
       selectedSession: { id: selectedId }, currentSessionId: selectedId, setCurrentSessionId,
       setIsLoading, setSessionRuntimeState: noop, activeRunId: null, setActiveRunId: noop,
-      setCanAbortSession: noop, setIsAborting: noop, setClaudeStatus: noop, setPilotDeckStatus: noop,
+      setCanAbortSession: noop, setIsAborting: noop, setClaudeStatus: noop, setEastYunDeskStatus: noop,
       setTokenBudget: noop, setPendingPermissionRequests, pendingViewSessionRef: { current: null }, sessionStore }));
     act(() => {
       mocks.listener?.({ kind: 'session_created', sessionId: otherId, newSessionId: otherId });
@@ -83,7 +83,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
     const base = {
       provider, selectedProject: { name: 'fixture', fullPath: '/fixture', displayName: 'Fixture' },
       setCurrentSessionId: noop, setIsLoading: noop, activeRunId: null, setActiveRunId: noop,
-      setCanAbortSession: noop, setIsAborting: noop, setClaudeStatus: noop, setPilotDeckStatus: noop,
+      setCanAbortSession: noop, setIsAborting: noop, setClaudeStatus: noop, setEastYunDeskStatus: noop,
       setTokenBudget: noop, setPendingPermissionRequests: noop, pendingViewSessionRef: { current: null },
     };
     renderHook(() => useChatRealtimeHandlers({ ...base, sessionScope: 'task',
@@ -107,7 +107,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       selectedProject: { name: 'fixture', fullPath: '/fixture', displayName: 'Fixture' }, selectedSession: { id: 'web:source' },
       currentSessionId: 'web:source', setCurrentSessionId: noop, setIsLoading: noop,
       setSessionRuntimeState: noop, activeRunId: null, setActiveRunId: noop,
-      setCanAbortSession: noop, setIsAborting: noop, setClaudeStatus: noop, setPilotDeckStatus: noop,
+      setCanAbortSession: noop, setIsAborting: noop, setClaudeStatus: noop, setEastYunDeskStatus: noop,
       setTokenBudget, setPendingPermissionRequests: noop, pendingViewSessionRef: { current: null },
       sessionStore: createSessionStore() }));
     const respond = (tokenBudget: unknown) => {
@@ -123,13 +123,13 @@ describe('useChatRealtimeHandlers terminal errors', () => {
 
   it('publishes completed-turn usage for an already-open context panel', () => {
     const listener = vi.fn();
-    window.addEventListener('pilotdeck:agent-turn-complete', listener);
+    window.addEventListener('eastyundesk:agent-turn-complete', listener);
     try {
       renderHook(() => useChatRealtimeHandlers({ provider,
         selectedProject: { name: 'fixture', fullPath: '/fixture', displayName: 'Fixture' }, selectedSession: { id: 'web:source' },
         currentSessionId: 'web:source', setCurrentSessionId: noop, setIsLoading: noop,
         setSessionRuntimeState: noop, activeRunId: null, setActiveRunId: noop,
-        setCanAbortSession: noop, setIsAborting: noop, setClaudeStatus: noop, setPilotDeckStatus: noop,
+        setCanAbortSession: noop, setIsAborting: noop, setClaudeStatus: noop, setEastYunDeskStatus: noop,
         setTokenBudget: noop, setPendingPermissionRequests: noop, pendingViewSessionRef: { current: null },
         sessionStore: createSessionStore() }));
       const usage = { inputTokens: 5000, cacheReadTokens: 5000, outputTokens: 20 };
@@ -138,7 +138,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
         turnTiming: { startedAt: '2026-09-01T00:00:00Z', completedAt, finishReason: 'completed' } }));
       expect(listener.mock.calls[0][0].detail).toMatchObject({ sessionId: 'web:source', projectPath: '/fixture',
         lastTurnUsage: { turnId: 'run-1', completedAt, calls: 6, usage } });
-    } finally { window.removeEventListener('pilotdeck:agent-turn-complete', listener); }
+    } finally { window.removeEventListener('eastyundesk:agent-turn-complete', listener); }
   });
 
   it('ends a new send when preflight fails immediately after session creation', () => {
@@ -147,7 +147,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
     const onSessionInactive = vi.fn();
     renderHook(() => useChatRealtimeHandlers({
       provider,
-      selectedProject: { name: 'general', fullPath: '/tmp/pilot-home' } as unknown as Project,
+      selectedProject: { name: 'general', fullPath: '/tmp/eastyun-home' } as unknown as Project,
       selectedSession: null,
       currentSessionId: null,
       setCurrentSessionId: noop,
@@ -158,7 +158,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: { sessionId: null, startedAt: Date.now() } },
@@ -168,7 +168,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
     act(() => {
       mocks.listener?.({ kind: 'session_created', sessionId: 'web:s_failed', newSessionId: 'web:s_failed', runId: 'workspace-failed-start' });
       mocks.listener?.({ kind: 'error', sessionId: 'web:s_failed', runId: 'workspace-failed-start', terminal: true,
-        code: 'gateway_bridge_error', content: 'General workspace must be separate from PILOT_HOME.' });
+        code: 'gateway_bridge_error', content: 'General workspace must be separate from EASTYUN_HOME.' });
     });
     expect(setIsLoading).toHaveBeenCalledWith(false);
     expect(setCanAbortSession).toHaveBeenCalledWith(false);
@@ -193,7 +193,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -227,7 +227,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -269,7 +269,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -305,7 +305,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -347,7 +347,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -384,7 +384,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -424,7 +424,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -452,7 +452,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
     expect(mocks.sendMessage).toHaveBeenCalledWith({
       type: 'check-session-status',
       sessionId: 'cron:task-1',
-      provider: 'pilotdeck',
+      provider: 'eastyundesk',
       expectedActiveRunId: null,
       includeActiveTurnMessages: true,
       statusRequestId: 1,
@@ -476,7 +476,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -515,7 +515,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -570,7 +570,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -633,7 +633,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -665,7 +665,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
     expect(mocks.sendMessage).toHaveBeenCalledWith({
       type: 'check-session-status',
       sessionId: 'cron:task-1',
-      provider: 'pilotdeck',
+      provider: 'eastyundesk',
       expectedActiveRunId: 'run-current',
       includeActiveTurnMessages: true,
       statusRequestId: 1,
@@ -691,7 +691,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -731,7 +731,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -799,7 +799,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -866,7 +866,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },
@@ -927,7 +927,7 @@ describe('useChatRealtimeHandlers terminal errors', () => {
       setCanAbortSession: noop,
       setIsAborting: noop,
       setClaudeStatus: noop,
-      setPilotDeckStatus: noop,
+      setEastYunDeskStatus: noop,
       setTokenBudget: noop,
       setPendingPermissionRequests: noop,
       pendingViewSessionRef: { current: null },

@@ -76,9 +76,9 @@ vi.mock('../skills/view/SkillsPanel', () => ({
 }));
 
 const project: Project = {
-  name: 'pilotdeck',
-  displayName: 'PilotDeck',
-  fullPath: '/workspace/PilotDeck',
+  name: 'eastyundesk',
+  displayName: 'EastYunDesk',
+  fullPath: '/workspace/EastYunDesk',
 };
 
 function Harness({
@@ -123,7 +123,7 @@ describe('MainArea dashboard switcher', () => {
       name: 'general',
       displayName: 'general',
       kind: 'general',
-      fullPath: '/state/pilot-home',
+      fullPath: '/state/eastyun-home',
       workspaceCwd: '/workspaces/general',
       capabilities: { files: false, explore: false, projectFileMentions: false },
     };
@@ -151,7 +151,7 @@ describe('MainArea dashboard switcher', () => {
     fireEvent.keyDown(input, { key: 'Enter' });
 
     expect(screen.getByTitle('Renamed conversation').textContent).toBe('Renamed conversation');
-    expect(JSON.parse(localStorage.getItem('pilotdeck:customSessionTitles') || '{}')).toEqual({
+    expect(JSON.parse(localStorage.getItem('eastyundesk:customSessionTitles') || '{}')).toEqual({
       'session-1': 'Renamed conversation',
     });
   });
@@ -165,7 +165,7 @@ describe('MainArea dashboard switcher', () => {
     fireEvent.keyDown(input, { key: 'Escape' });
 
     expect(screen.getByTitle('Searchable chat').textContent).toBe('Searchable chat');
-    expect(localStorage.getItem('pilotdeck:customSessionTitles')).toBeNull();
+    expect(localStorage.getItem('eastyundesk:customSessionTitles')).toBeNull();
   });
 
   it('keeps header search absent and opens global search without leaving Files', () => {

@@ -104,6 +104,9 @@ router.post('/complete-onboarding', authenticateToken, async (req, res) => {
         configuration,
       });
     }
+    // Persist the flag so a returning user skips the first-run wizard even
+    // when the configuration later becomes unready (e.g. key revoked).
+    if (req.user?.id !== undefined) userDb.completeOnboarding(req.user.id);
     res.json({
       success: true,
       message: 'Onboarding completed successfully',
@@ -124,7 +127,13 @@ router.get('/onboarding-status', authenticateToken, async (req, res) => {
       success: true,
       configuration,
       gateway: runtimeCoordination.getGatewayState(),
-      hasCompletedOnboarding: configuration.state === 'ready' || configuration.state === 'empty'
+      // The stored flag only widens the answer: a ready configuration is
+      // always considered complete, a stored flag keeps a returning user from
+      // being pushed back into the wizard after their key stops working.
+      hasCompletedOnboarding:
+        configuration.state === 'ready'
+        || configuration.state === 'empty'
+        || (req.user?.id !== undefined && userDb.hasCompletedOnboarding(req.user.id)),
     });
   } catch (error) {
     console.error('Error checking onboarding status:', error);

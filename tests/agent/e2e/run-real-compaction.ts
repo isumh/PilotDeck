@@ -30,7 +30,7 @@ import {
   type CanonicalUsage,
 } from "../../../src/model/index.js";
 import { createDefaultPermissionContext } from "../../../src/permission/protocol/types.js";
-import { loadPilotConfig } from "../../../src/pilot/index.js";
+import { loadEastYunConfig } from "../../../src/eastyun/index.js";
 import { createRouterRuntime } from "../../../src/router/index.js";
 import {
   createAgentProjectSessionStorage,
@@ -43,12 +43,12 @@ import type {
 } from "../../../src/session/transcript/TranscriptEntry.js";
 import { ToolRegistry } from "../../../src/tool/registry/ToolRegistry.js";
 
-if (process.env.PILOTDECK_RUN_REAL_COMPACTION_E2E !== "1") {
-  throw new Error("Set PILOTDECK_RUN_REAL_COMPACTION_E2E=1 to run the real-provider compaction E2E.");
+if (process.env.EASTYUNDESK_RUN_REAL_COMPACTION_E2E !== "1") {
+  throw new Error("Set EASTYUNDESK_RUN_REAL_COMPACTION_E2E=1 to run the real-provider compaction E2E.");
 }
 
 const projectRoot = process.cwd();
-const snapshot = loadPilotConfig({ projectRoot });
+const snapshot = loadEastYunConfig({ projectRoot });
 const selected = snapshot.config.agent.model;
 const modelRuntime = createModelRuntime(snapshot.config.model);
 const capabilities = modelRuntime.getCapabilities(selected.provider, selected.model);
@@ -133,11 +133,11 @@ const agentConfig: AgentRuntimeConfig = {
     bypassAvailable: true,
   }),
 };
-const runRoot = mkdtempSync(join(tmpdir(), "pilotdeck-real-compaction-e2e-"));
+const runRoot = mkdtempSync(join(tmpdir(), "eastyundesk-real-compaction-e2e-"));
 const sessionId = `real-compaction-${Date.now()}`;
 const storage = createAgentProjectSessionStorage({
   projectRoot,
-  pilotHome: runRoot,
+  eastyunHome: runRoot,
   sessionId,
 });
 const seedTurnId = "seed-real-history";
@@ -372,7 +372,7 @@ async function buildRealRepositoryHistory(input: {
     role: "user",
     content: [{
       type: "text",
-      text: "Inspect the PilotDeck context, compaction, agent loop, transcript, and model code paths, preserving concrete findings for a final status response.",
+      text: "Inspect the EastYunDesk context, compaction, agent loop, transcript, and model code paths, preserving concrete findings for a final status response.",
     }],
   }];
   let projectedMessages: CanonicalMessage[] = messages;

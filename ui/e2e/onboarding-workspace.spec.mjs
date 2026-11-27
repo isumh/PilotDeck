@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.use({ serviceWorkers: 'block' });
 
-for (const scenario of ['create', 'clone', 'retry completion', 'skip']) {
+for (const scenario of ['create', 'retry completion', 'skip']) {
   test(`onboarding opens the selected workspace: ${scenario}`, async ({ page, context }) => {
     const project = { name: 'onboarding space-项目', displayName: 'New workspace', fullPath: '/fixture/new-workspace', sessions: [] };
     const general = { name: 'general', displayName: 'General conversation', fullPath: '/fixture/general', sessions: [] };
@@ -22,21 +22,26 @@ for (const scenario of ['create', 'clone', 'retry completion', 'skip']) {
         if (scenario === 'retry completion' && completions === 1) {
           status = 503; body = { error: 'Please retry completion' };
         } else completed = true;
-      } else if (pathname === '/api/projects/create-workspace' || pathname === '/api/projects/clone-progress') {
+      } else if (pathname === '/api/projects/create-workspace') {
         creations++; created = true;
-        if (pathname.endsWith('clone-progress')) {
-          expect(url.searchParams.get('path')).toBe('/fixture/new-workspace');
-          expect(url.searchParams.get('githubUrl')).toBe('https://github.com/example/demo.git');
-          await route.fulfill({ contentType: 'text/event-stream', body: `data: ${JSON.stringify({ type: 'complete', project })}\n\n` });
-          return;
-        }
         expect(route.request().postDataJSON()).toMatchObject({ path: '/fixture/new-workspace', workspaceType: 'new' });
         body = { project };
       } else if (pathname === '/api/projects') body = created ? [general, project] : [general];
-      else if (pathname === '/api/config/provider') body = { exists: false, provider: null };
-      else if (pathname === '/api/config/models') body = { models: [{ id: 'fixture-model' }] };
+      // EastYunDesk pins the wizard to the builtin provider and collapses the
+      // connection step once a usable key is already stored.
+      else if (pathname === '/api/config/provider') body = {
+        exists: true,
+        environmentCredentialProviderIds: [],
+        provider: {
+          type: 'openai-responses',
+          baseUrl: 'http://ai-gw.ceairyn.com/v1',
+          apiKey: 'sk-fixture',
+          model: 'qwen3.8-27b',
+        },
+      };
+      else if (pathname === '/api/config/models') body = { models: [{ id: 'qwen3.8-27b' }] };
       else if (pathname === '/api/config') body = { config: {}, raw: '', exists: false, success: true };
-      else if (pathname === '/api/v1/providers') body = { providers: [{ id: 'ollama', displayName: 'Ollama', requiresApiKey: false }] };
+      else if (pathname === '/api/v1/providers') body = { providers: [] };
       else if (pathname.includes('sessions')) body = { sessions: [], total: 0, hasMore: false };
       else if (pathname.includes('credentials')) body = { credentials: [] };
       else if (pathname.includes('providers') || pathname.includes('models')) body = { providers: [], models: [] };
@@ -48,16 +53,11 @@ for (const scenario of ['create', 'clone', 'retry completion', 'skip']) {
     // Replace a previous workspace selection when onboarding finishes.
     await page.goto('/p/general');
     await page.getByRole('button', { name: 'Start setup', exact: true }).click();
-    await page.getByRole('button', { name: 'Ollama', exact: true }).click();
-    await page.getByRole('button', { name: 'Continue', exact: true }).click();
-    await page.getByRole('button', { name: 'fixture-model', exact: true }).click();
-    await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Create your workspace', exact: true })).toBeVisible();
     if (scenario === 'skip') {
       await page.getByRole('button', { name: 'Start chatting', exact: true }).click();
     } else {
       await page.getByRole('textbox', { name: /^Workspace / }).fill('/fixture/new-workspace');
-      if (scenario === 'clone') await page.getByRole('textbox', { name: /^GitHub URL / }).fill('https://github.com/example/demo.git');
       await page.getByRole('button', { name: 'Create workspace', exact: true }).click();
       if (scenario === 'retry completion') {
         await expect(page.getByText('Please retry completion', { exact: true })).toBeVisible();

@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { constants, promises as fs, realpathSync } from "node:fs";
 import path from "node:path";
 import type { CanonicalMessage } from "../../model/index.js";
-import { getPilotProjectChatDir } from "../../pilot/paths.js";
+import { getEastYunProjectChatDir } from "../../eastyun/paths.js";
 import { buildStructuredPatch } from "../../tool/builtin/filesystem/structuredPatch.js";
 import { resolveRealWritePath } from "../../tool/builtin/filesystem/pathSafety.js";
 import { acquireWorkspaceOperation, canonicalWorkspacePath, hasWorkspaceTurn, operationContext, registerWorkspaceTurn, workspaceOperationState } from "./WorkspaceCoordinator.js";
@@ -10,7 +10,7 @@ import { acquireWorkspaceOperation, canonicalWorkspacePath, hasWorkspaceTurn, op
 import type { FileVersion, FileChange, Checkpoint, CheckpointSummary, RestorePlan, RestoreOperation, CheckpointRequest } from "./types.js";
 export type { FileVersion, FileChange, Checkpoint, CheckpointSummary, RestorePlan, RestoreOperation, CheckpointRequest } from "./types.js";
 
-const EXCLUDED = new Set([".git", ".pilotdeck", ".tmp", "node_modules", ".venv", "venv", "dist", "build", "coverage", ".next", ".cache", "__pycache__"]);
+const EXCLUDED = new Set([".git", ".eastyundesk", ".tmp", "node_modules", ".venv", "venv", "dist", "build", "coverage", ".next", ".cache", "__pycache__"]);
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_WORKSPACE_BYTES = 256 * 1024 * 1024;
 const ABSENT: FileVersion = { kind: "absent" };
@@ -36,16 +36,16 @@ export class CheckpointError extends Error {
   constructor(public readonly code: string, message: string) { super(message); }
 }
 
-export async function getCheckpointStore(workspace: string, pilotHome: string): Promise<CheckpointStore> {
+export async function getCheckpointStore(workspace: string, eastyunHome: string): Promise<CheckpointStore> {
   const root = canonicalPath(await fs.realpath(workspace));
-  const key = `${path.resolve(pilotHome)}\0${root}`;
+  const key = `${path.resolve(eastyunHome)}\0${root}`;
   let pending = stores.get(key);
   if (!pending) {
     const workspaceId = digest(Buffer.from(root)).slice(0, 24);
     pending = (async () => {
       // Keep backup storage outside project registration directories, including aliased roots.
-      const directory = path.join(path.resolve(pilotHome), "checkpoints", workspaceId);
-      const legacy = path.resolve(getPilotProjectChatDir(root, pilotHome), "..", "checkpoints", workspaceId);
+      const directory = path.join(path.resolve(eastyunHome), "checkpoints", workspaceId);
+      const legacy = path.resolve(getEastYunProjectChatDir(root, eastyunHome), "..", "checkpoints", workspaceId);
       await fs.mkdir(path.dirname(directory), { recursive: true, mode: 0o700 });
       if ((await fs.stat(legacy).catch(() => undefined))?.isDirectory() && !await fs.stat(directory).catch(() => undefined)) {
         await fs.rename(legacy, directory).catch(async error => { if (!(await fs.stat(directory).catch(() => undefined))?.isDirectory()) throw error; });
@@ -253,7 +253,7 @@ export class CheckpointStore {
           }
           continue;
         }
-        if (entry.name.startsWith(".pilotdeck-restore-")) continue;
+        if (entry.name.startsWith(".eastyundesk-restore-")) continue;
         if (bytes >= MAX_WORKSPACE_BYTES) {
           const info = await fs.lstat(target);
           files[relative] = { kind: "unprotected", reason: "Workspace exceeds the 256 MB checkpoint budget.", fingerprint: digest(Buffer.from(JSON.stringify([info.dev, info.ino, info.mode, info.size, info.mtimeMs, info.ctimeMs]))) }; continue;
@@ -466,7 +466,7 @@ export class CheckpointStore {
     if (version.kind === "absent") { await fs.unlink(target).catch(error => { if (!hasCode(error, "ENOENT")) throw error; }); return; }
     const content = await this.readObject(version.hash);
     await fs.mkdir(path.dirname(target), { recursive: true });
-    const temporary = path.join(path.dirname(target), `.pilotdeck-restore-${randomUUID()}`);
+    const temporary = path.join(path.dirname(target), `.eastyundesk-restore-${randomUUID()}`);
     try {
       await fs.writeFile(temporary, content, { flag: "wx", mode: version.mode });
       await fs.chmod(temporary, version.mode);
@@ -618,7 +618,7 @@ type CommandFrame = {
 /** Session-owned journals; only actual mutations acquire filesystem leases. */
 export class WorkspaceCheckpoints {
   private active?: ActiveHistory;
-  constructor(private readonly workspace: string, private readonly pilotHome: string) {}
+  constructor(private readonly workspace: string, private readonly eastyunHome: string) {}
   private frame(): CommandFrame | undefined {
     const frame = operationContext.getStore()?.command as CommandFrame | undefined;
     return frame?.history === this ? frame : undefined;
@@ -630,7 +630,7 @@ export class WorkspaceCheckpoints {
   }
   async beginTurn(sessionId: string, turnId: string, messages: CanonicalMessage[], signal?: AbortSignal): Promise<void> {
     if (signal?.aborted) throw new CheckpointError("ABORTED", "Turn stopped before its checkpoint was captured.");
-    const store = await getCheckpointStore(this.workspace, this.pilotHome);
+    const store = await getCheckpointStore(this.workspace, this.eastyunHome);
     const releaseTurn = registerWorkspaceTurn(store.workspace, sessionId, turnId);
     const unpin = await store.pin();
     try {
@@ -806,6 +806,6 @@ function canonicalPath(value: string): string {
 function digest(content: Buffer): string { return createHash("sha256").update(content).digest("hex"); }
 function hasCode(error: unknown, code: string): boolean { return !!error && typeof error === "object" && "code" in error && error.code === code; }
 function same(left: FileVersion, right: FileVersion): boolean { return left.kind === right.kind && (left.kind === "absent" || (left.kind === "file" && right.kind === "file" && left.hash === right.hash && left.mode === right.mode) || (left.kind === "unprotected" && right.kind === "unprotected" && !!left.fingerprint && left.fingerprint === right.fingerprint)); }
-function scannedPath(relative: string): boolean { const segments = relative.split("/"); return !segments.slice(0, -1).some(segment => EXCLUDED.has(segment)) && segments.at(-1) !== ".git" && !segments.at(-1)?.startsWith(".pilotdeck-restore-"); }
+function scannedPath(relative: string): boolean { const segments = relative.split("/"); return !segments.slice(0, -1).some(segment => EXCLUDED.has(segment)) && segments.at(-1) !== ".git" && !segments.at(-1)?.startsWith(".eastyundesk-restore-"); }
 
 function sameOnDisk(left: FileVersion, right: FileVersion): boolean { return same(left, right) && (left.kind !== "file" || right.kind !== "file" || !right.fingerprint || left.fingerprint === right.fingerprint); }

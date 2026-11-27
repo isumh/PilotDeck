@@ -3,9 +3,9 @@ import { findTextSearchMatches } from './fileSearch';
 
 describe('findTextSearchMatches', () => {
   it('finds case-insensitive text and preserves source offsets', () => {
-    expect(findTextSearchMatches('PilotDeck pilotdeck', 'PILOT')).toEqual([
-      { from: 0, to: 5 },
-      { from: 10, to: 15 },
+    expect(findTextSearchMatches('EastYun eastyundesk', 'EASTYUN')).toEqual([
+      { from: 0, to: 7 },
+      { from: 8, to: 15 },
     ]);
   });
 

@@ -129,7 +129,7 @@ class InstallerUiTests
                                 if (IsCheckbox(child))
                                 {
                                     string label = Text(child).Replace("&", "");
-                                    if (label == "Start PilotDeck" || label == "启动 PilotDeck")
+                                    if (label == "Start EastYunDesk" || label == "启动 EastYunDesk")
                                         runOptionVisible = sawRunOption = true;
                                     SendMessage(child, 0x00F1, IntPtr.Zero, IntPtr.Zero);
                                 }

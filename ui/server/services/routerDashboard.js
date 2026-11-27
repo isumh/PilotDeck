@@ -1,12 +1,12 @@
 import path from 'node:path';
 import { promises as defaultFs } from 'node:fs';
 import { setImmediate as yieldToRequests } from 'node:timers/promises';
-import { createProjectId, sanitizeSessionIdForPath } from '../utils/pilotPaths.js';
+import { createProjectId, sanitizeSessionIdForPath } from '../utils/eastyunPaths.js';
 import { isRealUserRequestMessage } from '../../../src/model/protocol/userRequest.js';
 
 /** Read-only projections for the dashboard, summary and individual session APIs. */
-export function createRouterDashboard({ pilotHome, repoRoot, fs = defaultFs, maxCacheEntries = 128, maxCacheBytes = 8 * 1024 * 1024 }) {
-    const GENERAL_HOME = pilotHome;
+export function createRouterDashboard({ eastyunHome, repoRoot, fs = defaultFs, maxCacheEntries = 128, maxCacheBytes = 8 * 1024 * 1024 }) {
+    const GENERAL_HOME = eastyunHome;
     const files = createProjectionCache(fs, maxCacheEntries, maxCacheBytes);
 
     function requestContext() {
@@ -15,14 +15,14 @@ export function createRouterDashboard({ pilotHome, repoRoot, fs = defaultFs, max
         return {
             primary: projectKey => {
                 if (!primaryDirectories.has(projectKey)) primaryDirectories.set(projectKey, (async () => {
-                    const directory = path.join(pilotHome, 'projects', createProjectId(projectKey));
+                    const directory = path.join(eastyunHome, 'projects', createProjectId(projectKey));
                     const cwd = (await missingAsEmpty(() => fs.readFile(path.join(directory, '.cwd'), 'utf8'), '')).trim();
                     return !cwd || path.resolve(cwd) === path.resolve(projectKey) ? directory : undefined;
                 })());
                 return primaryDirectories.get(projectKey);
             },
             directories: () => directories ??= (async () => {
-                const root = path.join(pilotHome, 'projects');
+                const root = path.join(eastyunHome, 'projects');
                 const entries = await missingAsEmpty(() => fs.readdir(root, { withFileTypes: true }), []);
                 const result = [];
                 for (const entry of entries) {
@@ -38,7 +38,7 @@ export function createRouterDashboard({ pilotHome, repoRoot, fs = defaultFs, max
                     const result = new Map();
                     for (const project of await this.directories()) {
                         const names = await missingAsEmpty(() => fs.readdir(path.join(project.directory, 'chats')), []);
-                        const projectPath = project.cwd || (project.name === createProjectId(repoRoot) ? repoRoot : pilotHome);
+                        const projectPath = project.cwd || (project.name === createProjectId(repoRoot) ? repoRoot : eastyunHome);
                         for (const name of names) if (name.endsWith('.jsonl')) result.set(name.slice(0, -6), projectPath);
                     }
                     return result;
@@ -48,7 +48,7 @@ export function createRouterDashboard({ pilotHome, repoRoot, fs = defaultFs, max
     }
 
     async function loadStats(context) {
-        let records = await files.read(path.join(pilotHome, 'router', 'stats.jsonl'), parseStatsLines);
+        let records = await files.read(path.join(eastyunHome, 'router', 'stats.jsonl'), parseStatsLines);
         if (records === undefined) {
             const parseLegacy = raw => {
                 try {
@@ -57,8 +57,8 @@ export function createRouterDashboard({ pilotHome, repoRoot, fs = defaultFs, max
                         .filter(record => record?.sessionId && record?.startedAt);
                 } catch { return []; }
             };
-            records = await files.read(path.join(pilotHome, 'router', 'stats.json'), parseLegacy)
-                ?? await files.read(path.join(pilotHome, 'router-stats.json'), parseLegacy)
+            records = await files.read(path.join(eastyunHome, 'router', 'stats.json'), parseLegacy)
+                ?? await files.read(path.join(eastyunHome, 'router-stats.json'), parseLegacy)
                 ?? [];
         }
         const byProject = new Map();
@@ -66,7 +66,7 @@ export function createRouterDashboard({ pilotHome, repoRoot, fs = defaultFs, max
             let projectKey = record.projectPath;
             if (!projectKey) {
                 const index = await context.sessions();
-                projectKey = index.get(sanitizeSessionIdForPath(record.sessionId)) || index.get(record.sessionId) || pilotHome;
+                projectKey = index.get(sanitizeSessionIdForPath(record.sessionId)) || index.get(record.sessionId) || eastyunHome;
             }
             if (!byProject.has(projectKey)) byProject.set(projectKey, []);
             byProject.get(projectKey).push(record);
@@ -98,7 +98,7 @@ export function createRouterDashboard({ pilotHome, repoRoot, fs = defaultFs, max
         const directories = await context.directories();
         const exact = directories.filter(project => project.cwd && path.resolve(project.cwd) === path.resolve(projectKey));
         const candidates = [...exact.map(project => project.directory),
-            path.join(pilotHome, 'projects', createProjectId(pilotHome)),
+            path.join(eastyunHome, 'projects', createProjectId(eastyunHome)),
             ...directories.filter(project => !project.cwd).map(project => project.directory)];
         for (const directory of new Set(candidates)) {
             if (directory === primary) continue;
@@ -157,7 +157,7 @@ export function createRouterDashboard({ pilotHome, repoRoot, fs = defaultFs, max
                     sessionEntry = {
                         sessionId: record.sessionId,
                         title: record.sessionId,
-                        provider: record.provider || 'pilotdeck',
+                        provider: record.provider || 'eastyundesk',
                         lastActivity: record.endedAt,
                         userQueries: [],
                         routing: {

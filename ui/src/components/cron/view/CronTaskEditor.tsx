@@ -624,7 +624,7 @@ export default function CronTaskEditor({
             onChange={(event) => { setMessage(event.target.value); setFormError(null); }}
             rows={3}
             className="pd-form-field mt-1.5"
-            placeholder={t('cron.create.placeholders.prompt', { defaultValue: 'Describe what PilotDeck should do when this task runs.' })}
+            placeholder={t('cron.create.placeholders.prompt', { defaultValue: 'Describe what EastYunDesk should do when this task runs.' })}
           />
         </label>
 

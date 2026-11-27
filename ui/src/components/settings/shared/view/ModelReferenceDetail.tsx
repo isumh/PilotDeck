@@ -1,12 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-import type { PilotDeckConfig } from '../../view/modelPool/types';
+import type { EastYunDeskConfig } from '../../view/modelPool/types';
 import { buildModelRefOptions, ensureModelRefConfigured } from '../../view/modelPool/utils/modelRefs';
 import { patch } from '../../view/modelPool/utils/patch';
 import { usageLabel } from '../../view/modelPool/utils/modelUsage';
 import { GeneralSelectControl, GeneralSettingRow } from './GeneralSettingsPrimitives';
 import ConfigSaveError from './ConfigSaveError';
-import { isOptionalFeatureEnabled } from '../../../../../../src/pilot/config/optionalFeature.js';
+import { isOptionalFeatureEnabled } from '../../../../../../src/eastyun/config/optionalFeature.js';
 
 // Pricing keys can contain both dots and slashes. Never split a model ID.
 export function modelReferencePath(reference: string): Array<string | number> | null {
@@ -20,7 +20,7 @@ export function modelReferencePath(reference: string): Array<string | number> | 
 }
 
 export default function ModelReferenceDetail({ config, reference, onChange }: {
-  config: PilotDeckConfig; reference?: string | null; onChange: (config: PilotDeckConfig) => void | Promise<void>;
+  config: EastYunDeskConfig; reference?: string | null; onChange: (config: EastYunDeskConfig) => void | Promise<void>;
 }) {
   const { t } = useTranslation('settings');
   const [saving, setSaving] = useState(false);
@@ -42,7 +42,7 @@ export default function ModelReferenceDetail({ config, reference, onChange }: {
     : typeof objectRef?.provider === 'string' && typeof objectRef.model === 'string' ? `${objectRef.provider}/${objectRef.model}` : '';
   const options = buildModelRefOptions(config);
   if (model && !options.some(option => option.value === model)) options.unshift({ value: model, label: model });
-  if (reference === 'agent.subagents.default' && !options.some(option => option.value === 'inherit')) options.unshift({ value: 'inherit', label: t('pilotDeckConfig.panels.router.ui.inheritMainModel') });
+  if (reference === 'agent.subagents.default' && !options.some(option => option.value === 'inherit')) options.unshift({ value: 'inherit', label: t('eastyunDeskConfig.panels.router.ui.inheritMainModel') });
   const pricing = path[2] === 'modelPricing';
   return <section className="general-card model-reference-detail" data-model-reference={reference} tabIndex={-1}>
     <GeneralSettingRow title={usageLabel(reference, t)} detail={reference}>
@@ -68,7 +68,7 @@ export default function ModelReferenceDetail({ config, reference, onChange }: {
         finally { setSaving(false); }
       }} /> : pricing && objectRef ? <dl className="model-reference-pricing">
         {(['input', 'output', 'cacheRead'] as const).map(field => <div key={field}>
-          <dt>{t(`pilotDeckConfig.panels.router.ui.${field === 'input' ? 'pricingInput' : field === 'output' ? 'pricingOutput' : 'pricingCache'}`)}</dt>
+          <dt>{t(`eastyunDeskConfig.panels.router.ui.${field === 'input' ? 'pricingInput' : field === 'output' ? 'pricingOutput' : 'pricingCache'}`)}</dt>
           <dd>{String(objectRef[field] ?? '—')}</dd>
         </div>)}
       </dl> : <span className="model-reference-value">{value === undefined ? '—' : JSON.stringify(value)}</span>}

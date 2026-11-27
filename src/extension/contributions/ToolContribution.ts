@@ -1,5 +1,5 @@
-import type { PilotDeckToolDefinition } from "../../tool/index.js";
+import type { EastYunDeskToolDefinition } from "../../tool/index.js";
 
 export type ToolContribution = {
-  tools: PilotDeckToolDefinition[];
+  tools: EastYunDeskToolDefinition[];
 };

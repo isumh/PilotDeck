@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { createCronManager, defaultCronConfig, resolveCronPaths } from '../../src/cron/index.js';
 import { CronReminderStore } from '../../src/cron/storage/CronReminderStore.js';
 import type { Gateway, GatewaySubmitTurnInput } from '../../src/gateway/index.js';
-import { createProjectId } from '../../src/pilot/paths.js';
+import { createProjectId } from '../../src/eastyun/paths.js';
 
 async function registerProject(home: string, project: string) {
   const record = join(home, 'projects', createProjectId(project));
@@ -16,7 +16,7 @@ async function registerProject(home: string, project: string) {
 }
 
 test('legacy due-mode tasks notify only after execution, with durable per-user acknowledgement', async () => {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-reminders-'));
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-reminders-'));
   const project = join(home, 'project'); await mkdir(project);
   await registerProject(home, project);
   let now = new Date('2026-06-01T08:00:00Z');
@@ -32,7 +32,7 @@ test('legacy due-mode tasks notify only after execution, with durable per-user a
       await finish;
     } } as unknown as Gateway;
   const create = () => {
-    const manager = createCronManager({ config: defaultCronConfig(), pilotHome: home, now: () => now,
+    const manager = createCronManager({ config: defaultCronConfig(), eastyunHome: home, now: () => now,
       onTurnEvent: (_sessionKey, _channelKey, event) => {
         if (event.type === 'agent_status' && event.event === 'cron_settled') runs.emit('settled', event.runId);
       },
@@ -45,7 +45,7 @@ test('legacy due-mode tasks notify only after execution, with durable per-user a
     const { task } = await manager.createTask({ name: 'Meeting', message: 'Attend the meeting',
       projectKey: project, schedule: { type: 'once', runAt: '2026-06-01T09:00:00Z' }, timezone: 'UTC' });
     await manager.stop();
-    const { tasksFile } = resolveCronPaths({ pilotHome: home, projectKey: project });
+    const { tasksFile } = resolveCronPaths({ eastyunHome: home, projectKey: project });
     const stored = JSON.parse(await readFile(tasksFile, 'utf8'));
     stored.tasks[0].reminderTiming = 'due';
     await writeFile(tasksFile, JSON.stringify(stored));
@@ -85,12 +85,12 @@ test('legacy due-mode tasks notify only after execution, with durable per-user a
 });
 
 test('Run Now and the following scheduled execution produce separate result reminders', async () => {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-reminder-run-now-'));
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-reminder-run-now-'));
   const project = join(home, 'project');
   const runs = new EventEmitter();
   let now = new Date('2026-06-01T08:00:00Z');
   const manager = createCronManager({
-    config: defaultCronConfig(), pilotHome: home, now: () => now,
+    config: defaultCronConfig(), eastyunHome: home, now: () => now,
     onTurnEvent: (_sessionKey, _channelKey, event) => {
       if (event.type === 'agent_status' && event.event === 'cron_settled') runs.emit('settled', event.runId);
     },
@@ -135,10 +135,10 @@ test('Run Now and the following scheduled execution produce separate result remi
 });
 
 test('result notifications honor findings/failure policy and retain independent periodic occurrences', async () => {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-reminder-results-'));
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-reminder-results-'));
   const project = join(home, 'project'); await mkdir(project);
   await registerProject(home, project);
-  const manager = createCronManager({ config: { ...defaultCronConfig(), maxConcurrentRuns: 4 }, pilotHome: home,
+  const manager = createCronManager({ config: { ...defaultCronConfig(), maxConcurrentRuns: 4 }, eastyunHome: home,
     now: () => new Date('2026-06-01T08:00:00Z') });
   manager.bindGateway({ closeSession: async () => {}, abortTurn: async () => {}, async *submitTurn(input: GatewaySubmitTurnInput) {
     if (input.message.includes('failure')) throw new Error('Synthetic execution failure');
@@ -172,7 +172,7 @@ test('result notifications honor findings/failure policy and retain independent 
 });
 
 test('reminder storage serializes duplicate creation and preserves malformed stores', async () => {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-reminder-store-'));
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-reminder-store-'));
   const path = join(home, 'reminders.json'); const store = new CronReminderStore(path);
   try {
     const reminder = { id: 'a'.repeat(64), taskId: 'task', projectKey: '/project', sessionKey: 'cron:task', title: 'Meeting', body: 'Meeting now',

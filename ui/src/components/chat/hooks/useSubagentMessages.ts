@@ -16,24 +16,24 @@ interface SubagentMessagesResult {
   error: string | null;
 }
 
-function isPilotDeckForkDirective(message: ChatMessage): boolean {
+function isEastYunDeskForkDirective(message: ChatMessage): boolean {
   if (typeof message.content !== 'string') return false;
-  return message.content.includes('<pilotdeck-fork>') &&
+  return message.content.includes('<eastyundesk-fork>') &&
     message.content.includes('Directive:');
 }
 
-function isPilotDeckForkPlaceholder(message: ChatMessage): boolean {
+function isEastYunDeskForkPlaceholder(message: ChatMessage): boolean {
   const content = typeof message.content === 'string' ? message.content : '';
   const toolResultContent = typeof message.toolResult?.content === 'string'
     ? message.toolResult.content
     : '';
-  return `${content}\n${toolResultContent}`.includes('<pilotdeck-fork-placeholder>');
+  return `${content}\n${toolResultContent}`.includes('<eastyundesk-fork-placeholder>');
 }
 
 function filterSubagentDetailMessages(messages: ChatMessage[]): ChatMessage[] {
   return messages.filter((message) =>
-    !isPilotDeckForkDirective(message) &&
-    !isPilotDeckForkPlaceholder(message)
+    !isEastYunDeskForkDirective(message) &&
+    !isEastYunDeskForkPlaceholder(message)
   );
 }
 

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createServer } from 'node:http';
-import { customSearchRequest, customSearchResults, validateCustomSearch } from '../../../src/pilot/config/customSearch.js';
-import { customSearchPreset, CUSTOM_SEARCH_PRESETS } from '../../../src/pilot/config/customSearchPresets.js';
+import { customSearchRequest, customSearchResults, validateCustomSearch } from '../../../src/eastyun/config/customSearch.js';
+import { customSearchPreset, CUSTOM_SEARCH_PRESETS } from '../../../src/eastyun/config/customSearchPresets.js';
 import { createWebSearchTool } from '../../../src/tool/builtin/webSearch.js';
 import { additionalSearchRequest, redactSearchError } from '../../../src/tool/builtin/additionalWebSearch.js';
 

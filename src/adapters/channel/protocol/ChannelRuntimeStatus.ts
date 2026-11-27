@@ -38,12 +38,12 @@ export type ChannelRuntimeStatusReporter = (
   update: ChannelRuntimeStatusUpdate,
 ) => void;
 
-export function channelRuntimeStatusPath(pilotHome: string): string {
-  return join(pilotHome, "channels", "runtime-status.json");
+export function channelRuntimeStatusPath(eastyunHome: string): string {
+  return join(eastyunHome, "channels", "runtime-status.json");
 }
 
-export function readChannelRuntimeStatusSnapshot(pilotHome: string): ChannelRuntimeStatusSnapshot {
-  const path = channelRuntimeStatusPath(pilotHome);
+export function readChannelRuntimeStatusSnapshot(eastyunHome: string): ChannelRuntimeStatusSnapshot {
+  const path = channelRuntimeStatusPath(eastyunHome);
   if (!existsSync(path)) {
     return { updatedAt: new Date(0).toISOString(), channels: {} };
   }
@@ -59,12 +59,12 @@ export function readChannelRuntimeStatusSnapshot(pilotHome: string): ChannelRunt
   }
 }
 
-export function createChannelRuntimeStatusReporter(pilotHome: string): ChannelRuntimeStatusReporter {
-  const path = channelRuntimeStatusPath(pilotHome);
+export function createChannelRuntimeStatusReporter(eastyunHome: string): ChannelRuntimeStatusReporter {
+  const path = channelRuntimeStatusPath(eastyunHome);
 
   return (channelKey, update) => {
     const now = new Date().toISOString();
-    const snapshot = readChannelRuntimeStatusSnapshot(pilotHome);
+    const snapshot = readChannelRuntimeStatusSnapshot(eastyunHome);
     const next: ChannelRuntimeStatusSnapshot = {
       updatedAt: now,
       channels: {

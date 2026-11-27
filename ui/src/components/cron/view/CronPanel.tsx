@@ -41,7 +41,7 @@ export default function CronPanel({ isSidebarCollapsed, onOpenSidebar, projects:
   const request = useRef<AbortController | null>(null);
   const changes = useRef(new Map<string, CronJobOverview | null>());
   const [seenRuns, setSeenRuns] = useState<Record<string, string>>(() => {
-    try { return JSON.parse(localStorage.getItem('pilotdeck-cron-seen-runs') || '{}'); } catch { return {}; }
+    try { return JSON.parse(localStorage.getItem('eastyundesk-cron-seen-runs') || '{}'); } catch { return {}; }
   });
   const requestedId = active ? params.get('taskId') : null;
   useEffect(() => { if (requestedId) setSelectedId(requestedId); }, [requestedId]);
@@ -104,7 +104,7 @@ export default function CronPanel({ isSidebarCollapsed, onOpenSidebar, projects:
     setSeenRuns(current => {
       if (current[id] === lastRun.runId) return current;
       const next = { ...current, [id]: lastRun.runId };
-      try { localStorage.setItem('pilotdeck-cron-seen-runs', JSON.stringify(next)); } catch { /* Storage may be unavailable. */ }
+      try { localStorage.setItem('eastyundesk-cron-seen-runs', JSON.stringify(next)); } catch { /* Storage may be unavailable. */ }
       return next;
     });
   }, [active, selected?.id, selected?.lastRun?.runId, selected?.lastRun?.finishedAt]);

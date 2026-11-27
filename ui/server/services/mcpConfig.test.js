@@ -10,33 +10,33 @@ import {
 
 describe('MCP config writable paths', () => {
   let root;
-  let previousPilotHome;
+  let previousEastYunHome;
   let previousDesktop;
 
   beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), 'pilotdeck-ui-mcp-config-'));
-    previousPilotHome = process.env.PILOT_HOME;
-    previousDesktop = process.env.PILOTDECK_DESKTOP;
-    process.env.PILOT_HOME = join(root, 'pilot-home');
-    process.env.PILOTDECK_DESKTOP = '1';
+    root = mkdtempSync(join(tmpdir(), 'eastyun-desk-ui-mcp-config-'));
+    previousEastYunHome = process.env.EASTYUN_HOME;
+    previousDesktop = process.env.EASTYUNDESK_DESKTOP;
+    process.env.EASTYUN_HOME = join(root, 'eastyun-home');
+    process.env.EASTYUNDESK_DESKTOP = '1';
   });
 
   afterEach(() => {
-    if (previousPilotHome === undefined) {
-      delete process.env.PILOT_HOME;
+    if (previousEastYunHome === undefined) {
+      delete process.env.EASTYUN_HOME;
     } else {
-      process.env.PILOT_HOME = previousPilotHome;
+      process.env.EASTYUN_HOME = previousEastYunHome;
     }
     if (previousDesktop === undefined) {
-      delete process.env.PILOTDECK_DESKTOP;
+      delete process.env.EASTYUNDESK_DESKTOP;
     } else {
-      process.env.PILOTDECK_DESKTOP = previousDesktop;
+      process.env.EASTYUNDESK_DESKTOP = previousDesktop;
     }
     rmSync(root, { recursive: true, force: true });
   });
 
   it('disables project MCP config for desktop runtime roots', async () => {
-    const runtimeRoot = join(root, 'Program Files', 'PilotDeck', 'resources', 'runtime');
+    const runtimeRoot = join(root, 'Program Files', 'EastYunDesk', 'resources', 'runtime');
 
     const config = await readMcpConfigFile('project', runtimeRoot);
 
@@ -47,7 +47,7 @@ describe('MCP config writable paths', () => {
     ).rejects.toThrow(/real project/i);
   });
 
-  it('writes global MCP config under pilotHome', async () => {
+  it('writes global MCP config under eastyunHome', async () => {
     const raw = JSON.stringify({
       mcpServers: {
         local: { command: 'node', args: ['server.js'] },
@@ -57,7 +57,7 @@ describe('MCP config writable paths', () => {
     const config = await writeMcpConfigFile('global', raw, null);
 
     expect(config.path).toBe(getGlobalMcpConfigPath());
-    expect(config.path).toBe(join(process.env.PILOT_HOME, 'mcp.json'));
+    expect(config.path).toBe(join(process.env.EASTYUN_HOME, 'mcp.json'));
     expect(readFileSync(config.path, 'utf8')).toContain('"local"');
   });
 
@@ -71,6 +71,6 @@ describe('MCP config writable paths', () => {
       projectRoot,
     );
 
-    expect(config.path).toBe(join(projectRoot, '.pilotdeck', 'mcp.json'));
+    expect(config.path).toBe(join(projectRoot, '.eastyundesk', 'mcp.json'));
   });
 });
