@@ -18,7 +18,7 @@ import {
   type RouterModelRef,
 } from "./config/schema.js";
 import type {
-  PilotDeckCustomRouter,
+  EastYunDeskCustomRouter,
   CustomRouterRegistry,
 } from "./customRouter/customRouter.js";
 import { noopCustomRouterRegistry } from "./customRouter/customRouter.js";
@@ -354,7 +354,7 @@ export function createRouterRuntime(
     if (!config.customRouter) {
       return undefined;
     }
-    const router: PilotDeckCustomRouter | undefined = customRouters.lookupRouter(
+    const router: EastYunDeskCustomRouter | undefined = customRouters.lookupRouter(
       config.customRouter.extensionId,
     );
     if (!router) {
@@ -371,7 +371,7 @@ export function createRouterRuntime(
       });
     } catch (error) {
       events.emit({
-        type: "pilotdeck_router_custom_failed",
+        type: "eastyundesk_router_custom_failed",
         sessionId: input.sessionId,
         extensionId: config.customRouter.extensionId,
         reason: error instanceof Error ? error.message : String(error),
@@ -490,7 +490,7 @@ export function createRouterRuntime(
         if (tokenSaver) {
           if (tokenSaver.failureReason) {
             events.emit({
-              type: "pilotdeck_router_token_saver_failed",
+              type: "eastyundesk_router_token_saver_failed",
               sessionId: input.sessionId,
               reason: tokenSaver.failureReason,
               fallbackTier: tokenSaver.tier,
@@ -599,7 +599,7 @@ export function createRouterRuntime(
     });
 
     events.emit({
-      type: "pilotdeck_router_decision",
+      type: "eastyundesk_router_decision",
       sessionId: input.sessionId,
       decision,
     });
@@ -747,7 +747,7 @@ export function createRouterRuntime(
 
       if (lastAttempt && previousFailure) {
         events.emit({
-          type: "pilotdeck_router_fallback",
+          type: "eastyundesk_router_fallback",
           sessionId: ctx.sessionId,
           turnId: ctx.turnId,
           scenarioType: attemptDecision.scenarioType,
@@ -874,10 +874,10 @@ export function createRouterRuntime(
               ? Math.min(outcome.error.retryAfterMs, transientMaxDelayMs)
               : calculateLiteLLMRetryDelay(transientRetryCount, transientBaseDelayMs, transientMaxDelayMs);
             console.warn(
-              `[PilotDeck] transientRetry: ${outcome.error.code} (attempt ${transientRetryCount + 1}/${transientRetryMax}, delay=${Math.round(delay)}ms)`,
+              `[EastYunDesk] transientRetry: ${outcome.error.code} (attempt ${transientRetryCount + 1}/${transientRetryMax}, delay=${Math.round(delay)}ms)`,
             );
             events.emit({
-              type: "pilotdeck_router_transient_retry",
+              type: "eastyundesk_router_transient_retry",
               sessionId: ctx.sessionId,
               turnId: ctx.turnId,
               attempt: transientRetryCount + 1,
@@ -887,7 +887,7 @@ export function createRouterRuntime(
               errorCode: outcome.error.code,
             });
             events.emit({
-              type: "pilotdeck_router_retry_progress",
+              type: "eastyundesk_router_retry_progress",
               sessionId: ctx.sessionId,
               turnId: ctx.turnId,
               attempt: transientRetryCount + 1,
@@ -931,11 +931,11 @@ export function createRouterRuntime(
           zeroUsageAttempt < zeroUsageMax
         ) {
           console.warn(
-            `[PilotDeck] zeroUsageRetry: empty response from ${attempt.provider}/${attempt.model} ` +
+            `[EastYunDesk] zeroUsageRetry: empty response from ${attempt.provider}/${attempt.model} ` +
             `(attempt ${zeroUsageAttempt}/${zeroUsageMax}, session=${ctx.sessionId})`,
           );
           events.emit({
-            type: "pilotdeck_router_zero_usage_retry",
+            type: "eastyundesk_router_zero_usage_retry",
             sessionId: ctx.sessionId,
             turnId: ctx.turnId,
             attempt: zeroUsageAttempt,
@@ -943,7 +943,7 @@ export function createRouterRuntime(
             model: attempt.model,
           });
           events.emit({
-            type: "pilotdeck_router_retry_progress",
+            type: "eastyundesk_router_retry_progress",
             sessionId: ctx.sessionId,
             turnId: ctx.turnId,
             attempt: zeroUsageAttempt,
@@ -1029,7 +1029,7 @@ export function createRouterRuntime(
 
     if (lastError && lastAttempt) {
       events.emit({
-        type: "pilotdeck_router_execute_failed",
+        type: "eastyundesk_router_execute_failed",
         sessionId: ctx.sessionId,
         turnId: ctx.turnId,
         scenarioType: lastDecision.scenarioType,
@@ -1070,7 +1070,7 @@ export function createRouterRuntime(
       const target = { id: `${decision.provider}/${decision.model}`, provider: decision.provider, model: decision.model };
       const error = projectionError ?? incompatibleRequestError(target, baseRequest);
       events.emit({
-        type: "pilotdeck_router_execute_failed",
+        type: "eastyundesk_router_execute_failed",
         sessionId: ctx.sessionId,
         turnId: ctx.turnId,
         scenarioType: decision.scenarioType,
@@ -1326,7 +1326,7 @@ async function* streamAttempt(
       },
       onRetryProgress(progress) {
         events.emit({
-          type: "pilotdeck_router_retry_progress",
+          type: "eastyundesk_router_retry_progress",
           sessionId: ctx.sessionId,
           turnId: ctx.turnId,
           attempt: progress.attempt,

@@ -7,9 +7,9 @@ import { promisify } from 'node:util';
 import { watch as watchDirectory } from 'node:fs';
 import { readSessionInfo } from '../../../../src/session/storage/SessionList.js';
 import { activeTranscriptEntries } from '../../../../src/session/transcript/CompactSnapshot.js';
-import { getPilotProjectChatDir } from '../../../../src/pilot/paths.js';
+import { getEastYunProjectChatDir } from '../../../../src/eastyun/paths.js';
 import { isPathInsideOrEqual } from '../../utils/pathSafety.js';
-import { isVirtualProjectPath } from '../../utils/pilotPaths.js';
+import { isVirtualProjectPath } from '../../utils/eastyunPaths.js';
 import { resolveRegisteredProject } from '../projectRegistration.js';
 import { listSearchProjects } from './searchRegistry.js';
 import { SearchStore } from './searchStore.js';
@@ -62,9 +62,9 @@ function parseRecords(buffer, start) {
 }
 
 export class SearchIndex {
-  constructor({ pilotHome, databasePath, maxIndexedFileBytes = 8 * 1024 * 1024, watch = true } = {}) {
-    this.pilotHome = pilotHome;
-    this.store = new SearchStore(databasePath || path.join(pilotHome, 'search', 'global-v1.sqlite'));
+  constructor({ eastyunHome, databasePath, maxIndexedFileBytes = 8 * 1024 * 1024, watch = true } = {}) {
+    this.eastyunHome = eastyunHome;
+    this.store = new SearchStore(databasePath || path.join(eastyunHome, 'search', 'global-v1.sqlite'));
     this.maxIndexedFileBytes = maxIndexedFileBytes;
     this.watch = watch; this.closed = false;
     this.dirtyChats = new Set(); this.dirtyFiles = new Set(); this.dirtyPaths = new Map();
@@ -115,11 +115,11 @@ export class SearchIndex {
     this.catalogPromise = (async () => {
       const started = performance.now();
       if (needsRegistry) {
-        const candidates = projectsOverride || await listSearchProjects(this.pilotHome);
+        const candidates = projectsOverride || await listSearchProjects(this.eastyunHome);
         const projects = [];
         await mapConcurrent(candidates, async candidate => {
           try {
-            const root = await resolveRegisteredProject(candidate.name, this.pilotHome);
+            const root = await resolveRegisteredProject(candidate.name, this.eastyunHome);
             const { sessions: _sessions, sessionMeta: _sessionMeta, ...project } = candidate;
             projects.push({ ...project, fullPath: root, path: root });
           } catch { /* Registrations are the authority, including after a deletion. */ }
@@ -148,8 +148,8 @@ export class SearchIndex {
     if (this.dirtyChats.size || this.dirtyFiles.size || this.dirtyPaths.size || this.registryDirty) await this.refreshCatalog(projectsOverride);
   }
   async chatCatalog(project) {
-    const directory = project.storageId ? path.join(this.pilotHome, 'projects', project.storageId, 'chats')
-      : getPilotProjectChatDir(project.fullPath, this.pilotHome);
+    const directory = project.storageId ? path.join(this.eastyunHome, 'projects', project.storageId, 'chats')
+      : getEastYunProjectChatDir(project.fullPath, this.eastyunHome);
     const names = await readdir(directory, { withFileTypes: true }).catch(() => []);
     const keep = new Set();
     await mapConcurrent(names.filter(item => item.isFile() && item.name.endsWith('.jsonl') && !INTERNAL_SESSION.test(item.name)), async item => {
@@ -172,12 +172,12 @@ export class SearchIndex {
     const root = project.fullPath;
     this.catalogRoots.delete(root);
     this.canonicalRoots.delete(root);
-    if (project.capabilities?.files === false || isVirtualProjectPath(root, this.pilotHome)) {
+    if (project.capabilities?.files === false || isVirtualProjectPath(root, this.eastyunHome)) {
       this.store.removeMissing(project.name, 'files', keep); return;
     }
     const canonical = await realpath(root).catch(() => null);
-    const home = await realpath(this.pilotHome);
-    this.canonicalPilotHome = home;
+    const home = await realpath(this.eastyunHome);
+    this.canonicalEastYunHome = home;
     if (!canonical || isPathInsideOrEqual(home, canonical)) {
       this.store.removeMissing(project.name, 'files', keep); return;
     }
@@ -185,7 +185,7 @@ export class SearchIndex {
     this.canonicalRoots.set(root, canonical);
     const globs = [...EXCLUDED_DIRECTORIES].flatMap(name => ['--glob', '!**/' + name + '/**']);
     if (isPathInsideOrEqual(canonical, home)) {
-      // A normal workspace may contain PILOT_HOME (for example ~/). Exclude
+      // A normal workspace may contain EASTYUN_HOME (for example ~/). Exclude
       // only that subtree, including custom homes with glob metacharacters.
       const relativeHome = path.relative(canonical, home).split(path.sep).join('/').replace(/[?*\[\]{}!\\]/g, '\\$&');
       globs.push('--glob', '!/' + relativeHome + '/**');
@@ -216,15 +216,15 @@ export class SearchIndex {
     this.store.removeMissing(project.name, 'files', keep);
   }
   isInternalFilePath(absolute) {
-    return isPathInsideOrEqual(this.pilotHome, absolute)
-      || Boolean(this.canonicalPilotHome && isPathInsideOrEqual(this.canonicalPilotHome, absolute));
+    return isPathInsideOrEqual(this.eastyunHome, absolute)
+      || Boolean(this.canonicalEastYunHome && isPathInsideOrEqual(this.canonicalEastYunHome, absolute));
   }
   startWatchers() {
     // Native recursive directory watches use far fewer handles than one watch
     // per catalog file on macOS/Windows. Source stats remain authoritative.
     this.workspaceWatchers = new Map();
     try {
-      this.registrationWatcher = watchDirectory(path.join(this.pilotHome, 'projects'), { recursive: true, persistent: false }, (_event, file) => {
+      this.registrationWatcher = watchDirectory(path.join(this.eastyunHome, 'projects'), { recursive: true, persistent: false }, (_event, file) => {
         if (!file) { this.invalidate(); return; }
         const parts = String(file).split(path.sep);
         if (parts[1] === 'chats' && parts.length === 3 && parts[2].endsWith('.jsonl')) {

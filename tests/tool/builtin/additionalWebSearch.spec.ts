@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createWebSearchTool } from "../../../src/tool/builtin/webSearch.js";
-import { SERPAPI_ENGINES } from "../../../src/pilot/config/webSearchProviders.js";
+import { SERPAPI_ENGINES } from "../../../src/eastyun/config/webSearchProviders.js";
 
 const context = { env: {}, cwd: "/", projectRoot: "/" } as any;
 const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status });

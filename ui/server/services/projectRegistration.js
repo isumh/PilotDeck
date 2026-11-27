@@ -1,6 +1,6 @@
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
-import { createProjectId } from '../utils/pilotPaths.js';
+import { createProjectId } from '../utils/eastyunPaths.js';
 
 export function projectNotFound() {
   return Object.assign(new Error('Project not found'), { code: 'PROJECT_NOT_FOUND', status: 404 });
@@ -37,10 +37,10 @@ export async function readRegisteredProject(projectsDir, id) {
   return path.resolve(root);
 }
 
-export async function resolveRegisteredProject(name, pilotHome) {
+export async function resolveRegisteredProject(name, eastyunHome) {
   if (typeof name !== 'string' || !name || name.includes('\0')) throw projectNotFound();
-  if (name === 'general' || (path.isAbsolute(name) && path.resolve(name) === path.resolve(pilotHome))) return pilotHome;
-  const projectsDir = path.join(pilotHome, 'projects');
+  if (name === 'general' || (path.isAbsolute(name) && path.resolve(name) === path.resolve(eastyunHome))) return eastyunHome;
+  const projectsDir = path.join(eastyunHome, 'projects');
   if (!path.isAbsolute(name)) {
     const root = await readRegisteredProject(projectsDir, name);
     if (root) return root;

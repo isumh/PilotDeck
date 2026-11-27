@@ -89,9 +89,9 @@ describe('desktop release routing', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(4);
   });
   it('never queries the official OBS bucket for a fork', async () => {
-    const fetchImpl = vi.fn(async () => response({ ...manifest, repository: 'fork/PilotDeck' }));
-    await make({ repository: 'fork/PilotDeck', fetchImpl }).latestRelease();
-    expect(fetchImpl.mock.calls.every(([url]) => !url.startsWith(OBS_BASE) && url.includes('/fork/PilotDeck/'))).toBe(true);
+    const fetchImpl = vi.fn(async () => response({ ...manifest, repository: 'fork/EastYunDesk' }));
+    await make({ repository: 'fork/EastYunDesk', fetchImpl }).latestRelease();
+    expect(fetchImpl.mock.calls.every(([url]) => !url.startsWith(OBS_BASE) && url.includes('/fork/EastYunDesk/'))).toBe(true);
   });
   it('orders only the two official downloads by measured speed and retains failed probes', async () => {
     const release = { tagName: manifest.tag }, asset = manifest.assets[0];
@@ -191,7 +191,7 @@ describe('verified route history', () => {
     service.downloadSucceeded(obs, release);
     expect(routeStore.write).toHaveBeenLastCalledWith({ ...record, source: 'obs' });
   });
-  it.each([null, {}, { ...record, source: 'proxy' }, { ...record, repository: 'fork/PilotDeck' },
+  it.each([null, {}, { ...record, source: 'proxy' }, { ...record, repository: 'fork/EastYunDesk' },
     { ...record, succeededAt: timestamp - 7 * 86400000 }, { ...record, succeededAt: timestamp + 1 },
     { ...record, succeededAt: 'yesterday' }])('ignores invalid, foreign or expired cache: %j', async initial => {
     const service = make({ routeStore: cache(initial), now: () => timestamp, probe: async () => 100 });

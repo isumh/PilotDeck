@@ -1,9 +1,9 @@
 import { realpath, stat } from "node:fs/promises";
 import path from "node:path";
 import type { PermissionResult, PermissionRule } from "../../permission/index.js";
-import type { PilotDeckToolDefinition, PilotDeckToolRuntimeContext } from "../protocol/types.js";
-import { PilotDeckToolRuntimeError } from "../protocol/errors.js";
-import { isPathWithinRoot, resolvePilotDeckWorkspacePath } from "./filesystem/pathSafety.js";
+import type { EastYunDeskToolDefinition, EastYunDeskToolRuntimeContext } from "../protocol/types.js";
+import { EastYunDeskToolRuntimeError } from "../protocol/errors.js";
+import { isPathWithinRoot, resolveEastYunDeskWorkspacePath } from "./filesystem/pathSafety.js";
 
 export type SendAttachmentInput = {
   file_path: string;
@@ -18,7 +18,7 @@ export type SendAttachmentOutput = {
   mimeType?: string;
 };
 
-export function createSendAttachmentTool(): PilotDeckToolDefinition<SendAttachmentInput, SendAttachmentOutput> {
+export function createSendAttachmentTool(): EastYunDeskToolDefinition<SendAttachmentInput, SendAttachmentOutput> {
   return {
     name: "send_attachment",
     aliases: ["send_file"],
@@ -27,7 +27,7 @@ export function createSendAttachmentTool(): PilotDeckToolDefinition<SendAttachme
       "Send a local file back to the user through the current host/channel when supported. "
       + "Use this when the user asks you to send, upload, return, or share an existing local file. "
       + "Do not call read_file first just to send binary files; this tool sends the file bytes as an attachment without parsing them. "
-      + "Files under PILOTDECK_WORK_DIR or workspace .pilotdeck/work are internal candidates and cannot be sent directly; publish the reviewed final artifact outside the internal work directory first. "
+      + "Files under EASTYUNDESK_WORK_DIR or workspace .eastyundesk/work are internal candidates and cannot be sent directly; publish the reviewed final artifact outside the internal work directory first. "
       + "Workspace files and registered IM attachment files can be sent directly; paths outside the workspace require explicit user permission before execution.",
     kind: "filesystem",
     inputSchema: {
@@ -81,23 +81,23 @@ export function createSendAttachmentTool(): PilotDeckToolDefinition<SendAttachme
     execute: async (input, context) => {
       const internalRoot = await findInternalWorkRoot(input.file_path, context);
       if (internalRoot) {
-        throw new PilotDeckToolRuntimeError(
+        throw new EastYunDeskToolRuntimeError(
           "invalid_tool_input",
           internalAttachmentMessage(input.file_path, internalRoot),
           { filePath: input.file_path, internalWorkRoot: internalRoot },
         );
       }
-      const resolved = resolvePilotDeckWorkspacePath(input.file_path, context, {
+      const resolved = resolveEastYunDeskWorkspacePath(input.file_path, context, {
         mustExist: true,
         allowRegisteredReadFiles: true,
         allowOutsideWorkspace: context.currentPermissionDecision?.type === "allow",
       });
       if (!resolved.ok) {
-        throw new PilotDeckToolRuntimeError(resolved.error.code, resolved.error.message, resolved.error.details);
+        throw new EastYunDeskToolRuntimeError(resolved.error.code, resolved.error.message, resolved.error.details);
       }
       const fileStat = await stat(resolved.absolutePath);
       if (!fileStat.isFile()) {
-        throw new PilotDeckToolRuntimeError("invalid_tool_input", `Path ${input.file_path} is not a file.`);
+        throw new EastYunDeskToolRuntimeError("invalid_tool_input", `Path ${input.file_path} is not a file.`);
       }
       const name = sanitizeAttachmentName(input.name) ?? path.basename(resolved.absolutePath);
       const output: SendAttachmentOutput = {
@@ -125,12 +125,12 @@ export function createSendAttachmentTool(): PilotDeckToolDefinition<SendAttachme
 
 async function findInternalWorkRoot(
   inputPath: string,
-  context: PilotDeckToolRuntimeContext,
+  context: EastYunDeskToolRuntimeContext,
 ): Promise<string | undefined> {
   const absolutePath = path.resolve(path.isAbsolute(inputPath) ? inputPath : path.join(context.cwd, inputPath));
-  const configuredWorkDir = context.env?.PILOTDECK_WORK_DIR?.trim();
+  const configuredWorkDir = context.env?.EASTYUNDESK_WORK_DIR?.trim();
   const roots = [
-    path.resolve(context.cwd, ".pilotdeck", "work"),
+    path.resolve(context.cwd, ".eastyundesk", "work"),
     ...(configuredWorkDir
       ? [path.resolve(path.isAbsolute(configuredWorkDir) ? configuredWorkDir : path.join(context.cwd, configuredWorkDir))]
       : []),
@@ -156,12 +156,12 @@ async function tryRealpath(value: string): Promise<string | undefined> {
 }
 
 function internalAttachmentMessage(inputPath: string, internalRoot: string): string {
-  return `Cannot send ${inputPath} directly because it is inside PilotDeck's internal work directory (${internalRoot}). `
-    + "Internal candidates may be incomplete or unreviewed. Publish the reviewed final artifact outside PILOTDECK_WORK_DIR with the relevant skill's delivery workflow (for DOCX, use docx.sh deliver), then send the delivered path.";
+  return `Cannot send ${inputPath} directly because it is inside EastYunDesk's internal work directory (${internalRoot}). `
+    + "Internal candidates may be incomplete or unreviewed. Publish the reviewed final artifact outside EASTYUNDESK_WORK_DIR with the relevant skill's delivery workflow (for DOCX, use docx.sh deliver), then send the delivered path.";
 }
 
-function checkSendAttachmentPermission(inputPath: string, context: PilotDeckToolRuntimeContext): PermissionResult {
-  const workspaceResolved = resolvePilotDeckWorkspacePath(inputPath, context, {
+function checkSendAttachmentPermission(inputPath: string, context: EastYunDeskToolRuntimeContext): PermissionResult {
+  const workspaceResolved = resolveEastYunDeskWorkspacePath(inputPath, context, {
     mustExist: true,
     allowRegisteredReadFiles: true,
   });
@@ -176,7 +176,7 @@ function checkSendAttachmentPermission(inputPath: string, context: PilotDeckTool
     };
   }
 
-  const outsideResolved = resolvePilotDeckWorkspacePath(inputPath, context, {
+  const outsideResolved = resolveEastYunDeskWorkspacePath(inputPath, context, {
     mustExist: true,
     allowOutsideWorkspace: true,
   });

@@ -1220,6 +1220,18 @@
   animation: onboarding-spin 0.8s linear infinite;
 }
 
+.onboarding-shell .connection-test-hint {
+  flex: 0 0 auto;
+  margin-top: -3px;
+  padding: 10px 14px;
+  border: 1px solid rgb(226, 228, 240);
+  border-radius: 11px;
+  background: rgb(248, 249, 253);
+  color: rgb(96, 101, 130);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .onboarding-shell .connection-failure-reason {
   flex: 0 0 auto;
   margin-top: -3px;

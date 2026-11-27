@@ -4,43 +4,43 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { createPlanFileManager } from "../../../src/tool/builtin/planFile.js";
-import { resolveProjectStorageId } from "../../../src/pilot/index.js";
+import { resolveProjectStorageId } from "../../../src/eastyun/index.js";
 
-test("desktop runtime plan files are stored under pilotHome project artifacts", () => {
-  const root = mkdtempSync(join(tmpdir(), "pilotdeck-plan-runtime-"));
+test("desktop runtime plan files are stored under eastyunHome project artifacts", () => {
+  const root = mkdtempSync(join(tmpdir(), "eastyundesk-plan-runtime-"));
   try {
-    const pilotHome = join(root, "pilot-home");
-    const projectRoot = join(root, "Program Files", "PilotDeck", "resources", "runtime");
+    const eastyunHome = join(root, "eastyun-home");
+    const projectRoot = join(root, "Program Files", "EastYunDesk", "resources", "runtime");
     const manager = createPlanFileManager({
       projectRoot,
-      pilotHome,
-      env: { PILOTDECK_DESKTOP: "1" },
+      eastyunHome,
+      env: { EASTYUNDESK_DESKTOP: "1" },
     });
 
     const planDir = manager.getPlanDirectoryPath();
 
     assert.equal(
       planDir,
-      join(pilotHome, "projects", resolveProjectStorageId(projectRoot, pilotHome), "plans"),
+      join(eastyunHome, "projects", resolveProjectStorageId(projectRoot, eastyunHome), "plans"),
     );
-    assert.ok(!planDir.includes(join(projectRoot, ".pilotdeck")));
+    assert.ok(!planDir.includes(join(projectRoot, ".eastyundesk")));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
 });
 
-test("real project plan files stay under the project .pilotdeck directory", () => {
-  const root = mkdtempSync(join(tmpdir(), "pilotdeck-plan-project-"));
+test("real project plan files stay under the project .eastyundesk directory", () => {
+  const root = mkdtempSync(join(tmpdir(), "eastyundesk-plan-project-"));
   try {
-    const pilotHome = join(root, "pilot-home");
+    const eastyunHome = join(root, "eastyun-home");
     const projectRoot = join(root, "repo");
     const manager = createPlanFileManager({
       projectRoot,
-      pilotHome,
-      env: { PILOTDECK_DESKTOP: "1" },
+      eastyunHome,
+      env: { EASTYUNDESK_DESKTOP: "1" },
     });
 
-    assert.equal(manager.getPlanDirectoryPath(), join(projectRoot, ".pilotdeck", "plans"));
+    assert.equal(manager.getPlanDirectoryPath(), join(projectRoot, ".eastyundesk", "plans"));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

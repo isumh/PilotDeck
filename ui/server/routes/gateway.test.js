@@ -13,8 +13,8 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   vi.resetModules();
-  delete process.env.PILOT_HOME;
-  delete process.env.PILOTDECK_CONFIG_PATH;
+  delete process.env.EASTYUN_HOME;
+  delete process.env.EASTYUNDESK_CONFIG_PATH;
   for (const dir of tempDirs.splice(0)) {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -29,7 +29,7 @@ describe('gateway WeCom routes', () => {
     }
   });
 
-  it('returns WeCom status from pilotdeck.yaml', async () => {
+  it('returns WeCom status from eastyundesk.yaml', async () => {
     const { request } = await createGatewayApp({
       adapters: {
         wecom: {
@@ -61,7 +61,7 @@ describe('gateway WeCom routes', () => {
     });
   });
 
-  it('saves manual WeCom config to pilotdeck.yaml', async () => {
+  it('saves manual WeCom config to eastyundesk.yaml', async () => {
     const { request, configPath } = await createGatewayApp({});
 
     const result = await request('/api/gateway/wecom/save', {
@@ -196,7 +196,7 @@ describe('gateway WeCom routes', () => {
   it('broadcasts the latest config revision after a channel save', async () => {
     const broadcasts = [];
     const onBroadcast = (payload) => broadcasts.push(payload);
-    process.on('pilotdeck:config-broadcast', onBroadcast);
+    process.on('eastyundesk:config-broadcast', onBroadcast);
     try {
       const { request, configPath } = await createGatewayApp({});
 
@@ -217,7 +217,7 @@ describe('gateway WeCom routes', () => {
       );
       expect(broadcasts[0].raw).toContain('wecom:');
     } finally {
-      process.off('pilotdeck:config-broadcast', onBroadcast);
+      process.off('eastyundesk:config-broadcast', onBroadcast);
     }
   });
 
@@ -269,26 +269,26 @@ describe('gateway WeCom routes', () => {
 });
 
 async function createGatewayApp(initialConfig) {
-  const pilotHome = mkdtempSync(join(tmpdir(), 'pilotdeck-wecom-gateway-'));
-  tempDirs.push(pilotHome);
-  const configPath = join(pilotHome, 'pilotdeck.yaml');
+  const eastyunHome = mkdtempSync(join(tmpdir(), 'eastyundesk-wecom-gateway-'));
+  tempDirs.push(eastyunHome);
+  const configPath = join(eastyunHome, 'eastyundesk.yaml');
   writeFileSync(
     configPath,
     typeof initialConfig === 'string' ? initialConfig : stringifyYaml(initialConfig),
     'utf-8',
   );
 
-  process.env.PILOT_HOME = pilotHome;
-  process.env.PILOTDECK_CONFIG_PATH = configPath;
+  process.env.EASTYUN_HOME = eastyunHome;
+  process.env.EASTYUNDESK_CONFIG_PATH = configPath;
   vi.resetModules();
-  vi.doMock('../services/pilotdeckConfigWatcher.js', () => ({
+  vi.doMock('../services/eastyundeskConfigWatcher.js', () => ({
     suppressNextWatchEvent: vi.fn(),
   }));
-  vi.doMock('../services/pilotdeckConfigReloader.js', () => ({
-    reloadPilotDeckConfig: vi.fn(async () => undefined),
+  vi.doMock('../services/eastyundeskConfigReloader.js', () => ({
+    reloadEastYunDeskConfig: vi.fn(async () => undefined),
   }));
-  vi.doMock('../pilotdeck-bridge.js', () => ({
-    getPilotDeckGateway: vi.fn(async () => ({ reloadConfig: vi.fn(async () => undefined) })),
+  vi.doMock('../eastyundesk-bridge.js', () => ({
+    getEastYunDeskGateway: vi.fn(async () => ({ reloadConfig: vi.fn(async () => undefined) })),
   }));
 
   const { default: gatewayRoutes } = await import('./gateway.js');

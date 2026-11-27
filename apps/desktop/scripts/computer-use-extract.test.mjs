@@ -7,7 +7,7 @@ import test from 'node:test';
 import { extractDriverArchive } from '../../../scripts/prepare-computer-use.mjs';
 
 test('Windows ZIP extraction ignores an incompatible Archive module and handles Unicode paths', { skip: process.platform !== 'win32' }, t => {
-  const root = mkdtempSync(join(tmpdir(), 'pilotdeck-driver-zip-'));
+  const root = mkdtempSync(join(tmpdir(), 'eastyundesk-driver-zip-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const source = join(root, "源文件 [driver]'"), archive = join(root, "驱动 [archive]'.zip"), output = join(root, '已解压');
   mkdirSync(source); mkdirSync(output);

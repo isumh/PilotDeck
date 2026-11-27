@@ -8,9 +8,9 @@ export {};
 
 declare global {
   interface Window {
-    __pilotdeckStartupState?: { phase: string; progress?: number; startedAt?: number; phaseStartedAt?: number; completed?: boolean };
-    __pilotdeckStartupUpdate?: (state: NonNullable<Window['__pilotdeckStartupState']> & { language?: string; leaving?: boolean; error?: string; logPath?: string }) => void;
-    __pilotdeckStartupCleanup?: () => void;
+    __eastyundeskStartupState?: { phase: string; progress?: number; startedAt?: number; phaseStartedAt?: number; completed?: boolean };
+    __eastyundeskStartupUpdate?: (state: NonNullable<Window['__eastyundeskStartupState']> & { language?: string; leaving?: boolean; error?: string; logPath?: string }) => void;
+    __eastyundeskStartupCleanup?: () => void;
     __ROUTER_BASENAME__?: string;
     refreshProjects?: () => void | Promise<void>;
     openSettings?: (tab?: string) => void;
@@ -18,7 +18,7 @@ declare global {
     // app navigated to it; false otherwise so callers (e.g. chat slash
     // command handler) can surface a friendly "not found" message.
     switchProject?: (projectName: string) => boolean;
-    pilotdeckDesktop?: {
+    eastyundeskDesktop?: {
       platform?: string;
       reconcileSystemNotifications?: (value: { scope: string; ids: string[] }) => Promise<void>;
       dismissSystemNotification?: (value: { scope: string; id: string }) => Promise<void>;

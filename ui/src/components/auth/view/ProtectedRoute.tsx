@@ -21,6 +21,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     isLoading,
     needsSetup,
     authStatusError,
+    hasCompletedOnboarding,
     modelConfiguration,
     gatewayRuntime,
     refreshOnboardingStatus,
@@ -54,10 +55,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (modelConfiguration.state === 'empty') return <StartupReady>{children}</StartupReady>;
 
-  if (modelConfiguration.state === 'needs_configuration') {
-    return <StartupReady><Onboarding onComplete={refreshOnboardingStatus} /></StartupReady>;
-  }
-
   if (modelConfiguration.state === 'invalid' || modelConfiguration.state === 'status_error') {
     return (
       <ModelConfigurationErrorScreen
@@ -65,6 +62,14 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         onRetry={refreshOnboardingStatus}
       />
     );
+  }
+
+  // EastYunDesk runs a first-run wizard (language → connection → workspace).
+  // A fresh install opens it with three steps; an account that already stored
+  // a key gets two steps. `hasCompletedOnboarding` is persisted server-side so
+  // a returning user is never pushed through the wizard twice.
+  if (!hasCompletedOnboarding || modelConfiguration.state === 'needs_configuration') {
+    return <StartupReady><Onboarding onComplete={refreshOnboardingStatus} /></StartupReady>;
   }
 
   if (gatewayRuntime.state === 'stopped' || gatewayRuntime.state === 'starting') {

@@ -2,7 +2,7 @@ import { FormData } from "undici";
 import { setTimeout as delay } from "node:timers/promises";
 import { networkFetch } from "../../../network/fetch.js";
 import { resolveApiKey } from "../../../model/config/resolveCredentials.js";
-import { videoApiBaseUrl, type VideoGenerationConfig } from "../../../pilot/config/videoGenerationConfig.js";
+import { videoApiBaseUrl, type VideoGenerationConfig } from "../../../eastyun/config/videoGenerationConfig.js";
 
 export type VideoRequest = { prompt: string; seconds?: number; size?: string; num_inference_steps?: number; seed?: number; extra_params?: Record<string, unknown> };
 export const VIDEO_TIMEOUT_MS = 20 * 60_000;

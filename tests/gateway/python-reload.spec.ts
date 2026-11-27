@@ -3,17 +3,17 @@ import test from 'node:test';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadPilotConfig } from '../../src/pilot/config/loadPilotConfig.js';
-import { diffConfigSnapshots, classifyConfigChanges } from '../../src/pilot/config/classifyChanges.js';
+import { loadEastYunConfig } from '../../src/eastyun/config/loadEastYunConfig.js';
+import { diffConfigSnapshots, classifyConfigChanges } from '../../src/eastyun/config/classifyChanges.js';
 import { SessionRouter } from '../../src/gateway/SessionRouter.js';
 import { AgentSession } from '../../src/agent/session/AgentSession.js';
 
 test('Python defaults on, validates booleans, and participates in runtime reload hashes', async t => {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-python-config-'));
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-python-config-'));
   t.after(() => rm(home, { recursive: true, force: true }));
-  const path = join(home, 'pilotdeck.yaml');
+  const path = join(home, 'eastyundesk.yaml');
   const base = 'agent: { model: test/model }\nmodel:\n  providers:\n    test:\n      protocol: openai\n      url: https://example.test/v1\n      apiKey: fixture\n      models: { model: {} }\n';
-  const read = () => loadPilotConfig({ configPath: path, env: { PILOT_HOME: home } });
+  const read = () => loadEastYunConfig({ configPath: path, env: { EASTYUN_HOME: home } });
   await writeFile(path, base);
   const on = read(); assert.equal(on.config.runtime?.python.enabled, true);
   await writeFile(path, base + 'runtime: { python: { enabled: false } }\n');
@@ -24,7 +24,7 @@ test('Python defaults on, validates booleans, and participates in runtime reload
   assert.deepEqual(classifyConfigChanges(paths), ['next-runtime']);
   for (const value of ['"false"', 'null', '1']) {
     await writeFile(path, base + `runtime: { python: { enabled: ${value} } }\n`);
-    assert.throws(read, /runtime.python.enabled|Invalid PilotDeck config/);
+    assert.throws(read, /runtime.python.enabled|Invalid EastYunDesk config/);
   }
 });
 

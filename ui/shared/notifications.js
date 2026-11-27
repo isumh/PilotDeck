@@ -37,7 +37,7 @@ export function buildSystemNotification(event, preferences = {}, language = 'en'
   const preview = preferences.preview !== false ? notificationText(event.preview) : '';
   return {
     id: event.id,
-    title: notificationText(event.sessionName, 80) || 'PilotDeck',
+    title: notificationText(event.sessionName, 80) || 'EastYunDesk',
     // Keep the required action visible even when the OS truncates a long preview.
     body: [`${label} · ${action}`, preview].filter(Boolean).join('\n'),
     silent: preferences.sound === false,
@@ -51,7 +51,7 @@ export function buildTaskReminderNotification(reminder, preferences = {}, langua
     : reminder.kind === 'failed' ? zh ? '定时任务需要处理' : 'Scheduled task needs attention'
     : zh ? '定时任务已完成' : 'Scheduled task completed';
   return {
-    id: reminder.id, title: notificationText(reminder.title, 80) || 'PilotDeck',
+    id: reminder.id, title: notificationText(reminder.title, 80) || 'EastYunDesk',
     body: [label, preferences.preview !== false ? reminder.kind === 'due' ? (zh ? '到时间了，点击查看任务。' : 'It is time. Click to view the task.') : notificationText(reminder.body, 160) : ''].filter(Boolean).join('\n'),
     silent: preferences.sound === false, persistent: true,
     data: { sessionId: reminder.sessionKey, eventId: reminder.id, reminderId: reminder.id, scope,

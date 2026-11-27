@@ -3,9 +3,10 @@ import { homedir } from "node:os";
 import { basename, isAbsolute, join, posix, resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
 
+import { isHiddenBuiltinSkill } from "./hiddenBuiltinSkills.js";
 import { isSkillEnabled, readSkillPreferences, writeSkillEnabled } from "./skillPreferences.js";
-import { getPilotExtensionPaths } from "../../pilot/paths.js";
-import { isVirtualProjectRoot } from "../../pilot/writablePaths.js";
+import { getEastYunExtensionPaths } from "../../eastyun/paths.js";
+import { isVirtualProjectRoot } from "../../eastyun/writablePaths.js";
 import type {
   SkillAddressInput,
   SkillCreateInput,
@@ -56,14 +57,14 @@ const RISKY_EXTS = new Set([
 ]);
 
 export type SkillManagerOptions = {
-  /** Resolved `~/.pilotdeck` root. Required. */
-  pilotHome: string;
+  /** Resolved `~/.eastyundesk` root. Required. */
+  eastyunHome: string;
   env?: Record<string, string | undefined>;
-  /** Read-only skills shipped with the active PilotDeck build. */
+  /** Read-only skills shipped with the active EastYunDesk build. */
   builtinSkillsRoot?: string;
   /**
    * "General chat" cwds we treat as not-a-real-project. Defaults to
-   * `pilotHome` (~/.pilotdeck). When the caller passes a `projectKey`
+   * `eastyunHome` (~/.eastyundesk). When the caller passes a `projectKey`
    * matching one of these, the manager behaves as if no project was set —
    * built-in and user-scope skills are visible, but project skills are not.
    */
@@ -73,24 +74,24 @@ export type SkillManagerOptions = {
 /**
  * Authoritative skill-CRUD layer used by every host (gateway clients,
  * UI server, future SDK callers). Reads the release's bundled skill root and
- * owns the editable layouts under `~/.pilotdeck/skills/` (user scope) and
- * `<projectRoot>/.pilotdeck/skills/` (project scope). Legacy third-party skill
+ * owns the editable layouts under `~/.eastyundesk/skills/` (user scope) and
+ * `<projectRoot>/.eastyundesk/skills/` (project scope). Legacy third-party skill
  * directories are intentionally not consulted — conflating them with
- * PilotDeck's layout caused the UI/agent skill drift the migration fixes.
+ * EastYunDesk's layout caused the UI/agent skill drift the migration fixes.
  */
 export class SkillManager {
-  private readonly pilotHome: string;
+  private readonly eastyunHome: string;
   private readonly builtinSkillsRootPath: string | null;
   private readonly generalCwdPaths: string[];
   private readonly env?: Record<string, string | undefined>;
 
   constructor(options: SkillManagerOptions) {
-    this.pilotHome = resolve(options.pilotHome);
+    this.eastyunHome = resolve(options.eastyunHome);
     this.env = options.env;
     this.builtinSkillsRootPath = options.builtinSkillsRoot
       ? resolve(options.builtinSkillsRoot)
       : null;
-    const defaults = [this.pilotHome];
+    const defaults = [this.eastyunHome];
     this.generalCwdPaths = (options.generalCwdPaths ?? defaults).map((p) => resolve(p));
   }
 
@@ -99,7 +100,7 @@ export class SkillManager {
   // -------------------------------------------------------------------
 
   private userSkillsRoot(): string {
-    return getPilotExtensionPaths(this.pilotHome, this.pilotHome).globalSkillsDir;
+    return getEastYunExtensionPaths(this.eastyunHome, this.eastyunHome).globalSkillsDir;
   }
 
   private builtinSkillsRoot(): string {
@@ -110,7 +111,7 @@ export class SkillManager {
   }
 
   private projectSkillsRoot(projectRoot: string): string {
-    return getPilotExtensionPaths(projectRoot, this.pilotHome).projectSkillsDir;
+    return getEastYunExtensionPaths(projectRoot, this.eastyunHome).projectSkillsDir;
   }
 
   private isGeneralCwd(projectKey: string | null | undefined): boolean {
@@ -118,7 +119,7 @@ export class SkillManager {
     return this.generalCwdPaths.includes(resolve(projectKey))
       || isVirtualProjectRoot({
         projectRoot: projectKey,
-        pilotHome: this.pilotHome,
+        eastyunHome: this.eastyunHome,
         env: this.env,
       });
   }
@@ -168,15 +169,18 @@ export class SkillManager {
     const projectKey = input.projectKey ?? null;
     const effectiveProject = this.isGeneralCwd(projectKey) ? null : projectKey;
 
-    const builtinSkills = this.builtinSkillsRootPath
+    // EastYunDesk hides a curated set of upstream builtin skills. Filter before
+    // slugs are computed so counts, overrides and search all stay consistent.
+    const builtinSkills = (this.builtinSkillsRootPath
       ? await listSkillsIn(this.builtinSkillsRootPath, "builtin")
-      : [];
+      : []
+    ).filter((skill) => !isHiddenBuiltinSkill(skill.slug));
     const userSkills = await listSkillsIn(this.userSkillsRoot(), "user");
     const projectSkills = effectiveProject
       ? await listSkillsIn(this.projectSkillsRoot(effectiveProject), "project")
       : [];
 
-    const preferences = readSkillPreferences(this.pilotHome);
+    const preferences = readSkillPreferences(this.eastyunHome);
     for (const skill of [...builtinSkills, ...userSkills, ...projectSkills]) {
       skill.enabled = isSkillEnabled(preferences, { scope: skill.scope, slug: skill.slug, projectKey: effectiveProject });
     }
@@ -242,6 +246,10 @@ export class SkillManager {
   }
 
   async read(input: SkillAddressInput): Promise<SkillReadResult> {
+    if (input.scope === "builtin" && isHiddenBuiltinSkill(input.slug)) {
+      // Hidden skills must behave as if they were never shipped.
+      throw new SkillManagerError("not_found", `Skill "${input.slug}" not found.`);
+    }
     const skillDir = this.resolveSkillDir(input);
     const skillFile = join(skillDir, "SKILL.md");
     let content: string;
@@ -312,7 +320,7 @@ export class SkillManager {
       throw new SkillManagerError("invalid_input", "A valid scope and boolean enabled are required.");
     }
     await this.read(input);
-    writeSkillEnabled(this.pilotHome, input, input.enabled);
+    writeSkillEnabled(this.eastyunHome, input, input.enabled);
     return { ok: true, enabled: input.enabled };
   }
 

@@ -4,30 +4,30 @@ import { join } from "node:path";
 import test from "node:test";
 import { createDialogProjectRegistry } from "../../src/gateway/dialog/projectRegistry.js";
 
-const testRoot = join(tmpdir(), "pilotdeck-dialog-project-registry");
+const testRoot = join(tmpdir(), "eastyundesk-dialog-project-registry");
 
 test("dialog project registry accepts General and registered projects", async () => {
-  const pilotHome = join(testRoot, "home");
+  const eastyunHome = join(testRoot, "home");
   const registeredProject = join(testRoot, "workspace", "project");
   const registry = createDialogProjectRegistry({
-    pilotHome,
+    eastyunHome,
     listProjects: async () => [{ projectKey: registeredProject }],
   });
 
-  assert.equal(await registry.resolveProjectKey(join(pilotHome, ".")), pilotHome);
+  assert.equal(await registry.resolveProjectKey(join(eastyunHome, ".")), eastyunHome);
   assert.equal(await registry.resolveProjectKey(registeredProject), registeredProject);
-  assert.deepEqual(await registry.listProjectKeys(), [pilotHome, registeredProject]);
+  assert.deepEqual(await registry.listProjectKeys(), [eastyunHome, registeredProject]);
 });
 
 test("dialog project registry keeps unknown paths outside the allowed boundary", async () => {
-  const pilotHome = join(testRoot, "home");
+  const eastyunHome = join(testRoot, "home");
   const unknownProject = join(testRoot, "workspace", "unknown");
   const registry = createDialogProjectRegistry({
-    pilotHome,
+    eastyunHome,
     listProjects: async () => [{ projectKey: join(testRoot, "workspace", "project") }],
   });
 
-  for (const projectKey of [join(pilotHome, "sessions"), unknownProject]) {
+  for (const projectKey of [join(eastyunHome, "sessions"), unknownProject]) {
     await assert.rejects(
       registry.resolveProjectKey(projectKey),
       (error: unknown) => (
@@ -39,16 +39,16 @@ test("dialog project registry keeps unknown paths outside the allowed boundary",
 });
 
 test("dialog project registry lists normalized projects only once", async () => {
-  const pilotHome = join(testRoot, "home");
+  const eastyunHome = join(testRoot, "home");
   const registeredProject = join(testRoot, "workspace", "project");
   const registry = createDialogProjectRegistry({
-    pilotHome,
+    eastyunHome,
     listProjects: async () => [
-      { projectKey: pilotHome },
+      { projectKey: eastyunHome },
       { projectKey: registeredProject },
       { projectKey: join(registeredProject, ".") },
     ],
   });
 
-  assert.deepEqual(await registry.listProjectKeys(), [pilotHome, registeredProject]);
+  assert.deepEqual(await registry.listProjectKeys(), [eastyunHome, registeredProject]);
 });

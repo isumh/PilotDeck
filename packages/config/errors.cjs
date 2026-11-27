@@ -17,7 +17,7 @@ function redactDiagnostic(value) {
 function classifyRuntimeError(error, evidence = '', status, depth = 0) {
   const code = typeof error?.code === 'string' ? error.code : '';
   if (/^PD_[A-Z0-9_]+$/.test(code)) return code;
-  if (error?.name === 'PilotConfigError' || error?.name === 'ModelConfigError') return 'PD_CONFIG_INVALID';
+  if (error?.name === 'EastYunConfigError' || error?.name === 'ModelConfigError') return 'PD_CONFIG_INVALID';
   if (depth < 4 && error?.cause && error.cause !== error) {
     const cause = classifyRuntimeError(error.cause, evidence, status, depth + 1);
     if (cause !== 'PD_UNEXPECTED_ERROR') return cause;

@@ -3,15 +3,15 @@ import { VideoJobManager, videoJobView } from '../../../src/tool/builtin/videos/
 import path from 'node:path';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { resolvePilotHome } from '../utils/pilotPaths.js';
+import { resolveEastYunHome } from '../utils/eastyunPaths.js';
 import { VideoStore } from '../../../src/tool/builtin/videos/VideoStore.js';
-import { videoApiBaseUrl } from '../../../src/pilot/config/videoGenerationConfig.js';
+import { videoApiBaseUrl } from '../../../src/eastyun/config/videoGenerationConfig.js';
 import { resolveApiKey } from '../../../src/model/config/resolveCredentials.js';
 import { requestOpenAIVideo } from '../../../src/tool/builtin/videos/openaiVideos.js';
-import { readPilotDeckConfigFile } from '../services/pilotdeckConfig.js';
+import { readEastYunDeskConfigFile } from '../services/eastyundeskConfig.js';
 
-export function createVideoGenerationRouter({ store = new VideoStore(path.join(resolvePilotHome(process.env), 'generated-videos')),
-  readConfig = () => readPilotDeckConfigFile().config, fetchImpl } = {}) {
+export function createVideoGenerationRouter({ store = new VideoStore(path.join(resolveEastYunHome(process.env), 'generated-videos')),
+  readConfig = () => readEastYunDeskConfigFile().config, fetchImpl } = {}) {
   const router = express.Router();
   const manager = new VideoJobManager({ store, getConfig: () => readConfig().tools?.videoGeneration, fetchImpl });
   router.startRecovery = () => manager.startRecovery();
@@ -48,7 +48,7 @@ export function createVideoGenerationRouter({ store = new VideoStore(path.join(r
       try {
         // An explicit probe works while the feature is off, without changing
         // the saved opt-in or creating a project/session attachment.
-        const temporary = await mkdtemp(path.join(tmpdir(), 'pilotdeck-video-probe-'));
+        const temporary = await mkdtemp(path.join(tmpdir(), 'eastyundesk-video-probe-'));
         let bytes;
         try {
           const response = await requestOpenAIVideo({ enabled: true, apiKey, baseUrl, extraParams, model: submitted.model.trim() },

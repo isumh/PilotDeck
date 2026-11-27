@@ -5,20 +5,20 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createLocalGateway } from "../../src/cli/createLocalGateway.js";
 import { createModelRuntime, type CanonicalModelEvent, type CanonicalModelRequest } from "../../src/model/index.js";
-import type { PilotConfigSnapshot } from "../../src/pilot/config/types.js";
+import type { EastYunConfigSnapshot } from "../../src/eastyun/config/types.js";
 import { createAgentProjectSessionStorage, readTranscript, replayTranscriptEntries } from "../../src/session/index.js";
 import { activeTranscriptEntries } from "../../src/session/transcript/CompactSnapshot.js";
 import { readWebSessionMessages } from "../../src/web/server/readSessionMessages.js";
 import type { CheckpointSummary, RestorePlan, RestoreOperation } from "../../src/session/checkpoints/types.js";
-import { createProjectId } from "../../src/pilot/index.js";
+import { createProjectId } from "../../src/eastyun/index.js";
 import { replaceLastWebSessionTurn, finalizeLastWebSessionTurnReplacement } from "../../src/web/server/replaceLastTurn.js";
 
 async function fixture(t: test.TestContext) {
-  const base = await mkdtemp(join(tmpdir(), "pilotdeck-gateway-checkpoints-")), home = join(base, "home"), workspace = join(base, "workspace");
+  const base = await mkdtemp(join(tmpdir(), "eastyundesk-gateway-checkpoints-")), home = join(base, "home"), workspace = join(base, "workspace");
   await mkdir(home); await mkdir(workspace); await mkdir(join(home, "skills"));
   const registration = join(home, "projects", createProjectId(workspace));
   await mkdir(registration, { recursive: true }); await writeFile(join(registration, ".cwd"), workspace);
-  await writeFile(join(home, "pilotdeck.yaml"), `schemaVersion: 1
+  await writeFile(join(home, "eastyundesk.yaml"), `schemaVersion: 1
 agent: { model: test/model, maxContextTokens: 32768, maxOutputTokens: 4096 }
 extension:
   builtinPluginsEnabled: { windows-skills: false, browser-use: false, funasr: false }
@@ -34,9 +34,9 @@ model:
 `);
   const requests: CanonicalModelRequest[] = [];
   const options = {
-    pilotHome: home, projectRoot: workspace, builtinSkillsRoot: join(home, "skills"),
-    env: { ...process.env, PILOT_HOME: home, PILOT_AGENT_MODEL: undefined, PILOTDECK_CONFIG_PATH: undefined },
-    __testModelFactory: (snapshot: PilotConfigSnapshot) => ({
+    eastyunHome: home, projectRoot: workspace, builtinSkillsRoot: join(home, "skills"),
+    env: { ...process.env, EASTYUN_HOME: home, EASTYUN_AGENT_MODEL: undefined, EASTYUNDESK_CONFIG_PATH: undefined },
+    __testModelFactory: (snapshot: EastYunConfigSnapshot) => ({
       ...createModelRuntime(snapshot.config.model),
       async *stream(request: CanonicalModelRequest): AsyncIterable<CanonicalModelEvent> {
         requests.push(request);
@@ -72,7 +72,7 @@ model:
     async submit(message: string) { for await (const _event of local.gateway.submitTurn({ ...input, channelKey: "web", mode: "bypassPermissions", message })) { /* consume */ } },
     async list() { return await local.gateway.manageCheckpoints!({ ...input, action: "list" }) as { checkpoints: CheckpointSummary[]; sessionChanges: CheckpointSummary["changes"]; sessionRevision: string }; },
     async history() {
-      const storage = createAgentProjectSessionStorage({ projectRoot: workspace, pilotHome: home, sessionId: sessionKey });
+      const storage = createAgentProjectSessionStorage({ projectRoot: workspace, eastyunHome: home, sessionId: sessionKey });
       return (await readTranscript(storage.transcriptPath)).entries;
     },
   };
@@ -91,7 +91,7 @@ test("restoration changes persisted model context and UI history, survives resta
   const raw = await f.history();
   assert.equal(raw.filter(entry => entry.type === "accepted_input").length, 2);
   assert.equal(activeTranscriptEntries(raw).filter(entry => entry.type === "accepted_input").length, 0);
-  const ui = await readWebSessionMessages({ sessionKey: f.sessionKey }, { projectRoot: f.workspace, pilotHome: f.home });
+  const ui = await readWebSessionMessages({ sessionKey: f.sessionKey }, { projectRoot: f.workspace, eastyunHome: f.home });
   assert.ok(!ui.messages.some(message => message.text === "first" || message.text === "second"));
   assert.equal((await f.list()).sessionChanges.length, 0);
   f.restart(); await f.submit("continue");
@@ -139,7 +139,7 @@ test("editing the last visible turn after a rewind preserves archived history an
   await f.gateway.manageCheckpoints!({ ...f.input, action: "restore", planId: plan.id });
   const original = await f.history(), firstInput = activeTranscriptEntries(original).find(entry => entry.type === "accepted_input")!;
   const input = { ...f.input, expectedTurnId: firstInput.turnId, replacementTurnId: "replacement" };
-  const options = { projectRoot: f.workspace, pilotHome: f.home };
+  const options = { projectRoot: f.workspace, eastyunHome: f.home };
   const replacement = await replaceLastWebSessionTurn(input, options);
   const prepared = await f.history(); assert.equal(prepared.filter(entry => entry.type === "accepted_input").length, 2);
   assert.equal(activeTranscriptEntries(prepared).filter(entry => entry.type === "accepted_input").length, 0);

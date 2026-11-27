@@ -2,10 +2,36 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parse as parseYaml } from 'yaml';
+import { CATALOG_PROVIDERS } from '../../../../shared/catalogProviders';
 import useLlmSetup from '../hooks/useLlmSetup';
+import { CUSTOM_PROVIDER, PROVIDER_LOGOS } from '../constants';
+import type { LlmSetupController } from '../types';
 import ConnectionStep from './ConnectionStep';
-import ProviderStep from './ProviderStep';
 import '../Onboarding.css';
+
+// The production wizard pins the builtin provider, so this harness keeps a
+// small provider chooser of its own: it still exercises the free-form provider
+// plumbing of the shared setup hook.
+function ProviderPicker({ llm }: { llm: LlmSetupController }) {
+  return (
+    <div>
+      {CATALOG_PROVIDERS.map((provider) => (
+        <button
+          key={provider.id}
+          type="button"
+          aria-label={provider.displayName}
+          onClick={() => llm.handleProviderSelect(provider)}
+        >
+          <img src={PROVIDER_LOGOS[provider.id]} alt="" />
+          {provider.displayName}
+        </button>
+      ))}
+      <button type="button" aria-label="Custom" onClick={() => llm.handleProviderSelect(CUSTOM_PROVIDER)}>
+        Custom
+      </button>
+    </div>
+  );
+}
 
 // Exercise the real setup hook and steps together without shipping a test-only
 // composition as a production component.
@@ -13,7 +39,7 @@ function LlmConfigurationStep({ onSaved }: { onSaved: () => void | Promise<void>
   const llm = useLlmSetup({ onSaved });
   return (
     <div className="onboarding-shell">
-      <ProviderStep llm={llm} onBack={() => undefined} onContinue={() => undefined} />
+      <ProviderPicker llm={llm} />
       <ConnectionStep llm={llm} onBack={() => undefined} onContinue={llm.handleSave} />
     </div>
   );

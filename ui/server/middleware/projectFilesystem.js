@@ -2,12 +2,12 @@ import { realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { resolveRegisteredProject } from '../services/projectRegistration.js';
 import { isPathInsideOrEqual } from '../utils/pathSafety.js';
-import { isVirtualProjectPath, resolvePilotHome } from '../utils/pilotPaths.js';
+import { isVirtualProjectPath, resolveEastYunHome } from '../utils/eastyunPaths.js';
 
 export function createProjectFilesystemMiddleware({ env = process.env, resolveTaskWorkspace } = {}) {
     return async (req, res, next) => {
         try {
-            const pilotHome = resolvePilotHome(env);
+            const eastyunHome = resolveEastYunHome(env);
             // Never authorize a project root using request-derived paths or the
             // presentation cache populated by getProjects().
             const taskId = req.params.projectName?.startsWith('cron-task:') ? req.params.projectName.slice(10) : null;
@@ -17,25 +17,25 @@ export function createProjectFilesystemMiddleware({ env = process.env, resolveTa
                 taskWorkspace = await resolveTaskWorkspace(taskId);
                 if (!taskWorkspace?.root || !taskWorkspace.sourceRoot) return res.sendStatus(404);
             }
-            const projectRoot = taskWorkspace?.root || await resolveRegisteredProject(req.params.projectName, pilotHome);
-            const [realProjectRoot, realPilotHome] = await Promise.all([
+            const projectRoot = taskWorkspace?.root || await resolveRegisteredProject(req.params.projectName, eastyunHome);
+            const [realProjectRoot, realEastYunHome] = await Promise.all([
                 realpath(projectRoot),
-                realpath(pilotHome),
+                realpath(eastyunHome),
             ]);
             const ownedWorktree = taskWorkspace?.worktree === true
-                && path.resolve(projectRoot) === path.resolve(pilotHome, 'cron', 'worktrees', taskId)
-                && realProjectRoot === path.join(realPilotHome, 'cron', 'worktrees', taskId);
+                && path.resolve(projectRoot) === path.resolve(eastyunHome, 'cron', 'worktrees', taskId)
+                && realProjectRoot === path.join(realEastYunHome, 'cron', 'worktrees', taskId);
             if (taskWorkspace && !ownedWorktree) {
                 const realSourceRoot = await realpath(taskWorkspace.sourceRoot);
                 if (!isPathInsideOrEqual(taskWorkspace.sourceRoot, projectRoot)
                     || !isPathInsideOrEqual(realSourceRoot, realProjectRoot)) return res.sendStatus(403);
             }
             if (!ownedWorktree && (
-                isVirtualProjectPath(projectRoot, pilotHome, env)
-                || isPathInsideOrEqual(pilotHome, projectRoot)
-                || isPathInsideOrEqual(projectRoot, pilotHome)
-                || isPathInsideOrEqual(realPilotHome, realProjectRoot)
-                || isPathInsideOrEqual(realProjectRoot, realPilotHome)
+                isVirtualProjectPath(projectRoot, eastyunHome, env)
+                || isPathInsideOrEqual(eastyunHome, projectRoot)
+                || isPathInsideOrEqual(projectRoot, eastyunHome)
+                || isPathInsideOrEqual(realEastYunHome, realProjectRoot)
+                || isPathInsideOrEqual(realProjectRoot, realEastYunHome)
             )) {
                 return res.status(403).json({
                     error: { code: 'PROJECT_PATH_FORBIDDEN', message: 'Project file operations are unavailable for this path.' },

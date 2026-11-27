@@ -1,4 +1,4 @@
-import type { PilotDeckToolDefinition } from "../../tool/index.js";
+import type { EastYunDeskToolDefinition } from "../../tool/index.js";
 import { createCronCreateTool } from "./CronCreateTool.js";
 import { createCronListTool } from "./CronListTool.js";
 import { createCronDeleteTool } from "./CronDeleteTool.js";
@@ -8,7 +8,7 @@ import type { CronToolRuntime } from "./CronToolRuntime.js";
 import type { CronUpdateInput, CronListInput, CronRunNowInput } from "../protocol/types.js";
 import { previewCronSchedule } from "../runtime/CronSchedule.js";
 
-export function createCronTools(runtime: CronToolRuntime): PilotDeckToolDefinition[] {
+export function createCronTools(runtime: CronToolRuntime): EastYunDeskToolDefinition[] {
   const identity = { taskId: { type: "string", minLength: 1 }, projectKey: { type: "string" } };
   const output = (data: unknown) => ({ content: [{ type: "json" as const, value: data }], data });
   return [createCronCreateTool(runtime), createCronListTool(runtime), createCronDeleteTool(runtime), createCronStopTool(runtime), {

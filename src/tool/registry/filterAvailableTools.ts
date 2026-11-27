@@ -1,34 +1,34 @@
 import type {
-  PilotDeckToolAvailability,
-  PilotDeckToolAvailabilityContext,
-  PilotDeckToolDefinition,
+  EastYunDeskToolAvailability,
+  EastYunDeskToolAvailabilityContext,
+  EastYunDeskToolDefinition,
 } from "../protocol/types.js";
 import { ToolRegistry, type ToolUnavailableDiagnostic } from "./ToolRegistry.js";
 
-export type PilotDeckUnavailableToolDiagnostic = {
+export type EastYunDeskUnavailableToolDiagnostic = {
   toolName: string;
-  code: Exclude<PilotDeckToolAvailability, { ok: true }>["code"];
+  code: Exclude<EastYunDeskToolAvailability, { ok: true }>["code"];
   reason: string;
 };
 
 export type FilterAvailableToolsResult = {
   registry: ToolRegistry;
-  unavailable: PilotDeckUnavailableToolDiagnostic[];
+  unavailable: EastYunDeskUnavailableToolDiagnostic[];
 };
 
 export async function filterAvailableTools(
   registry: ToolRegistry,
-  context: PilotDeckToolAvailabilityContext,
+  context: EastYunDeskToolAvailabilityContext,
 ): Promise<FilterAvailableToolsResult> {
   const filtered = new ToolRegistry();
-  const unavailable: PilotDeckUnavailableToolDiagnostic[] = [];
+  const unavailable: EastYunDeskUnavailableToolDiagnostic[] = [];
   for (const { diagnostic, aliases } of registry.listUnavailableEntries()) {
     filtered.markUnavailable(diagnostic, aliases);
     unavailable.push(diagnostic);
   }
   const checkCache = new Map<
-    NonNullable<PilotDeckToolDefinition["checkAvailability"]>,
-    Promise<PilotDeckToolAvailability>
+    NonNullable<EastYunDeskToolDefinition["checkAvailability"]>,
+    Promise<EastYunDeskToolAvailability>
   >();
 
   for (const tool of registry.list()) {
@@ -38,7 +38,7 @@ export async function filterAvailableTools(
       continue;
     }
 
-    const diagnostic: PilotDeckUnavailableToolDiagnostic = {
+    const diagnostic: EastYunDeskUnavailableToolDiagnostic = {
       toolName: tool.name,
       code: availability.code,
       reason: availability.reason,
@@ -52,10 +52,10 @@ export async function filterAvailableTools(
 }
 
 async function resolveToolAvailability(
-  tool: PilotDeckToolDefinition,
-  context: PilotDeckToolAvailabilityContext,
-  cache: Map<NonNullable<PilotDeckToolDefinition["checkAvailability"]>, Promise<PilotDeckToolAvailability>>,
-): Promise<PilotDeckToolAvailability> {
+  tool: EastYunDeskToolDefinition,
+  context: EastYunDeskToolAvailabilityContext,
+  cache: Map<NonNullable<EastYunDeskToolDefinition["checkAvailability"]>, Promise<EastYunDeskToolAvailability>>,
+): Promise<EastYunDeskToolAvailability> {
   const check = tool.checkAvailability;
   if (!check) {
     return { ok: true };
@@ -65,7 +65,7 @@ async function resolveToolAvailability(
   if (!promise) {
     promise = Promise.resolve()
       .then(() => check(context))
-      .catch((error): PilotDeckToolAvailability => ({
+      .catch((error): EastYunDeskToolAvailability => ({
         ok: false,
         code: "failed_check",
         reason: error instanceof Error ? error.message : String(error),

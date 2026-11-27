@@ -1,7 +1,7 @@
 import type { ChatModelSelection } from '../hooks/useChatProviderState';
 import type { Project, ProjectSession } from '../../../types/app';
-import type { ChatAttachment, ChatRunMode, PilotDeckSettings, PermissionMode } from '../types/types';
-import { getPilotDeckSettings } from './chatStorage';
+import type { ChatAttachment, ChatRunMode, EastYunDeskSettings, PermissionMode } from '../types/types';
+import { getEastYunDeskSettings } from './chatStorage';
 
 type StartSessionOptions = {
   sendMessage: (message: unknown) => boolean | void;
@@ -17,7 +17,7 @@ type StartSessionOptions = {
   model?: string;
   thinking?: unknown;
   sessionSummary?: string | null;
-  toolsSettings?: PilotDeckSettings;
+  toolsSettings?: EastYunDeskSettings;
   modelSelection?: ChatModelSelection;
   modelOverride?: {
     mode: 'model';
@@ -111,7 +111,7 @@ export function startSessionCommand({
   model,
   thinking,
   sessionSummary,
-  toolsSettings = getPilotDeckSettings(),
+  toolsSettings = getEastYunDeskSettings(),
   modelOverride,
   modelSelection,
   images,
@@ -128,7 +128,7 @@ export function startSessionCommand({
   const resolvedWorkspaceCwd = workspaceCwd || selectedProject.workspaceCwd;
 
   const delivered = sendMessage({
-    type: 'pilotdeck-command',
+    type: 'eastyundesk-command',
     command,
     options: {
       ...(sessionId ? { sessionId, resume: true } : {}),
@@ -177,7 +177,7 @@ export function regenerateLastSessionCommand({
   model,
   thinking,
   sessionSummary,
-  toolsSettings = getPilotDeckSettings(),
+  toolsSettings = getEastYunDeskSettings(),
   images,
   attachments,
   uploadedAttachments,

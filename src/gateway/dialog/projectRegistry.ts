@@ -6,7 +6,7 @@ export type RegisteredDialogProject = {
 };
 
 export type DialogProjectRegistryOptions = {
-  pilotHome: string;
+  eastyunHome: string;
   listProjects: () => Promise<RegisteredDialogProject[]>;
   resolveProject?: (projectKey: string) => Promise<string | undefined>;
 };
@@ -17,14 +17,14 @@ export type DialogProjectRegistry = {
 };
 
 /**
- * Dialog APIs accept real registered projects plus PilotDeck's one virtual
- * General workspace rooted at pilotHome. Keeping that exception here avoids
+ * Dialog APIs accept real registered projects plus EastYunDesk's one virtual
+ * General workspace rooted at eastyunHome. Keeping that exception here avoids
  * teaching the real-project enumerator about a UI/runtime-only workspace.
  */
 export function createDialogProjectRegistry(
   options: DialogProjectRegistryOptions,
 ): DialogProjectRegistry {
-  const generalProjectKey = resolve(options.pilotHome);
+  const generalProjectKey = resolve(options.eastyunHome);
 
   const listProjectKeys = async (): Promise<string[]> => {
     const projects = await options.listProjects();

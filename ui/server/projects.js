@@ -1,13 +1,13 @@
 /**
- * Project / session metadata layer (PilotDeck-only).
+ * Project / session metadata layer (EastYunDesk-only).
  *
  * Replaces the legacy four-provider scanner that used to read
- * ~/.gemini/projects/. After the PilotDeck-only migration:
+ * ~/.gemini/projects/. After the EastYunDesk-only migration:
  *
  *   - `getProjects()` lists projects via `gateway.listProjects()`.
  *   - `getSessions()` lists session transcripts via
- *     `gateway.listSessions()` (PilotDeck transcripts under
- *     ~/.pilotdeck/projects/<id>/chats/<sessionKey>.jsonl).
+ *     `gateway.listSessions()` (EastYunDesk transcripts under
+ *     ~/.eastyundesk/projects/<id>/chats/<sessionKey>.jsonl).
  *   - All sessions are returned in the single `sessions` array.
  *
  * Exports preserved for external callers under ui/server/:
@@ -23,19 +23,19 @@ import path from 'node:path';
 import os from 'node:os';
 
 import {
-    getPilotDeckGateway,
+    getEastYunDeskGateway,
     beginProjectDeletion,
     beginSessionDeletion,
     isGatewayUnavailableError,
-    withPilotDeckGatewayReadRetry,
-} from './pilotdeck-bridge.js';
+    withEastYunDeskGatewayReadRetry,
+} from './eastyundesk-bridge.js';
 import { mapLegacySessionPresentation } from '../../src/web/server/legacySessionPresentation.js';
 import {
-    resolvePilotHome,
+    resolveEastYunHome,
     createProjectId,
     createCollisionResistantProjectId,
     sanitizeSessionIdForPath,
-} from './utils/pilotPaths.js';
+} from './utils/eastyunPaths.js';
 import { cronTaskOverview } from './services/cronOverview.js';
 import sessionManager from './sessionManager.js';
 import { applyCustomSessionNames } from './database/db.js';
@@ -92,7 +92,7 @@ function projectDisplayName(fullPath) {
 }
 
 /**
- * Map a PilotDeck `WebSessionInfo` onto the legacy `ProjectSession`
+ * Map a EastYunDesk `WebSessionInfo` onto the legacy `ProjectSession`
  * shape the React frontend expects.
  */
 function toLegacySession(session, projectName) {
@@ -127,11 +127,11 @@ function toLegacySession(session, projectName) {
 }
 
 async function readMarkedProjectPaths() {
-    // Scan ~/.pilotdeck/projects/<id>/.cwd to recover real workspace paths
+    // Scan ~/.eastyundesk/projects/<id>/.cwd to recover real workspace paths
     // for projects whose encoded id is ambiguous (see addProjectManually).
     // Returns a Map<id, absoluteCwd>; missing/unreadable markers are skipped.
-    const pilotHome = resolvePilotHome(process.env);
-    const projectsDir = path.join(pilotHome, 'projects');
+    const eastyunHome = resolveEastYunHome(process.env);
+    const projectsDir = path.join(eastyunHome, 'projects');
     const result = new Map();
     let entries = [];
     try {
@@ -156,7 +156,7 @@ async function readMarkedProjectPaths() {
 
 async function readProjectCreatedAt(projectId) {
     try {
-        const stats = await fs.stat(path.join(resolvePilotHome(process.env), 'projects', projectId));
+        const stats = await fs.stat(path.join(resolveEastYunHome(process.env), 'projects', projectId));
         return stats.birthtimeMs || stats.ctimeMs;
     } catch {
         return undefined;
@@ -164,7 +164,7 @@ async function readProjectCreatedAt(projectId) {
 }
 
 async function getProjects(progressCallback = null) {
-    const { projects: webProjects } = await withPilotDeckGatewayReadRetry(
+    const { projects: webProjects } = await withEastYunDeskGatewayReadRetry(
         (gateway) => gateway.listProjects(),
     );
     const markedProjects = await readMarkedProjectPaths();
@@ -234,7 +234,7 @@ async function getProjects(progressCallback = null) {
             let sessionsResult;
             let sessionPreviewSucceeded = true;
             try {
-                sessionsResult = await withPilotDeckGatewayReadRetry(
+                sessionsResult = await withEastYunDeskGatewayReadRetry(
                     (gateway) => gateway.listSessions({ projectKey: fullPath, limit: 5 }),
                 );
             } catch (error) {
@@ -284,15 +284,15 @@ async function getProjects(progressCallback = null) {
     }
 
     // Virtual "general" conversation space. Its session identity remains
-    // rooted at PILOT_HOME for backwards-compatible transcript discovery,
+    // rooted at EASTYUN_HOME for backwards-compatible transcript discovery,
     // while agent execution uses a separate managed workspace directory.
     // Sidebar looks for a project whose `name` or
     // `displayName` equals 'general' to populate the dedicated "General"
-    // toggle section. PilotDeck's gateway.listProjects() only returns
+    // toggle section. EastYunDesk's gateway.listProjects() only returns
     // real project directories, so we synthesize one here. New chats
     // started from the General section use this cwd; sessions are
     // sourced from the same backend as any other project.
-    const generalHome = resolvePilotHome(process.env);
+    const generalHome = resolveEastYunHome(process.env);
     let generalWorkspaceCwd;
     let generalWorkspaceUnavailable = false;
     try {
@@ -312,8 +312,8 @@ async function getProjects(progressCallback = null) {
         // workspace gets the real session count instead of the page size.
         // Without this, sessionMeta.hasMore was hardcoded `false` and the
         // sidebar would silently truncate to the first 5 sessions even
-        // when dozens existed under ~/.pilotdeck/projects/<encoded>/chats/.
-        const sessionsPromise = withPilotDeckGatewayReadRetry(
+        // when dozens existed under ~/.eastyundesk/projects/<encoded>/chats/.
+        const sessionsPromise = withEastYunDeskGatewayReadRetry(
             (gateway) => gateway.listSessions({ projectKey: generalHome, limit: 5 }),
         )
             .then((sessionsResult) => ({ sessionsResult, succeeded: true }))
@@ -321,7 +321,7 @@ async function getProjects(progressCallback = null) {
                 if (isGatewayUnavailableError(error)) throw error;
                 return { sessionsResult: { sessions: [] }, succeeded: false };
             });
-        const summaryPromise = withPilotDeckGatewayReadRetry(
+        const summaryPromise = withEastYunDeskGatewayReadRetry(
             (gateway) => gateway.describeProject({ projectKey: generalHome }),
         )
             .then((summary) => ({ summary, succeeded: true }))
@@ -400,13 +400,13 @@ async function getSessions(projectName, limit = 5, offset = 0) {
     // to the user as a button that "doesn't react" once they've already
     // pulled in everything that exists.
     const [listResult, summary] = await Promise.all([
-        withPilotDeckGatewayReadRetry(
+        withEastYunDeskGatewayReadRetry(
             (gateway) => gateway.listSessions({ projectKey: projectPath, limit, cursor }),
         ).catch((error) => {
             if (isGatewayUnavailableError(error)) throw error;
             return { sessions: [] };
         }),
-        withPilotDeckGatewayReadRetry(
+        withEastYunDeskGatewayReadRetry(
             (gateway) => gateway.describeProject({ projectKey: projectPath }),
         ).catch((error) => {
             if (isGatewayUnavailableError(error)) throw error;
@@ -431,14 +431,14 @@ async function getSessions(projectName, limit = 5, offset = 0) {
 }
 
 /**
- * Resolve a `projectName` (encoded form like `-Users-miwi-PilotDeck`,
+ * Resolve a `projectName` (encoded form like `-Users-miwi-EastYunDesk`,
  * a basename, or an already-absolute path) to the absolute project root.
  * Falls back to consulting the directory cache populated by
  * `getProjects()` so worktree-aware paths resolve correctly.
  */
 async function extractProjectDirectory(projectName) {
     if (!projectName) {
-        return resolvePilotHome(process.env);
+        return resolveEastYunHome(process.env);
     }
     if (path.isAbsolute(projectName)) {
         rememberProjectDirectory(projectName, projectName);
@@ -460,7 +460,7 @@ async function extractProjectDirectory(projectName) {
         rememberProjectDirectory(projectName, decoded);
         return decoded;
     }
-    return resolvePilotHome(process.env);
+    return resolveEastYunHome(process.env);
 }
 
 async function addProjectManually(projectPath, _displayName = null) {
@@ -468,25 +468,25 @@ async function addProjectManually(projectPath, _displayName = null) {
         throw new Error('projectPath is required');
     }
     const absolute = path.resolve(projectPath);
-    const pilotHome = resolvePilotHome(process.env);
-    const name = await allocateProjectIdForPath(absolute, pilotHome);
+    const eastyunHome = resolveEastYunHome(process.env);
+    const name = await allocateProjectIdForPath(absolute, eastyunHome);
     rememberProjectDirectory(name, absolute);
 
-    // Materialize a PilotDeck project directory and drop a `.cwd` marker
+    // Materialize a EastYunDesk project directory and drop a `.cwd` marker
     // recording the real absolute path. We need the marker because
     // createProjectId() encodes both '/' and literal '-' to '-', so the
-    // PilotDeck's listWebProjects() heuristically tries each `-` as a
+    // EastYunDesk's listWebProjects() heuristically tries each `-` as a
     // path separator and drops the project when no decode matches an
     // existing directory — which would silently lose workspaces whose
     // real path contains a dash. getProjects() reads `.cwd` to backfill
     // any project listProjects() couldn't recover.
-    const projectDir = path.join(pilotHome, 'projects', name);
+    const projectDir = path.join(eastyunHome, 'projects', name);
     try {
         await fs.mkdir(projectDir, { recursive: true });
         await fs.writeFile(path.join(projectDir, '.cwd'), absolute, 'utf8');
     } catch (error) {
         console.warn(
-            `[projects] failed to materialize PilotDeck project dir for ${name}:`,
+            `[projects] failed to materialize EastYunDesk project dir for ${name}:`,
             error?.message || error,
         );
         throw error;
@@ -502,9 +502,9 @@ async function addProjectManually(projectPath, _displayName = null) {
     };
 }
 
-async function allocateProjectIdForPath(absolutePath, pilotHome) {
+async function allocateProjectIdForPath(absolutePath, eastyunHome) {
     const legacyId = createProjectId(absolutePath);
-    const legacyDir = path.join(pilotHome, 'projects', legacyId);
+    const legacyDir = path.join(eastyunHome, 'projects', legacyId);
     try {
         await fs.access(legacyDir);
     } catch (error) {
@@ -530,18 +530,18 @@ async function allocateProjectIdForPath(absolutePath, pilotHome) {
 }
 
 async function renameProject(_projectName, _displayName) {
-    // PilotDeck does not yet expose a rename API. Display names are derived
+    // EastYunDesk does not yet expose a rename API. Display names are derived
     // from the project's basename today, so this is a no-op.
     return { success: true };
 }
 
 async function deleteSession(projectName, sessionId, _options = {}) {
     const fullPath = await extractProjectDirectory(projectName);
-    const pilotHome = resolvePilotHome(process.env);
+    const eastyunHome = resolveEastYunHome(process.env);
     const projectId = await resolveProjectIdForPathOrName(projectName, fullPath);
     // The Gateway owns background title requests and the transcript write queue.
     // Drain/close it before unlinking, so late completions cannot recreate files.
-    const gateway = await getPilotDeckGateway();
+    const gateway = await getEastYunDeskGateway();
     const finishDeletion = beginSessionDeletion(fullPath, sessionId);
     let deleted = false;
     try {
@@ -550,7 +550,7 @@ async function deleteSession(projectName, sessionId, _options = {}) {
         // raw form (legacy files written before the sanitize fix).
         const safeId = sanitizeSessionIdForPath(sessionId);
         const filenames = safeId === sessionId ? [sessionId] : [safeId, sessionId];
-        const projectsRoot = path.resolve(pilotHome, 'projects');
+        const projectsRoot = path.resolve(eastyunHome, 'projects');
         const chatDirectory = path.resolve(projectsRoot, projectId, 'chats');
         if (!chatDirectory.startsWith(`${projectsRoot}${path.sep}`)) throw new Error('Invalid session storage directory.');
         let removed = false;
@@ -569,7 +569,7 @@ async function deleteSession(projectName, sessionId, _options = {}) {
             if (!snapshot.startsWith(`${projectsRoot}${path.sep}`)) throw new Error('Invalid context snapshot path.');
             await fs.rm(snapshot, { force: true });
         }
-        await fs.rm(path.join(pilotHome, 'projects', projectId, 'pending-inputs', `${safeId}.json`), { force: true });
+        await fs.rm(path.join(eastyunHome, 'projects', projectId, 'pending-inputs', `${safeId}.json`), { force: true });
         deleted = true;
         return removed;
     } finally { finishDeletion(deleted); }
@@ -577,10 +577,10 @@ async function deleteSession(projectName, sessionId, _options = {}) {
 
 async function deleteProject(projectName, force = false) {
     const fullPath = await extractProjectDirectory(projectName);
-    const pilotHome = resolvePilotHome(process.env);
+    const eastyunHome = resolveEastYunHome(process.env);
     const projectId = await resolveProjectIdForPathOrName(projectName, fullPath);
-    const projectDir = path.join(pilotHome, 'projects', projectId);
-    const gateway = await getPilotDeckGateway();
+    const projectDir = path.join(eastyunHome, 'projects', projectId);
+    const gateway = await getEastYunDeskGateway();
     if (!gateway.closeProjectSessions) throw new Error('Gateway does not support project session closure.');
     const finishDeletion = beginProjectDeletion(fullPath);
     let deleted = false;
@@ -615,7 +615,7 @@ async function resolveProjectIdForPathOrName(projectName, fullPath) {
 
 async function getProjectCronJobsOverview(projectName) {
     try {
-        const gateway = await getPilotDeckGateway();
+        const gateway = await getEastYunDeskGateway();
         const projectKey = projectName
             ? await extractProjectDirectory(projectName)
             : undefined;

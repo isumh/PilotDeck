@@ -24,7 +24,7 @@ function fixture({ event = run, current = event, results = jobs } = {}) {
       return { data: route.startsWith('GET ') ? current : undefined };
     },
   };
-  const context = { repo: { owner: 'OpenBMB', repo: 'PilotDeck' }, payload: { workflow_run: event } };
+  const context = { repo: { owner: 'OpenBMB', repo: 'EastYunDesk' }, payload: { workflow_run: event } };
   return { github, context, calls, execute: () => retry.retryReleaseBuild({ github, context }) };
 }
 
@@ -35,10 +35,10 @@ for (const event of ['schedule', 'workflow_dispatch']) {
     assert.deepEqual(f.calls, [
       {
         route: 'GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}/jobs',
-        params: { owner: 'OpenBMB', repo: 'PilotDeck', run_id: run.id, attempt_number: 1, per_page: 100 },
+        params: { owner: 'OpenBMB', repo: 'EastYunDesk', run_id: run.id, attempt_number: 1, per_page: 100 },
       },
-      { route: 'GET /repos/{owner}/{repo}/actions/runs/{run_id}', params: { owner: 'OpenBMB', repo: 'PilotDeck', run_id: run.id } },
-      { route: 'POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun-failed-jobs', params: { owner: 'OpenBMB', repo: 'PilotDeck', run_id: run.id } },
+      { route: 'GET /repos/{owner}/{repo}/actions/runs/{run_id}', params: { owner: 'OpenBMB', repo: 'EastYunDesk', run_id: run.id } },
+      { route: 'POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun-failed-jobs', params: { owner: 'OpenBMB', repo: 'EastYunDesk', run_id: run.id } },
     ]);
   });
 }
@@ -68,7 +68,7 @@ for (const [name, patch] of [
   ['missing attempt', { run_attempt: undefined }], ['successful run', { conclusion: 'success' }],
   ['cancelled run', { conclusion: 'cancelled' }], ['unfinished run', { status: 'in_progress' }],
   ['another branch', { head_branch: 'feature' }], ['PR event', { event: 'pull_request' }],
-  ['another repository', { head_repository: { full_name: 'someone/PilotDeck' } }],
+  ['another repository', { head_repository: { full_name: 'someone/EastYunDesk' } }],
   ['another workflow', { name: 'Desktop Smoke' }], ['another workflow path', { path: '.github/workflows/other.yml' }],
 ]) {
   test(`ignores ${name} without requesting a rerun`, async () => {

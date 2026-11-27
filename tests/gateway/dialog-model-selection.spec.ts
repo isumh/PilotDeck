@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import sharp from 'sharp';
-import type { PilotConfigSnapshot } from '../../src/pilot/config/types.js';
+import type { EastYunConfigSnapshot } from '../../src/eastyun/config/types.js';
 import { createLocalGateway } from '../../src/cli/createLocalGateway.js';
 import { buildOpenAIRequest } from '../../src/model/providers/openai/request.js';
 import { createModelRuntime, type CanonicalModelEvent, type CanonicalModelRequest, type ModelRuntime } from '../../src/model/index.js';
@@ -63,17 +63,17 @@ async function fixture(t: test.TestContext, responseText = 'ok', routing: {
   judgeReply?: string;
   reply?: (request: CanonicalModelRequest, index: number) => CanonicalModelEvent[] | undefined;
 } = {}) {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-model-choice-'));
-  await writeFile(join(home, 'pilotdeck.yaml'), routing.config ?? CONFIG);
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-model-choice-'));
+  await writeFile(join(home, 'eastyundesk.yaml'), routing.config ?? CONFIG);
   await mkdir(join(home, 'skills'), { recursive: true });
   const requests: CanonicalModelRequest[] = [];
-  let modelConfig: PilotConfigSnapshot['config']['model'];
+  let modelConfig: EastYunConfigSnapshot['config']['model'];
   let failZeta = false;
   const options = {
-    pilotHome: home, projectRoot: home,
-    env: { ...process.env, PILOT_HOME: home, PILOT_AGENT_MODEL: undefined, PILOTDECK_CONFIG_PATH: undefined },
+    eastyunHome: home, projectRoot: home,
+    env: { ...process.env, EASTYUN_HOME: home, EASTYUN_AGENT_MODEL: undefined, EASTYUNDESK_CONFIG_PATH: undefined },
     builtinSkillsRoot: join(home, 'skills'),
-    __testModelFactory: (snapshot: PilotConfigSnapshot): ModelRuntime => {
+    __testModelFactory: (snapshot: EastYunConfigSnapshot): ModelRuntime => {
       modelConfig = snapshot.config.model;
       return {
         ...createModelRuntime(modelConfig),
@@ -113,11 +113,11 @@ async function fixture(t: test.TestContext, responseText = 'ok', routing: {
     fail() { failZeta = true; },
     restart() { local.dispose(); local = createLocalGateway(options); },
     async seedSaved(selection: SessionModelSelection) {
-      const storage = createAgentProjectSessionStorage({ projectRoot: home, pilotHome: home, sessionId: 'web:model-choice' });
+      const storage = createAgentProjectSessionStorage({ projectRoot: home, eastyunHome: home, sessionId: 'web:model-choice' });
       await storage.transcript.recordSessionMetadata('web:model-choice', 'model-selection', { modelSelection: selection });
     },
     async configureThinking(thinking: string) {
-      await writeFile(join(home, 'pilotdeck.yaml'), CONFIG.replace(
+      await writeFile(join(home, 'eastyundesk.yaml'), CONFIG.replace(
         'thinking: { state: enabled, efforts: [low, medium, high, xhigh, max] }',
         `thinking: ${thinking}`,
       ));
@@ -195,7 +195,7 @@ test('first-turn choice and parameters are durable at acceptance and survive gat
   assert.equal(f.requests[0]!.provider, B.provider);
   assert.equal(f.requests[0]!.speed, B.speed);
   assert.equal(f.requests[0]!.thinking?.mode, 'high');
-  const storage = createAgentProjectSessionStorage({ projectRoot: f.home, pilotHome: f.home, sessionId: 'web:model-choice' });
+  const storage = createAgentProjectSessionStorage({ projectRoot: f.home, eastyunHome: f.home, sessionId: 'web:model-choice' });
   const entries = (await readTranscript(storage.transcriptPath)).entries;
   const acceptedOnly = entries.filter((e) => e.type === 'accepted_input');
   assert.deepEqual(replayTranscriptEntries(acceptedOnly).metadata.modelSelection, B, 'crash before metadata snapshot retains the choice');
@@ -277,7 +277,7 @@ test('response model survives transcript replay and differs from the next submit
   assert.ok(aEvents.some((event) => event.type === 'assistant_text_delta' && event.model === A.model));
   await f.submit(B);
   f.restart();
-  const history = await readWebSessionMessages({ projectKey: f.home, sessionKey: 'web:model-choice' }, { projectRoot: f.home, pilotHome: f.home });
+  const history = await readWebSessionMessages({ projectKey: f.home, sessionKey: 'web:model-choice' }, { projectRoot: f.home, eastyunHome: f.home });
   assert.deepEqual(history.messages.filter((message) => message.role === 'assistant' && message.kind === 'text').map((message) => message.model), [A.model, B.model]);
 });
 
@@ -433,7 +433,7 @@ for (const large of [false, true]) {
       block.type === 'tool_result' && block.toolCallId === 'read-test-file')));
     assert.ok(!events.some(event => event.type === 'agent_status' && event.event === 'model_images_omitted'));
 
-    const storage = createAgentProjectSessionStorage({ projectRoot: f.home, pilotHome: f.home, sessionId: 'web:model-choice' });
+    const storage = createAgentProjectSessionStorage({ projectRoot: f.home, eastyunHome: f.home, sessionId: 'web:model-choice' });
     const history = replayTranscriptEntries((await readTranscript(storage.transcriptPath)).entries);
     const blocks = history.messages.flatMap(message => message.content);
     assert.equal(blocks.some(block => block.type === 'media_reference' && block.mediaType === 'image'), large);
@@ -490,7 +490,7 @@ test('read_file compresses for the selected model before dispatch while retainin
   assert.ok(JSON.stringify(f.wireBody(1)).includes('data:image/jpeg;base64,' + image.data));
   assert.ok(!events.some(event => event.type === 'agent_status' && event.event === 'model_images_omitted'));
 
-  const storage = createAgentProjectSessionStorage({ projectRoot: f.home, pilotHome: f.home, sessionId: 'web:model-choice' });
+  const storage = createAgentProjectSessionStorage({ projectRoot: f.home, eastyunHome: f.home, sessionId: 'web:model-choice' });
   const history = replayTranscriptEntries((await readTranscript(storage.transcriptPath)).entries);
   assert.ok(history.messages.some(message => message.content.some(block =>
     block.type === 'media_reference' && block.mediaType === 'image' && block.originalBytes === png.length)));
@@ -569,7 +569,7 @@ for (const mode of ['no-vision', 'explicit', 'router-disabled'] as const) {
     assert.match(JSON.stringify(f.requests[1]!.messages), /omitted, Model does not support image input/);
     assert.equal(events.filter(event => event.type === 'agent_status' && event.event === 'model_images_omitted').length, 1);
 
-    const storage = createAgentProjectSessionStorage({ projectRoot: f.home, pilotHome: f.home, sessionId: 'web:model-choice' });
+    const storage = createAgentProjectSessionStorage({ projectRoot: f.home, eastyunHome: f.home, sessionId: 'web:model-choice' });
     const history = replayTranscriptEntries((await readTranscript(storage.transcriptPath)).entries);
     assert.ok(history.messages.some(message => message.content.some(block =>
       block.type === 'tool_result' && block.content.some(part => part.type === 'image'))));

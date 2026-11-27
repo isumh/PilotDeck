@@ -6,7 +6,7 @@ import type { WebReadSessionMessagesResult } from '../../src/web/client/protocol
 
 const result = (sessionKey: string, ordinal: number): WebReadSessionMessagesResult => ({
   session: { sessionId: sessionKey, sessionKey, summary: 'Task', lastModified: 0 },
-  messages: ['user', 'assistant'].map((role, index) => ({ id: `${ordinal}-${role}`, sessionKey, provider: 'pilotdeck',
+  messages: ['user', 'assistant'].map((role, index) => ({ id: `${ordinal}-${role}`, sessionKey, provider: 'eastyundesk',
     source: 'history', kind: 'text', role: role as 'user' | 'assistant', text: `${role} ${ordinal}`, turnId: `turn-${ordinal}`,
     createdAt: `2026-01-0${ordinal}T00:00:0${index}Z` })),
 });

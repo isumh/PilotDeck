@@ -5,7 +5,7 @@ import type {
   ClaudeWorkStatus,
   CompactProgress,
   PendingPermissionRequest,
-  PilotDeckWorkStatus,
+  EastYunDeskWorkStatus,
   SessionRuntimeState,
 } from '../types/types';
 import type { Project, ProjectSession, SessionProvider } from '../../../types/app';
@@ -370,7 +370,7 @@ interface UseChatRealtimeHandlersArgs {
   setCanAbortSession: (canAbort: boolean) => void;
   setIsAborting: (aborting: boolean) => void;
   setClaudeStatus: (status: ClaudeWorkStatus | null) => void;
-  setPilotDeckStatus: (status: PilotDeckWorkStatus | null) => void;
+  setEastYunDeskStatus: (status: EastYunDeskWorkStatus | null) => void;
   setTokenBudget: (budget: Record<string, unknown> | null) => void;
   setPendingPermissionRequests: Dispatch<SetStateAction<PendingPermissionRequest[]>>;
   pendingViewSessionRef: MutableRefObject<PendingViewSession | null>;
@@ -400,7 +400,7 @@ export function useChatRealtimeHandlers({
   setCanAbortSession,
   setIsAborting,
   setClaudeStatus,
-  setPilotDeckStatus,
+  setEastYunDeskStatus,
   setTokenBudget,
   setPendingPermissionRequests,
   pendingViewSessionRef,
@@ -548,7 +548,7 @@ export function useChatRealtimeHandlers({
             setCanAbortSession(true);
             setIsAborting(false);
             setClaudeStatus(null);
-            setPilotDeckStatus(null);
+            setEastYunDeskStatus(null);
           }
           onSessionProcessing?.(replacedSessionId);
           return;
@@ -659,7 +659,7 @@ export function useChatRealtimeHandlers({
               compactProgress: compactProgress?.compaction_id ? null : compactProgress,
             };
             setClaudeStatus(statusInfo);
-            setPilotDeckStatus(statusInfo);
+            setEastYunDeskStatus(statusInfo);
             setSessionRuntimeState('running');
             setIsLoading(true);
             setCanAbortSession(statusInfo.can_interrupt);
@@ -696,7 +696,7 @@ export function useChatRealtimeHandlers({
             setIsLoading(false);
             setCanAbortSession(false);
             setClaudeStatus(null);
-            setPilotDeckStatus(null);
+            setEastYunDeskStatus(null);
           }
           return;
         }
@@ -940,7 +940,7 @@ export function useChatRealtimeHandlers({
         if (isForActiveView && selectedProject?.name && Array.isArray(msg.artifacts)) {
           for (const artifact of msg.artifacts) {
             if (!artifact || typeof artifact.path !== 'string' || !artifact.path.trim()) continue;
-            window.dispatchEvent(new CustomEvent('pilotdeck:file-updated', {
+            window.dispatchEvent(new CustomEvent('eastyundesk:file-updated', {
               detail: {
                 sessionId: sid,
                 projectName: selectedProject.name,
@@ -1000,7 +1000,7 @@ export function useChatRealtimeHandlers({
           setCanAbortSession(false);
           setIsAborting(false);
           setClaudeStatus(null);
-          setPilotDeckStatus(null);
+          setEastYunDeskStatus(null);
         }
         if (sid) {
           setPendingPermissionRequests((prev) =>
@@ -1008,7 +1008,7 @@ export function useChatRealtimeHandlers({
           );
           onSessionInactive?.(sid);
           onSessionNotProcessing?.(sid);
-          window.dispatchEvent(new CustomEvent('pilotdeck:agent-turn-complete', {
+          window.dispatchEvent(new CustomEvent('eastyundesk:agent-turn-complete', {
             detail: {
               sessionId: sid,
               projectName: selectedProject?.name,
@@ -1099,7 +1099,7 @@ export function useChatRealtimeHandlers({
           setCanAbortSession(false);
           setIsAborting(false);
           setClaudeStatus(null);
-          setPilotDeckStatus(null);
+          setEastYunDeskStatus(null);
         }
         if (sid) {
           activeTurnReplaySignatureRef.current.delete(sid);
@@ -1132,7 +1132,7 @@ export function useChatRealtimeHandlers({
         setCanAbortSession(true);
         const waitingText = /^(ask_?user_?question)$/i.test(msg.toolName || '') ? 'Waiting for answer' : 'Waiting for approval';
         setClaudeStatus({ text: waitingText, tokens: 0, can_interrupt: true });
-        setPilotDeckStatus({ text: waitingText, tokens: 0, can_interrupt: true });
+        setEastYunDeskStatus({ text: waitingText, tokens: 0, can_interrupt: true });
         break;
       }
 
@@ -1159,7 +1159,7 @@ export function useChatRealtimeHandlers({
           setTokenBudget(msg.tokenBudget as Record<string, unknown>);
         } else if (msg.text === 'clear_status') {
           setClaudeStatus(null);
-          setPilotDeckStatus(null);
+          setEastYunDeskStatus(null);
         } else if (msg.text) {
           setClaudeStatus({
             text: msg.text,
@@ -1167,7 +1167,7 @@ export function useChatRealtimeHandlers({
             can_interrupt: msg.canInterrupt !== undefined ? msg.canInterrupt : true,
             compactProgress: msg.compactProgress || msg.compact_progress || null,
           });
-          setPilotDeckStatus({
+          setEastYunDeskStatus({
             text: msg.text,
             tokens: msg.tokens || 0,
             can_interrupt: msg.canInterrupt !== undefined ? msg.canInterrupt : true,
@@ -1187,7 +1187,7 @@ export function useChatRealtimeHandlers({
             setTokenBudget(msg.tokenBudget as Record<string, unknown>);
           }
           setClaudeStatus(null);
-          setPilotDeckStatus(null);
+          setEastYunDeskStatus(null);
           setIsLoading(true);
           setCanAbortSession(true);
         }
@@ -1214,7 +1214,7 @@ export function useChatRealtimeHandlers({
     setCanAbortSession,
     setIsAborting,
     setClaudeStatus,
-    setPilotDeckStatus,
+    setEastYunDeskStatus,
     setTokenBudget,
     setPendingPermissionRequests,
     pendingViewSessionRef,

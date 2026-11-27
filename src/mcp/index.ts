@@ -36,10 +36,10 @@ export {
   truncateMcpToolDescription,
 } from "./runtime/truncate.js";
 export type {
-  PilotDeckMcpClientStatusEntry,
-  PilotDeckMcpServerInstructions,
-  PilotDeckMcpServerSpec,
-  PilotDeckMcpStatus,
-  PilotDeckMcpToolAnnotations,
-  PilotDeckMcpToolSpec,
+  EastYunDeskMcpClientStatusEntry,
+  EastYunDeskMcpServerInstructions,
+  EastYunDeskMcpServerSpec,
+  EastYunDeskMcpStatus,
+  EastYunDeskMcpToolAnnotations,
+  EastYunDeskMcpToolSpec,
 } from "./protocol/types.js";

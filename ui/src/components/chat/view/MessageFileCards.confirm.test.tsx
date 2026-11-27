@@ -15,7 +15,7 @@ afterEach(() => { cleanup(); vi.clearAllMocks(); vi.restoreAllMocks(); });
 it('checks and downloads task files in their worktree while references retain the conversation project', async () => {
   const i18n = await createTestI18n('en'), onBrowse = vi.fn(), reference = vi.fn();
   const project = { name: 'source', displayName: 'Source', fullPath: '/source', workspaceCwd: '/task-worktree', fileOperationsKey: 'cron-task:task-a' };
-  mocks.sha.mockResolvedValue({ ok: true, headers: new Headers({ 'X-PilotDeck-Content-SHA256': 'same-content' }) });
+  mocks.sha.mockResolvedValue({ ok: true, headers: new Headers({ 'X-EastYunDesk-Content-SHA256': 'same-content' }) });
   mocks.download.mockReturnValue('http://localhost/task-download');
   const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
   const { result } = renderHook(() => useWorkspaceFileActions({ name: 'report.md', path: '/task-worktree/report.md', sha256: 'same-content' }, project, onBrowse),
@@ -36,7 +36,7 @@ describe('changed file preview confirmation', () => {
   it.each(['en', 'zh-CN'])('waits for explicit confirmation in %s and does not open on cancel', async (language) => {
     const i18n = await createTestI18n(language);
     const onBrowse = vi.fn();
-    mocks.sha.mockResolvedValue({ ok: true, headers: new Headers({ 'X-PilotDeck-Content-SHA256': 'new-content' }) });
+    mocks.sha.mockResolvedValue({ ok: true, headers: new Headers({ 'X-EastYunDesk-Content-SHA256': 'new-content' }) });
     render(<I18nextProvider i18n={i18n}><ConfirmProvider>
       <MessageFileCard file={{ id: 'report', name: 'report.md', path: 'report.md', sha256: 'old-content' }} source="agent" project={{ name: 'demo', displayName: 'Demo', path: '/demo', fullPath: '/demo' }} onBrowse={onBrowse} />
     </ConfirmProvider></I18nextProvider>);

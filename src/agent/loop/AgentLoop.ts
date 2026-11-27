@@ -20,12 +20,12 @@ import {
   type CanonicalUsage,
 } from "../../model/index.js";
 import type {
-  PilotDeckReadFileStateMap,
-  PilotDeckSubagentForkApi,
-  PilotDeckToolErrorResult,
-  PilotDeckToolResult,
-  PilotDeckToolRuntimeContext,
-  PilotDeckWriteSnapshotMap,
+  EastYunDeskReadFileStateMap,
+  EastYunDeskSubagentForkApi,
+  EastYunDeskToolErrorResult,
+  EastYunDeskToolResult,
+  EastYunDeskToolRuntimeContext,
+  EastYunDeskWriteSnapshotMap,
 } from "../../tool/index.js";
 import {
   SUBAGENT_DEFINITIONS,
@@ -37,7 +37,7 @@ import type { AgentPermissionDenial, AgentTurnResult } from "../protocol/result.
 import type { AgentRuntimeConfig } from "../runtime/AgentRuntimeConfig.js";
 import type { AgentRuntimeDependencies } from "../runtime/AgentRuntimeDependencies.js";
 import type { LifecycleDispatchResult } from "../../lifecycle/index.js";
-import type { PilotDeckHookEvent } from "../../extension/hooks/protocol/events.js";
+import type { EastYunDeskHookEvent } from "../../extension/hooks/protocol/events.js";
 import { truncateHeadPreservingCheckpoint } from "../../context/compaction/CompactionEngine.js";
 import type { AgentContextRuntime } from "../../context/ContextRuntime.js";
 import type {
@@ -141,14 +141,14 @@ export type AgentLoopRunResult = {
 };
 
 export type AgentLoopSeedState = {
-  readFileState?: PilotDeckReadFileStateMap;
-  writeSnapshots?: PilotDeckWriteSnapshotMap;
+  readFileState?: EastYunDeskReadFileStateMap;
+  writeSnapshots?: EastYunDeskWriteSnapshotMap;
   allowedReadFiles?: string[];
 };
 
 export class AgentLoop {
-  private readonly readFileState: PilotDeckReadFileStateMap;
-  private readonly writeSnapshots: PilotDeckWriteSnapshotMap;
+  private readonly readFileState: EastYunDeskReadFileStateMap;
+  private readonly writeSnapshots: EastYunDeskWriteSnapshotMap;
   private readonly allowedReadFiles: Set<string>;
   private readonly tokenCalibrationByRoute = new Map<string, TokenCalibrationBaseline>();
   private readonly transientTokenCaps = new Map<string, {
@@ -461,7 +461,7 @@ export class AgentLoop {
         } catch {
           if (input.abortSignal?.aborted) continue;
           // Failed discovery leaves the last complete catalog available.
-          console.warn("[pilotdeck] Tool catalog refresh failed; retaining the previous tool contracts.");
+          console.warn("[eastyundesk] Tool catalog refresh failed; retaining the previous tool contracts.");
         }
       }
 
@@ -659,7 +659,7 @@ export class AgentLoop {
         try {
           await input.onModelContext(createModelContextSnapshot(calibrationRequest, input.turnId,
             this.dependencies.tokenAccounting?.estimateRequestBreakdown?.(calibrationRequest)));
-        } catch (error) { console.warn('[pilotdeck] Could not save context inspection snapshot:', error); }
+        } catch (error) { console.warn('[eastyundesk] Could not save context inspection snapshot:', error); }
       }
       let calibrationRequestFingerprint = requestFingerprint(calibrationRequest);
       const assembler = createModelMessageAssemblerState(randomUUID());
@@ -676,7 +676,7 @@ export class AgentLoop {
         if (input.onModelContext) {
           try { await input.onModelContext(createModelContextSnapshot(actual, input.turnId,
             this.dependencies.tokenAccounting?.estimateRequestBreakdown?.(actual))); }
-          catch (error) { console.warn('[pilotdeck] Could not save context inspection snapshot:', error); }
+          catch (error) { console.warn('[eastyundesk] Could not save context inspection snapshot:', error); }
         }
       } : undefined;
       let omittedImages = 0;
@@ -1746,7 +1746,7 @@ export class AgentLoop {
         return { result, messages };
       }
 
-      let results: PilotDeckToolResult[];
+      let results: EastYunDeskToolResult[];
       try {
         const toolContext = this.createToolContext(input, messages);
         if (assembled.finishReason === "length" || assembled.hasRepairedToolCalls) {
@@ -2334,7 +2334,7 @@ export class AgentLoop {
   private createToolContext(
     input: AgentLoopInput,
     messages: CanonicalMessage[],
-  ): PilotDeckToolRuntimeContext {
+  ): EastYunDeskToolRuntimeContext {
     const planDirectoryPath = this.dependencies.planFileManager?.getPlanDirectoryPath();
     const planTodo = this.dependencies.planTodoManager?.forSession(input.sessionId);
     const canPrompt = input.canPrompt ?? this.config.permissionContext.canPrompt;
@@ -2411,7 +2411,7 @@ export class AgentLoop {
   private buildSubagentForkApi(
     input: AgentLoopInput,
     messages: CanonicalMessage[],
-  ): PilotDeckSubagentForkApi {
+  ): EastYunDeskSubagentForkApi {
     const depth = this.config.subagentDepth ?? 0;
     const maxDepth = this.config.maxSubagentDepth ?? 1;
     return {
@@ -2574,7 +2574,7 @@ export class AgentLoop {
 
   private async dispatchLifecycle(
     input: AgentLoopInput,
-    event: PilotDeckHookEvent,
+    event: EastYunDeskHookEvent,
     payload: Record<string, unknown>,
   ): Promise<LifecycleDispatchResult> {
     return this.dependencies.lifecycle?.dispatch({
@@ -2629,9 +2629,9 @@ export class AgentLoop {
 
   private async *executeToolsWithEventPump(
     toolCalls: CanonicalToolCall[],
-    context: PilotDeckToolRuntimeContext,
+    context: EastYunDeskToolRuntimeContext,
     input: AgentLoopInput,
-  ): AsyncGenerator<AgentEvent, PilotDeckToolResult[], unknown> {
+  ): AsyncGenerator<AgentEvent, EastYunDeskToolResult[], unknown> {
     const activeSubagents = new Map<string, ActiveSubagentStatus>();
     let settled = false;
 
@@ -2805,11 +2805,11 @@ export function buildTurnEnvironment(
 ): NodeJS.ProcessEnv {
   return {
     ...(baseEnv ?? process.env),
-    PILOTDECK_SESSION_ID: sessionId,
-    PILOTDECK_TURN_ID: turnId,
-    PILOTDECK_WORK_DIR: path.join(
+    EASTYUNDESK_SESSION_ID: sessionId,
+    EASTYUNDESK_TURN_ID: turnId,
+    EASTYUNDESK_WORK_DIR: path.join(
       path.resolve(cwd),
-      ".pilotdeck",
+      ".eastyundesk",
       "work",
       safeWorkPathSegment(sessionId),
       safeWorkPathSegment(turnId),
@@ -2833,7 +2833,7 @@ function findLifecycleBlock(result: LifecycleDispatchResult): { reason: string; 
   );
 }
 
-function findToolLifecycleBlock(results: PilotDeckToolResult[]): { reason: string; stopReason?: string } | undefined {
+function findToolLifecycleBlock(results: EastYunDeskToolResult[]): { reason: string; stopReason?: string } | undefined {
   for (const result of results) {
     const lifecycle = result.metadata?.lifecycle;
     if (isRecord(lifecycle) && isRecord(lifecycle.blocked) && typeof lifecycle.blocked.reason === "string") {
@@ -2939,9 +2939,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function cloneReadFileStateMap(
-  state: PilotDeckReadFileStateMap | undefined,
-): PilotDeckReadFileStateMap {
-  const out: PilotDeckReadFileStateMap = new Map();
+  state: EastYunDeskReadFileStateMap | undefined,
+): EastYunDeskReadFileStateMap {
+  const out: EastYunDeskReadFileStateMap = new Map();
   if (!state) return out;
   for (const [key, value] of state.entries()) {
     out.set(key, { ...value });
@@ -2950,9 +2950,9 @@ function cloneReadFileStateMap(
 }
 
 function cloneWriteSnapshotMap(
-  state: PilotDeckWriteSnapshotMap | undefined,
-): PilotDeckWriteSnapshotMap {
-  const out: PilotDeckWriteSnapshotMap = new Map();
+  state: EastYunDeskWriteSnapshotMap | undefined,
+): EastYunDeskWriteSnapshotMap {
+  const out: EastYunDeskWriteSnapshotMap = new Map();
   if (!state) return out;
   for (const [key, value] of state.entries()) {
     out.set(key, { ...value });
@@ -2973,10 +2973,10 @@ function truncateHeadKeepRatio(messages: CanonicalMessage[], keepRatio: number):
   return truncateHeadPreservingCheckpoint(messages, keepRatio);
 }
 
-function buildInvalidFingerprint(results: PilotDeckToolResult[]): string {
+function buildInvalidFingerprint(results: EastYunDeskToolResult[]): string {
   return results
     .filter(
-      (result): result is PilotDeckToolErrorResult =>
+      (result): result is EastYunDeskToolErrorResult =>
         result.type === "error" && result.error.code === "invalid_tool_input",
     )
     .map((result) => `${result.toolName}::${result.error.message}`)
@@ -3049,7 +3049,7 @@ function removeTransientPromptsById(
 }
 
 function detectRepeatedToolFailure(
-  results: PilotDeckToolResult[],
+  results: EastYunDeskToolResult[],
   lastFingerprint: string | undefined,
 ): {
   currentFingerprint?: string;
@@ -3072,9 +3072,9 @@ function detectRepeatedToolFailure(
   };
 }
 
-function buildToolFailureKeys(results: PilotDeckToolResult[]): string[] {
+function buildToolFailureKeys(results: EastYunDeskToolResult[]): string[] {
   return results
-    .filter((result): result is PilotDeckToolErrorResult => result.type === "error")
+    .filter((result): result is EastYunDeskToolErrorResult => result.type === "error")
     .map((result) => {
       const recovery = readRecoveryMetadata(result);
       return toolFailureKey(result, recovery);
@@ -3083,9 +3083,9 @@ function buildToolFailureKeys(results: PilotDeckToolResult[]): string[] {
 }
 
 function annotateRepeatedToolFailures(
-  results: PilotDeckToolResult[],
+  results: EastYunDeskToolResult[],
   repeatedKeys: Set<string>,
-): PilotDeckToolResult[] {
+): EastYunDeskToolResult[] {
   if (repeatedKeys.size === 0) {
     return results;
   }
@@ -3125,7 +3125,7 @@ function annotateRepeatedToolFailures(
 }
 
 function toolFailureKey(
-  result: PilotDeckToolErrorResult,
+  result: EastYunDeskToolErrorResult,
   recovery: Record<string, unknown> | undefined,
 ): string {
   return `${result.toolName}::${result.error.code}::${recovery?.failureClass ?? "unknown"}`;
@@ -3145,9 +3145,9 @@ function findRepeatedValues(values: string[]): Set<string> {
 }
 
 function appendTextToFirstContent(
-  content: PilotDeckToolErrorResult["content"],
+  content: EastYunDeskToolErrorResult["content"],
   suffix: string,
-): PilotDeckToolErrorResult["content"] {
+): EastYunDeskToolErrorResult["content"] {
   const [first, ...rest] = content;
   if (!first) {
     return [{ type: "text", text: suffix.trimStart() }];
@@ -3158,12 +3158,12 @@ function appendTextToFirstContent(
   return [{ ...first, text: `${first.text}${suffix}` }, ...rest];
 }
 
-function readRecoveryMetadata(result: PilotDeckToolErrorResult): Record<string, unknown> | undefined {
+function readRecoveryMetadata(result: EastYunDeskToolErrorResult): Record<string, unknown> | undefined {
   const recovery = result.metadata?.recovery;
   return isRecord(recovery) ? recovery : undefined;
 }
 
-function collectPermissionDenials(results: PilotDeckToolResult[]): AgentPermissionDenial[] {
+function collectPermissionDenials(results: EastYunDeskToolResult[]): AgentPermissionDenial[] {
   return results.flatMap((result) => {
     if (
       result.type === "error" &&
@@ -3212,7 +3212,7 @@ function readRequestedMode(value: unknown): AgentRuntimeConfig["permissionMode"]
 }
 
 function bindSupplementalMessagesToToolCalls(
-  results: PilotDeckToolResult[],
+  results: EastYunDeskToolResult[],
   supplementalMessages: CanonicalMessage[],
 ): ContextSupplementalToolResultMessage[] {
   const bound: ContextSupplementalToolResultMessage[] = [];
@@ -3323,11 +3323,11 @@ export function modelFailureAction(error: CanonicalModelError | undefined): {
   const modelLabel = error.model ? ` model "${error.model}"` : " selected model";
 
   if (error.status === 401 || error.status === 403 || error.code === "auth_error") {
-    const hint = `Update the API key or access permissions for${providerLabel} in Settings → Model Provider, or run pilotdeck setup.`;
+    const hint = `Update the API key or access permissions for${providerLabel} in Settings → Model Provider, or run eastyundesk setup.`;
     return modelFailureActionResult(hint, "settings", "auth", { provider: error.provider ?? "the provider" });
   }
   if (error.code === "model_not_found") {
-    const hint = `Choose a valid${modelLabel} for${providerLabel} in Settings → Model Provider, or add it under model.providers.<id>.models in pilotdeck.yaml.`;
+    const hint = `Choose a valid${modelLabel} for${providerLabel} in Settings → Model Provider, or add it under model.providers.<id>.models in eastyundesk.yaml.`;
     return modelFailureActionResult(hint, "settings", "modelNotFound", { provider: error.provider ?? "the provider", model: error.model });
   }
   if (error.code === "timeout") {

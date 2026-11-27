@@ -1,14 +1,14 @@
 import express from 'express';
 import path from 'node:path';
-import { resolvePilotHome } from '../utils/pilotPaths.js';
+import { resolveEastYunHome } from '../utils/eastyunPaths.js';
 import { ImageStore } from '../../../src/tool/builtin/images/ImageStore.js';
-import { imageApiBaseUrl } from '../../../src/pilot/config/imageGenerationConfig.js';
+import { imageApiBaseUrl } from '../../../src/eastyun/config/imageGenerationConfig.js';
 import { resolveApiKey } from '../../../src/model/config/resolveCredentials.js';
 import { requestOpenAIImage } from '../../../src/tool/builtin/images/openaiImages.js';
-import { readPilotDeckConfigFile } from '../services/pilotdeckConfig.js';
+import { readEastYunDeskConfigFile } from '../services/eastyundeskConfig.js';
 
-export function createImageGenerationRouter({ store = new ImageStore(path.join(resolvePilotHome(process.env), 'generated-images')),
-  readConfig = () => readPilotDeckConfigFile().config, fetchImpl } = {}) {
+export function createImageGenerationRouter({ store = new ImageStore(path.join(resolveEastYunHome(process.env), 'generated-images')),
+  readConfig = () => readEastYunDeskConfigFile().config, fetchImpl } = {}) {
   const router = express.Router();
   router.post('/test', async (req, res) => {
     let apiKey = '';

@@ -1,4 +1,4 @@
-import { resolvePilotHome } from '../utils/pilotPaths.js';
+import { resolveEastYunHome } from '../utils/eastyunPaths.js';
 import { SearchWorkerClient } from './search/searchWorkerClient.js';
 import { ByteLru, SEARCH_KINDS, emptyResults, normalize, pageResults, validateInput } from './search/searchCommon.js';
 export { listSearchProjects } from './search/searchRegistry.js';
@@ -7,8 +7,8 @@ const aliases = value => Object.entries(value || {}).filter(([, title]) => typeo
   .map(([id, title]) => [id, title.slice(0, 500)]).sort(([a], [b]) => a.localeCompare(b));
 
 /** Shared jobs survive tab changes; source generations invalidate completed snapshots. */
-export function createGlobalSearch({ listProjects, refreshOnQuery = Boolean(listProjects), pilotHome = resolvePilotHome(), ...options } = {}) {
-  const worker = new SearchWorkerClient({ pilotHome, watch: !listProjects, ...options });
+export function createGlobalSearch({ listProjects, refreshOnQuery = Boolean(listProjects), eastyunHome = resolveEastYunHome(), ...options } = {}) {
+  const worker = new SearchWorkerClient({ eastyunHome, watch: !listProjects, ...options });
   const cache = new ByteLru(64 * 1024 * 1024, 128);
   const active = new Map();
   let closed = false;

@@ -269,6 +269,24 @@ const userDb = {
     } catch (err) {
       throw err;
     }
+  },
+
+  // First-run decisions are per user, so the startup backfill and the wizard
+  // route both need the raw flag list.
+  listUsers: () => {
+    try {
+      return db.prepare('SELECT id, username, has_completed_onboarding FROM users').all();
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  resetOnboarding: (userId) => {
+    try {
+      db.prepare('UPDATE users SET has_completed_onboarding = 0 WHERE id = ?').run(userId);
+    } catch (err) {
+      throw err;
+    }
   }
 };
 

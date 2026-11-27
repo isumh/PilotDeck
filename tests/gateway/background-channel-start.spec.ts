@@ -4,21 +4,21 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { startPilotDeckServer } from "../../src/cli/pilotdeckServer.js";
+import { startEastYunDeskServer } from "../../src/cli/eastyundeskServer.js";
 import type { ChannelAdapter } from "../../src/adapters/index.js";
 import type { Gateway } from "../../src/gateway/index.js";
 
-test("startPilotDeckServer listens before a background channel finishes starting", async (t) => {
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-channel-start-"));
-  const previousPilotHome = process.env.PILOT_HOME;
-  process.env.PILOT_HOME = pilotHome;
+test("startEastYunDeskServer listens before a background channel finishes starting", async (t) => {
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-channel-start-"));
+  const previousEastYunHome = process.env.EASTYUN_HOME;
+  process.env.EASTYUN_HOME = eastyunHome;
   t.after(async () => {
-    if (previousPilotHome === undefined) {
-      delete process.env.PILOT_HOME;
+    if (previousEastYunHome === undefined) {
+      delete process.env.EASTYUN_HOME;
     } else {
-      process.env.PILOT_HOME = previousPilotHome;
+      process.env.EASTYUN_HOME = previousEastYunHome;
     }
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   });
 
   const stuckChannel: ChannelAdapter = {
@@ -26,7 +26,7 @@ test("startPilotDeckServer listens before a background channel finishes starting
     start: async () => new Promise(() => undefined),
   };
 
-  const server = await startPilotDeckServer({
+  const server = await startEastYunDeskServer({
     gateway: {} as Gateway,
     port: 0,
     channels: [stuckChannel],
@@ -41,16 +41,16 @@ test("startPilotDeckServer listens before a background channel finishes starting
 });
 
 test("overlapping hot starts and a stop of one channel never run two instances at once", async (t) => {
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-channel-hot-start-"));
-  const previousPilotHome = process.env.PILOT_HOME;
-  process.env.PILOT_HOME = pilotHome;
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-channel-hot-start-"));
+  const previousEastYunHome = process.env.EASTYUN_HOME;
+  process.env.EASTYUN_HOME = eastyunHome;
   t.after(async () => {
-    if (previousPilotHome === undefined) {
-      delete process.env.PILOT_HOME;
+    if (previousEastYunHome === undefined) {
+      delete process.env.EASTYUN_HOME;
     } else {
-      process.env.PILOT_HOME = previousPilotHome;
+      process.env.EASTYUN_HOME = previousEastYunHome;
     }
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   });
 
   let running = 0;
@@ -74,7 +74,7 @@ test("overlapping hot starts and a stop of one channel never run two instances a
     },
   });
 
-  const server = await startPilotDeckServer({ gateway: {} as Gateway, port: 0 });
+  const server = await startEastYunDeskServer({ gateway: {} as Gateway, port: 0 });
   t.after(async () => {
     await server.close();
   });

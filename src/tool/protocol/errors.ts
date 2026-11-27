@@ -1,4 +1,4 @@
-export type PilotDeckToolErrorCode =
+export type EastYunDeskToolErrorCode =
   | "tool_not_found"
   | "tool_unavailable"
   | "invalid_tool_input"
@@ -17,35 +17,35 @@ export type PilotDeckToolErrorCode =
   | "plan_mode_violation"
   | "ask_mode_violation";
 
-export type PilotDeckToolError = {
-  code: PilotDeckToolErrorCode;
+export type EastYunDeskToolError = {
+  code: EastYunDeskToolErrorCode;
   message: string;
   cause?: unknown;
   details?: Record<string, unknown>;
 };
 
-export class PilotDeckToolRuntimeError extends Error {
-  readonly code: PilotDeckToolErrorCode;
+export class EastYunDeskToolRuntimeError extends Error {
+  readonly code: EastYunDeskToolErrorCode;
   readonly details?: Record<string, unknown>;
 
-  constructor(code: PilotDeckToolErrorCode, message: string, details?: Record<string, unknown>) {
+  constructor(code: EastYunDeskToolErrorCode, message: string, details?: Record<string, unknown>) {
     super(message);
-    this.name = "PilotDeckToolRuntimeError";
+    this.name = "EastYunDeskToolRuntimeError";
     this.code = code;
     this.details = details;
   }
 }
 
 export function toolError(
-  code: PilotDeckToolErrorCode,
+  code: EastYunDeskToolErrorCode,
   message: string,
   details?: Record<string, unknown>,
-): PilotDeckToolError {
+): EastYunDeskToolError {
   return { code, message, details };
 }
 
-export function normalizeToolError(error: unknown): PilotDeckToolError {
-  if (error instanceof PilotDeckToolRuntimeError) {
+export function normalizeToolError(error: unknown): EastYunDeskToolError {
+  if (error instanceof EastYunDeskToolRuntimeError) {
     return toolError(error.code, error.message, error.details);
   }
 

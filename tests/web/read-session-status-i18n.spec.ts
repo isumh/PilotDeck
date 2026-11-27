@@ -8,20 +8,20 @@ import { createAgentProjectSessionStorage } from "../../src/session/storage/Proj
 import { readWebSessionMessages } from "../../src/web/server/readSessionMessages.js";
 
 test("scheduled results replay as visible assistant messages with a stable delivery identity", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-cron-result-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-cron-result-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-cron-result-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-cron-result-home-"));
   try {
     const sessionKey = "web:cron-source";
-    const storage = createAgentProjectSessionStorage({ projectRoot, pilotHome, sessionId: sessionKey });
+    const storage = createAgentProjectSessionStorage({ projectRoot, eastyunHome, sessionId: sessionKey });
     await storage.transcript.recordAcceptedInput(sessionKey, "source-turn", [{ role: "user", content: [{ type: "text", text: "Schedule a report" }] }]);
     await storage.transcript.recordDurableMessage(sessionKey, "source-turn", { role: "assistant", content: [{ type: "text", text: "Report scheduled" }] });
-    const deliveryStorage = createAgentProjectSessionStorage({ projectRoot, pilotHome, sessionId: sessionKey });
+    const deliveryStorage = createAgentProjectSessionStorage({ projectRoot, eastyunHome, sessionId: sessionKey });
     for (const kind of ["status", "status", "error"] as const) {
       await deliveryStorage.transcript.recordAgentStatusMessage(sessionKey, `cron-result:${kind}`, {
         event: "cron_result", kind, text: `Scheduled report: ${kind}`, detail: { runId: kind, taskId: "task-1" },
       });
     }
-    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, pilotHome });
+    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, eastyunHome });
     const results = replay.messages.filter(message => message.id.startsWith("cron-result:"));
     assert.equal(results.length, 2);
     assert.deepEqual(replay.messages.filter(message => message.kind === "text").slice(-2).map(message => message.id), ["cron-result:status", "cron-result:error"]);
@@ -33,18 +33,18 @@ test("scheduled results replay as visible assistant messages with a stable deliv
     }
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("history replay preserves agent status i18n metadata and user hint", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-status-i18n-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-status-i18n-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-status-i18n-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-status-i18n-home-"));
   try {
     const sessionKey = "web:s_status_i18n";
     const storage = createAgentProjectSessionStorage({
       projectRoot,
-      pilotHome,
+      eastyunHome,
       sessionId: sessionKey,
       now: () => new Date("2026-07-09T00:00:00.000Z"),
     });
@@ -65,7 +65,7 @@ test("history replay preserves agent status i18n metadata and user hint", async 
       },
     });
 
-    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, pilotHome });
+    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, eastyunHome });
     const message = replay.messages.find((item) => item.kind === "error");
 
     assert.ok(message, "expected replayed error status message");
@@ -78,18 +78,18 @@ test("history replay preserves agent status i18n metadata and user hint", async 
     assert.equal((message.payload as { detail?: { userHint?: string } }).detail?.userHint, "Check Settings.");
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("history token usage restores latest non-empty turn past latest empty turn result", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-token-usage-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-token-usage-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-token-usage-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-token-usage-home-"));
   try {
     const sessionKey = "web:s_token_usage_restore";
     const storage = createAgentProjectSessionStorage({
       projectRoot,
-      pilotHome,
+      eastyunHome,
       sessionId: sessionKey,
       now: () => new Date("2026-07-09T00:00:00.000Z"),
     });
@@ -129,7 +129,7 @@ test("history token usage restores latest non-empty turn past latest empty turn 
 
     const replay = await readWebSessionMessages(
       { sessionKey },
-      { projectRoot, pilotHome, maxContextTokens: 1000 },
+      { projectRoot, eastyunHome, maxContextTokens: 1000 },
     );
 
     assert.equal(replay.tokenUsage?.used, 35);
@@ -141,18 +141,18 @@ test("history token usage restores latest non-empty turn past latest empty turn 
     });
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("history token usage prefers persisted context budget snapshot", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-token-budget-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-token-budget-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-token-budget-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-token-budget-home-"));
   try {
     const sessionKey = "web:s_token_budget_restore";
     const storage = createAgentProjectSessionStorage({
       projectRoot,
-      pilotHome,
+      eastyunHome,
       sessionId: sessionKey,
       now: () => new Date("2026-07-09T00:00:00.000Z"),
     });
@@ -186,7 +186,7 @@ test("history token usage prefers persisted context budget snapshot", async () =
 
     const replay = await readWebSessionMessages(
       { sessionKey },
-      { projectRoot, pilotHome, maxContextTokens: 1000 },
+      { projectRoot, eastyunHome, maxContextTokens: 1000 },
     );
 
     assert.equal(replay.tokenUsage?.used, 60);
@@ -198,18 +198,18 @@ test("history token usage prefers persisted context budget snapshot", async () =
     assert.deepEqual(replay.lastTurnUsage?.usage, { inputTokens: 100, outputTokens: 5, totalTokens: 105 });
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("history token usage reflects the latest compact boundary after context budget", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-compact-token-budget-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-compact-token-budget-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-compact-token-budget-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-compact-token-budget-home-"));
   try {
     const sessionKey = "web:s_compact_token_budget";
     const storage = createAgentProjectSessionStorage({
       projectRoot,
-      pilotHome,
+      eastyunHome,
       sessionId: sessionKey,
       now: () => new Date("2026-08-02T00:00:00.000Z"),
     });
@@ -242,7 +242,7 @@ test("history token usage reflects the latest compact boundary after context bud
 
     const replay = await readWebSessionMessages(
       { sessionKey },
-      { projectRoot, pilotHome, maxContextTokens: 100000, maxOutputTokens: 10000 },
+      { projectRoot, eastyunHome, maxContextTokens: 100000, maxOutputTokens: 10000 },
     );
 
     assert.equal(replay.tokenUsage?.used, 12000);
@@ -256,6 +256,6 @@ test("history token usage reflects the latest compact boundary after context bud
     assert.equal(replay.tokenUsage?.preCompactUsed, 76000);
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });

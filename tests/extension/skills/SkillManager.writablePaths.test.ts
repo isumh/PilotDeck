@@ -6,13 +6,13 @@ import test from "node:test";
 import { SkillManager, SkillManagerError } from "../../../src/extension/skills/SkillManager.js";
 
 test("SkillManager rejects project scope for desktop runtime roots", async () => {
-  const root = mkdtempSync(join(tmpdir(), "pilotdeck-skills-runtime-"));
+  const root = mkdtempSync(join(tmpdir(), "eastyundesk-skills-runtime-"));
   try {
-    const pilotHome = join(root, "pilot-home");
-    const runtimeRoot = join(root, "Program Files", "PilotDeck", "resources", "runtime");
+    const eastyunHome = join(root, "eastyun-home");
+    const runtimeRoot = join(root, "Program Files", "EastYunDesk", "resources", "runtime");
     const manager = new SkillManager({
-      pilotHome,
-      env: { PILOTDECK_DESKTOP: "1" },
+      eastyunHome,
+      env: { EASTYUNDESK_DESKTOP: "1" },
     });
 
     await assert.rejects(
@@ -33,13 +33,13 @@ test("SkillManager rejects project scope for desktop runtime roots", async () =>
 });
 
 test("SkillManager keeps project scope under real project roots", async () => {
-  const root = mkdtempSync(join(tmpdir(), "pilotdeck-skills-project-"));
+  const root = mkdtempSync(join(tmpdir(), "eastyundesk-skills-project-"));
   try {
-    const pilotHome = join(root, "pilot-home");
+    const eastyunHome = join(root, "eastyun-home");
     const projectRoot = join(root, "repo");
     const manager = new SkillManager({
-      pilotHome,
-      env: { PILOTDECK_DESKTOP: "1" },
+      eastyunHome,
+      env: { EASTYUNDESK_DESKTOP: "1" },
     });
 
     const result = await manager.create({
@@ -49,7 +49,7 @@ test("SkillManager keeps project scope under real project roots", async () => {
       content: "---\nname: real-skill\n---\n",
     });
 
-    assert.equal(result.skillPath, join(projectRoot, ".pilotdeck", "skills", "real-skill"));
+    assert.equal(result.skillPath, join(projectRoot, ".eastyundesk", "skills", "real-skill"));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

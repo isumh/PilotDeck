@@ -23,8 +23,8 @@ function isProjectChatDirectory(projectsRoot: string, chatDir: string): boolean 
   return !isAbsolute(local) && parts.length === 2 && parts[0] !== '..' && parts[1] === 'chats';
 }
 
-export function listSessionFiles(pilotHome: string, chatDir: string): Promise<SessionFile[]> {
-  const projectsRoot = resolve(pilotHome, 'projects');
+export function listSessionFiles(eastyunHome: string, chatDir: string): Promise<SessionFile[]> {
+  const projectsRoot = resolve(eastyunHome, 'projects');
   const directory = resolve(chatDir);
   if (!isProjectChatDirectory(projectsRoot, directory)) return Promise.resolve([]);
   const projectId = basename(dirname(directory));
@@ -47,7 +47,7 @@ async function scanSessionFiles(projectsRoot: string, projectId: string): Promis
   const directory = join(canonicalRoot, projectId, 'chats');
   if (!directory.startsWith(canonicalRoot + sep)) return [];
   const canonicalDirectory = await realpath(directory).catch(() => null);
-  // A legacy name is allowed; a project/chats symlink escaping PilotHome is not.
+  // A legacy name is allowed; a project/chats symlink escaping EastYunHome is not.
   if (!canonicalDirectory || !isProjectChatDirectory(canonicalRoot, canonicalDirectory)) return [];
   const entries = await readdir(canonicalDirectory, { withFileTypes: true }).catch(() => []);
   // Ignore subagent subdirectories, empty/unreadable files and symbolic links.

@@ -1,22 +1,16 @@
 import { useCallback, useRef, useState } from 'react';
-import {
-  cloneWorkspaceWithProgress,
-  createWorkspaceRequest,
-} from '../../../project-creation-wizard/data/workspaceApi';
-import {
-  isCloneWorkflow,
-  shouldShowGithubAuthentication,
-} from '../../../project-creation-wizard/utils/pathUtils';
+import { createWorkspaceRequest } from '../../../project-creation-wizard/data/workspaceApi';
 import type { WorkspaceType } from '../../../project-creation-wizard/types';
 import type { WorkspaceDraft } from '../types';
 
+/**
+ * EastYunDesk onboarding only creates a brand-new local workspace: the
+ * clone-from-GitHub flow and its credential prompts were removed from the
+ * first-run wizard.
+ */
 const initialDraft: WorkspaceDraft = {
   workspaceType: 'new',
   workspacePath: '',
-  githubUrl: '',
-  tokenMode: 'none',
-  selectedGithubToken: '',
-  newGithubToken: '',
 };
 
 export default function useOnboardingWorkspace() {
@@ -40,35 +34,14 @@ export default function useOnboardingWorkspace() {
     setError('');
   }, []);
 
-  const setGithubUrl = useCallback((githubUrl: string) => {
-    setDraft((current) => ({ ...current, githubUrl }));
-    setError('');
-  }, []);
-
-  const setTokenMode = useCallback((tokenMode: WorkspaceDraft['tokenMode']) => {
-    setDraft((current) => ({ ...current, tokenMode }));
-    setError('');
-  }, []);
-
-  const setSelectedGithubToken = useCallback((selectedGithubToken: string) => {
-    setDraft((current) => ({ ...current, selectedGithubToken }));
-    setError('');
-  }, []);
-
-  const setNewGithubToken = useCallback((newGithubToken: string) => {
-    setDraft((current) => ({ ...current, newGithubToken }));
-    setError('');
-  }, []);
-
   const canFinish = draft.workspacePath.trim().length > 0;
 
   const createWorkspace = useCallback(async () => {
     const workspacePath = draft.workspacePath.trim();
-    const githubUrl = draft.githubUrl.trim();
     if (!workspacePath) {
       throw new Error('Workspace path is required.');
     }
-    const fingerprint = JSON.stringify({ workspacePath, githubUrl });
+    const fingerprint = JSON.stringify({ workspacePath });
     if (createdDraftsRef.current.has(fingerprint)) return createdDraftsRef.current.get(fingerprint);
     if (inFlightRef.current?.fingerprint === fingerprint) {
       return inFlightRef.current.promise;
@@ -77,23 +50,11 @@ export default function useOnboardingWorkspace() {
     setIsCreating(true);
     setError('');
     setProgress('');
-    const useGithubAuthentication = shouldShowGithubAuthentication('new', githubUrl);
 
-    const operation = isCloneWorkflow('new', githubUrl)
-      ? cloneWorkspaceWithProgress(
-          {
-            workspacePath,
-            githubUrl,
-            tokenMode: useGithubAuthentication ? draft.tokenMode : 'none',
-            selectedGithubToken: useGithubAuthentication ? draft.selectedGithubToken : '',
-            newGithubToken: useGithubAuthentication ? draft.newGithubToken : '',
-          },
-          { onProgress: setProgress },
-        )
-      : createWorkspaceRequest({
-          workspaceType: 'new',
-          path: workspacePath,
-        });
+    const operation = createWorkspaceRequest({
+      workspaceType: 'new',
+      path: workspacePath,
+    });
     inFlightRef.current = { fingerprint, promise: operation };
 
     try {
@@ -108,7 +69,7 @@ export default function useOnboardingWorkspace() {
       if (inFlightRef.current?.promise === operation) inFlightRef.current = null;
       setIsCreating(false);
     }
-  }, [draft.githubUrl, draft.newGithubToken, draft.selectedGithubToken, draft.tokenMode, draft.workspacePath]);
+  }, [draft.workspacePath]);
 
   return {
     draft,
@@ -118,10 +79,6 @@ export default function useOnboardingWorkspace() {
     canFinish,
     setWorkspaceType,
     setWorkspacePath,
-    setGithubUrl,
-    setTokenMode,
-    setSelectedGithubToken,
-    setNewGithubToken,
     createWorkspace,
   };
 }

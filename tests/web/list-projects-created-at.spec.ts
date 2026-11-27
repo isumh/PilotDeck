@@ -4,36 +4,36 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createCollisionResistantProjectId, createProjectId } from "../../src/pilot/paths.js";
+import { createCollisionResistantProjectId, createProjectId } from "../../src/eastyun/paths.js";
 import { describeWebProject, listWebProjects } from "../../src/web/server/listProjects.js";
 
 test("project summaries expose registration creation time for list and describe", async () => {
-  const root = await mkdtemp(join(tmpdir(), "pilotdeck-created-at-"));
-  const pilotHome = join(root, ".pilotdeck");
+  const root = await mkdtemp(join(tmpdir(), "eastyundesk-created-at-"));
+  const eastyunHome = join(root, ".eastyundesk");
   const projectRoot = join(root, "workspace");
   const projectId = createProjectId(projectRoot);
-  const storageDir = join(pilotHome, "projects", projectId);
+  const storageDir = join(eastyunHome, "projects", projectId);
   await mkdir(projectRoot, { recursive: true });
   await mkdir(storageDir, { recursive: true });
   await writeFile(join(storageDir, ".cwd"), `${projectRoot}\n`, "utf8");
   const expectedCreatedAt = (await stat(storageDir)).birthtimeMs;
 
-  const listed = await listWebProjects({ pilotHome });
-  const described = await describeWebProject(projectRoot, { pilotHome });
+  const listed = await listWebProjects({ eastyunHome });
+  const described = await describeWebProject(projectRoot, { eastyunHome });
 
   assert.equal(listed.projects[0]?.createdAt, expectedCreatedAt);
   assert.equal(described.createdAt, expectedCreatedAt);
 });
 
 test("describe resolves the marked project when legacy ids collide", async () => {
-  const root = await mkdtemp(join(tmpdir(), "pilotdeck-created-at-collision-"));
-  const pilotHome = join(root, ".pilotdeck");
+  const root = await mkdtemp(join(tmpdir(), "eastyundesk-created-at-collision-"));
+  const eastyunHome = join(root, ".eastyundesk");
   const firstProjectRoot = join(root, "a-b");
   const secondProjectRoot = join(root, "a b");
   const legacyId = createProjectId(firstProjectRoot);
   const collisionResistantId = createCollisionResistantProjectId(secondProjectRoot);
-  const firstStorageDir = join(pilotHome, "projects", legacyId);
-  const secondStorageDir = join(pilotHome, "projects", collisionResistantId);
+  const firstStorageDir = join(eastyunHome, "projects", legacyId);
+  const secondStorageDir = join(eastyunHome, "projects", collisionResistantId);
 
   await mkdir(firstProjectRoot, { recursive: true });
   await mkdir(secondProjectRoot, { recursive: true });
@@ -43,7 +43,7 @@ test("describe resolves the marked project when legacy ids collide", async () =>
   await writeFile(join(secondStorageDir, ".cwd"), `${secondProjectRoot}\n`, "utf8");
 
   const expectedCreatedAt = (await stat(secondStorageDir)).birthtimeMs;
-  const described = await describeWebProject(secondProjectRoot, { pilotHome });
+  const described = await describeWebProject(secondProjectRoot, { eastyunHome });
 
   assert.equal(described.createdAt, expectedCreatedAt);
 });

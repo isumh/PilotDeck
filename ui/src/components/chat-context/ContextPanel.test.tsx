@@ -106,7 +106,7 @@ it('updates an open panel on completion and retains newer usage over stale histo
   mocks.fetch.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
   const view = render(<ContextPanel target={{ sessionId: 's', projectPath: '/p' }} {...usage} />);
   const complete = (sessionId: string, projectPath: string, lastTurnUsage: unknown) => act(() => {
-    window.dispatchEvent(new CustomEvent('pilotdeck:agent-turn-complete', { detail: { sessionId, projectPath, lastTurnUsage } }));
+    window.dispatchEvent(new CustomEvent('eastyundesk:agent-turn-complete', { detail: { sessionId, projectPath, lastTurnUsage } }));
   });
   complete('other', '/p', turn({ inputTokens: 0, cacheReadTokens: 10000 }));
   complete('s', '/other', turn({ inputTokens: 0, cacheReadTokens: 10000 }));

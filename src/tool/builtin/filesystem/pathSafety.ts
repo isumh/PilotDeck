@@ -2,22 +2,22 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import { readlinkSync, realpathSync, statSync } from "node:fs";
 import { homedir } from "node:os";
-import type { PilotDeckToolRuntimeContext } from "../../protocol/types.js";
-import type { PilotDeckToolError } from "../../protocol/errors.js";
+import type { EastYunDeskToolRuntimeContext } from "../../protocol/types.js";
+import type { EastYunDeskToolError } from "../../protocol/errors.js";
 import { toolError } from "../../protocol/errors.js";
 
-export type PilotDeckPathSafetyResult =
+export type EastYunDeskPathSafetyResult =
   | { ok: true; absolutePath: string; relativePath: string; root: string }
-  | { ok: false; error: PilotDeckToolError };
+  | { ok: false; error: EastYunDeskToolError };
 
 const DEFAULT_WRITE_DENY_DIRECTORIES = new Set([".git", "node_modules", "dist"]);
 const MAX_SYMLINK_HOPS = 40;
 
-export function resolvePilotDeckWorkspacePath(
+export function resolveEastYunDeskWorkspacePath(
   inputPath: string,
-  context: PilotDeckToolRuntimeContext,
+  context: EastYunDeskToolRuntimeContext,
   options?: { forWrite?: boolean; mustExist?: boolean; allowOutsideWorkspace?: boolean; allowRegisteredReadFiles?: boolean },
-): PilotDeckPathSafetyResult {
+): EastYunDeskPathSafetyResult {
   if (!inputPath || inputPath.includes("\0")) {
     return {
       ok: false,
@@ -84,7 +84,7 @@ export function resolvePilotDeckWorkspacePath(
 
     return {
       ok: false,
-      error: toolError("path_not_allowed", `Path ${inputPath} is outside the PilotDeck workspace.`),
+      error: toolError("path_not_allowed", `Path ${inputPath} is outside the EastYunDesk workspace.`),
     };
   }
 
@@ -99,7 +99,7 @@ export function resolvePilotDeckWorkspacePath(
   if (realWritePath && !findRealRoot(realWritePath, roots) && !options?.allowOutsideWorkspace) {
     return {
       ok: false,
-      error: toolError("path_not_allowed", `Path ${inputPath} resolves outside the PilotDeck workspace.`),
+      error: toolError("path_not_allowed", `Path ${inputPath} resolves outside the EastYunDesk workspace.`),
     };
   }
 
@@ -116,7 +116,7 @@ export function resolvePilotDeckWorkspacePath(
     if (!isPathWithinRoot(real, realRoot)) {
       return {
         ok: false,
-        error: toolError("path_not_allowed", `Path ${inputPath} resolves outside the PilotDeck workspace.`),
+        error: toolError("path_not_allowed", `Path ${inputPath} resolves outside the EastYunDesk workspace.`),
       };
     }
   }
@@ -220,9 +220,9 @@ function safeReadlink(value: string): string | undefined {
   }
 }
 
-function isManagedImAttachmentFile(realPath: string, context: PilotDeckToolRuntimeContext): boolean {
-  const pilotHome = path.resolve(context.env?.PILOT_HOME ?? path.join(homedir(), ".pilotdeck"));
-  const root = safeRealpath(path.join(pilotHome, "im-attachments")) ?? path.join(pilotHome, "im-attachments");
+function isManagedImAttachmentFile(realPath: string, context: EastYunDeskToolRuntimeContext): boolean {
+  const eastyunHome = path.resolve(context.env?.EASTYUN_HOME ?? path.join(homedir(), ".eastyundesk"));
+  const root = safeRealpath(path.join(eastyunHome, "im-attachments")) ?? path.join(eastyunHome, "im-attachments");
   return isPathWithinRoot(realPath, root) && isRegularFile(realPath);
 }
 
@@ -234,10 +234,10 @@ function isRegularFile(value: string): boolean {
   }
 }
 
-function isManagedGeneratedImageFile(realPath: string, context: PilotDeckToolRuntimeContext): boolean {
+function isManagedGeneratedImageFile(realPath: string, context: EastYunDeskToolRuntimeContext): boolean {
   if (!/^[0-9a-f-]{36}\.(png|jpg|webp)$/.test(path.basename(realPath))) return false;
-  const pilotHome = path.resolve(context.env?.PILOT_HOME ?? path.join(homedir(), ".pilotdeck"));
-  const root = path.join(pilotHome, "generated-images", createHash("sha256").update(context.sessionId).digest("hex"));
+  const eastyunHome = path.resolve(context.env?.EASTYUN_HOME ?? path.join(homedir(), ".eastyundesk"));
+  const root = path.join(eastyunHome, "generated-images", createHash("sha256").update(context.sessionId).digest("hex"));
   const realRoot = safeRealpath(root);
   return Boolean(realRoot && isPathWithinRoot(realPath, realRoot) && isRegularFile(realPath));
 }

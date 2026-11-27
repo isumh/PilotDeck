@@ -1,7 +1,7 @@
 /**
- * Enumerate PilotDeck projects.
+ * Enumerate EastYunDesk projects.
  *
- * Source of truth: the `projects/` directory under `pilotHome`.
+ * Source of truth: the `projects/` directory under `eastyunHome`.
  * Each subdirectory is a project ID; we surface its derived name + the
  * encoded `fullPath` we can recover from the ID. Where possible we also
  * count stored sessions using file attributes without opening transcripts.
@@ -10,12 +10,12 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { resolve, basename } from "node:path";
 import { listSessionFiles, isInternalSession } from "../../session/storage/SessionCatalog.js";
-import { createProjectId, getPilotProjectChatDir } from "../../pilot/index.js";
-import { resolveProjectIdentityPath } from "../../pilot/paths.js";
+import { createProjectId, getEastYunProjectChatDir } from "../../eastyun/index.js";
+import { resolveProjectIdentityPath } from "../../eastyun/paths.js";
 import type { WebListProjectsResult, WebProjectSummary } from "../client/protocol.js";
 
 export type ListWebProjectsOptions = {
-  pilotHome: string;
+  eastyunHome: string;
 };
 
 export async function listWebProjects(
@@ -23,7 +23,7 @@ export async function listWebProjects(
 ): Promise<WebListProjectsResult> {
   const projects: WebProjectSummary[] = [];
 
-  const projectsDir = resolve(options.pilotHome, "projects");
+  const projectsDir = resolve(options.eastyunHome, "projects");
   let projectIds: string[] = [];
   try {
     projectIds = await readdir(projectsDir);
@@ -49,7 +49,7 @@ export async function listWebProjects(
       // project list trustworthy.
       continue;
     }
-    if (resolve(fullPath) === resolve(options.pilotHome)) {
+    if (resolve(fullPath) === resolve(options.eastyunHome)) {
       continue;
     }
     const summary = await summarizeProject(fullPath, options, dir);
@@ -64,20 +64,20 @@ export async function listWebProjects(
 export async function listRegisteredWebProjects(
   options: ListWebProjectsOptions,
 ): Promise<Array<{ projectKey: string }>> {
-  const projectsDir = resolve(options.pilotHome, "projects");
+  const projectsDir = resolve(options.eastyunHome, "projects");
   const entries = await readdir(projectsDir, { withFileTypes: true }).catch(() => []);
   const projects: Array<{ projectKey: string }> = [];
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
     const projectKey = await resolveProjectPathFromId(projectsDir, entry.name);
-    if (projectKey && resolve(projectKey) !== resolve(options.pilotHome)) projects.push({ projectKey });
+    if (projectKey && resolve(projectKey) !== resolve(options.eastyunHome)) projects.push({ projectKey });
   }
   return projects;
 }
 
 /** Cache exact registration locations and revalidate them on every lookup. */
 export function createRegisteredWebProjectResolver(options: ListWebProjectsOptions) {
-  const projectsDir = resolve(options.pilotHome, "projects");
+  const projectsDir = resolve(options.eastyunHome, "projects");
   const locations = new Map<string, string>();
   return async (projectKey: string): Promise<string | undefined> => {
     const requested = resolve(projectKey);
@@ -128,7 +128,7 @@ async function resolveProjectStorageDir(
   projectRoot: string,
   options: ListWebProjectsOptions,
 ): Promise<string | undefined> {
-  const projectsDir = resolve(options.pilotHome, "projects");
+  const projectsDir = resolve(options.eastyunHome, "projects");
   const candidate = resolve(projectsDir, createProjectId(projectRoot));
   let legacyCandidate: string | undefined;
   try {
@@ -187,8 +187,8 @@ async function summarizeProject(
   try {
     const chatDir = projectStorageDir
       ? resolve(projectStorageDir, "chats")
-      : getPilotProjectChatDir(projectRoot, options.pilotHome);
-    const files = (await listSessionFiles(options.pilotHome, chatDir)).filter((file) => !isInternalSession(file.sessionId));
+      : getEastYunProjectChatDir(projectRoot, options.eastyunHome);
+    const files = (await listSessionFiles(options.eastyunHome, chatDir)).filter((file) => !isInternalSession(file.sessionId));
     sessionCount = files.length;
     lastActivity = files[0]?.mtime;
   } catch {

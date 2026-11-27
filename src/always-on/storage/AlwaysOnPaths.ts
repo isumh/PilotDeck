@@ -1,11 +1,11 @@
 import { homedir } from "node:os";
 import { resolve } from "node:path";
-import { resolveProjectStorageId } from "../../pilot/paths.js";
+import { resolveProjectStorageId } from "../../eastyun/paths.js";
 
 const ROOT_DIR_NAME = "always-on";
 
 export type AlwaysOnPaths = {
-  pilotHome: string;
+  eastyunHome: string;
   projectKey: string;
   projectId: string;
   rootDir: string;
@@ -26,15 +26,15 @@ export type AlwaysOnPaths = {
 };
 
 export function resolveAlwaysOnPaths(input: {
-  pilotHome: string;
+  eastyunHome: string;
   projectKey: string;
   worktreesBaseDir?: string;
   snapshotsBaseDir?: string;
 }): AlwaysOnPaths {
-  const pilotHome = resolve(input.pilotHome);
+  const eastyunHome = resolve(input.eastyunHome);
   const projectKey = resolve(input.projectKey);
-  const projectId = resolveProjectStorageId(projectKey, pilotHome);
-  const rootDir = resolve(pilotHome, ROOT_DIR_NAME);
+  const projectId = resolveProjectStorageId(projectKey, eastyunHome);
+  const rootDir = resolve(eastyunHome, ROOT_DIR_NAME);
   const projectDir = resolve(rootDir, "projects", projectId);
   const worktreesBaseDir = resolveBaseDir(input.worktreesBaseDir, resolve(rootDir, "worktrees"));
   const snapshotsBaseDir = resolveBaseDir(input.snapshotsBaseDir, resolve(rootDir, "snapshots"));
@@ -42,7 +42,7 @@ export function resolveAlwaysOnPaths(input: {
   const snapshotsDir = resolve(snapshotsBaseDir, projectId);
 
   return {
-    pilotHome,
+    eastyunHome,
     projectKey,
     projectId,
     rootDir,

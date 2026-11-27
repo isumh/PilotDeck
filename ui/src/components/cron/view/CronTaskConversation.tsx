@@ -15,7 +15,7 @@ export default function CronTaskConversation({ job, projects, active = true, emp
   const { preferences } = useUiPreferences();
   const project = useMemo<Project>(() => projects.find(item => item.fullPath === job.projectKey || item.name === job.projectKey)
     || { name: job.projectKey || 'general', fullPath: job.projectKey || '', displayName: job.projectKey?.split(/[\\/]/).at(-1) || 'General' }, [projects, job.projectKey]);
-  const session = useMemo<ProjectSession>(() => ({ id: job.sessionKey || `cron:${job.id}`, provider: 'pilotdeck', title: job.name }), [job.id, job.sessionKey, job.name]);
+  const session = useMemo<ProjectSession>(() => ({ id: job.sessionKey || `cron:${job.id}`, provider: 'eastyundesk', title: job.name }), [job.id, job.sessionKey, job.name]);
   const workspace = job.workspaceCwd || job.lastRun?.workspaceCwd || project.fullPath;
   const editorProject = useMemo(() => ({ ...project, name: `cron-task:${job.id}`, fullPath: workspace }), [project, workspace, job.id]);
   const chatProject = useMemo(() => ({ ...project, workspaceCwd: workspace, fileOperationsKey: `cron-task:${job.id}`,

@@ -5,19 +5,16 @@ import useOnboardingWorkspace from './useOnboardingWorkspace';
 
 const mocks = vi.hoisted(() => ({
   createWorkspaceRequest: vi.fn(),
-  cloneWorkspaceWithProgress: vi.fn(),
 }));
 
 vi.mock('../../../project-creation-wizard/data/workspaceApi', () => ({
   createWorkspaceRequest: mocks.createWorkspaceRequest,
-  cloneWorkspaceWithProgress: mocks.cloneWorkspaceWithProgress,
 }));
 
 describe('useOnboardingWorkspace retry safety', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.createWorkspaceRequest.mockResolvedValue({ name: 'demo' });
-    mocks.cloneWorkspaceWithProgress.mockResolvedValue({ name: 'demo' });
   });
 
   it('does not create the same workspace again after creation succeeds', async () => {
@@ -62,31 +59,19 @@ describe('useOnboardingWorkspace retry safety', () => {
     expect(mocks.createWorkspaceRequest).toHaveBeenCalledTimes(2);
   });
 
-  it('preserves GitHub authentication when cloning an HTTPS repository', async () => {
+  it('always creates a new local workspace without a clone request', async () => {
     const { result } = renderHook(() => useOnboardingWorkspace());
-    act(() => {
-      result.current.setWorkspacePath('/workspace/private');
-      result.current.setGithubUrl('https://github.com/example/private.git');
-      result.current.setTokenMode('new');
-      result.current.setNewGithubToken('ghp_secret');
-    });
+    act(() => result.current.setWorkspacePath('/workspace/local'));
 
     await act(async () => result.current.createWorkspace());
-    await act(async () => {
-      expect(await result.current.createWorkspace()).toEqual({ name: 'demo' });
+
+    expect(mocks.createWorkspaceRequest).toHaveBeenCalledWith({
+      workspaceType: 'new',
+      path: '/workspace/local',
     });
-
-    expect(mocks.cloneWorkspaceWithProgress).toHaveBeenCalledTimes(1);
-
-    expect(mocks.cloneWorkspaceWithProgress).toHaveBeenCalledWith(
-      {
-        workspacePath: '/workspace/private',
-        githubUrl: 'https://github.com/example/private.git',
-        tokenMode: 'new',
-        selectedGithubToken: '',
-        newGithubToken: 'ghp_secret',
-      },
-      expect.objectContaining({ onProgress: expect.any(Function) }),
-    );
+    expect(result.current.draft).toEqual({
+      workspaceType: 'new',
+      workspacePath: '/workspace/local',
+    });
   });
 });

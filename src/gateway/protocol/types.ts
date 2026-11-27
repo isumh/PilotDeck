@@ -21,9 +21,9 @@ import type { CanonicalMessage, CanonicalUsage } from "../../model/index.js";
 import type { TelemetryExecutionKind, TelemetryModule } from "../../telemetry/index.js";
 import type { SessionInfo as ProjectSessionInfo } from "../../session/index.js";
 import type {
-  PilotDeckElicitationAnswer,
-  PilotDeckElicitationQuestion,
-} from "../../tool/elicitation/PilotDeckElicitationChannel.js";
+  EastYunDeskElicitationAnswer,
+  EastYunDeskElicitationQuestion,
+} from "../../tool/elicitation/EastYunDeskElicitationChannel.js";
 import type {
   WebListProjectsResult as WebUiListProjectsResult,
   WebProjectSummary as WebUiProjectSummary,
@@ -217,7 +217,7 @@ export type GatewayEvent = GatewayTurnScopedEventMetadata & (
       resultPath?: string;
       /**
        * Inline image results — emitted when the tool returns one or more
-       * `PilotDeckToolResultContent { type: "image" }` blocks (e.g. `read_file`
+       * `EastYunDeskToolResultContent { type: "image" }` blocks (e.g. `read_file`
        * on a PNG/JPG, or PDF-page rendering). Hosts render these alongside
        * the tool's row so the user sees the picture next to the call site
        * instead of in a stray user-side bubble. Empty when no images were
@@ -230,7 +230,7 @@ export type GatewayEvent = GatewayTurnScopedEventMetadata & (
         detail?: "auto" | "low" | "high";
       }>;
       /**
-       * `PilotDeckToolErrorCode` of the underlying failure when `ok === false`.
+       * `EastYunDeskToolErrorCode` of the underlying failure when `ok === false`.
        * Hosts use this to render type-specific affordances — e.g. the Web UI
        * only surfaces the "Add to Allowed Tools" suggestion for
        * `permission_denied` / `permission_required`, not for execution
@@ -254,7 +254,7 @@ export type GatewayEvent = GatewayTurnScopedEventMetadata & (
       toolCallId: string;
       toolName: string;
       previewFormat?: "html" | "markdown";
-      questions: PilotDeckElicitationQuestion[];
+      questions: EastYunDeskElicitationQuestion[];
       metadata?: Record<string, unknown>;
     }
   /**
@@ -319,7 +319,7 @@ export type GatewayActiveTurnSnapshot = {
 export type GatewayElicitationResponseInput = {
   sessionKey: string;
   requestId: string;
-  answer: PilotDeckElicitationAnswer;
+  answer: EastYunDeskElicitationAnswer;
 };
 
 /**
@@ -652,7 +652,7 @@ export interface Gateway {
    */
   readSubagentMessages(input: WebReadSubagentMessagesInput): Promise<WebReadSubagentMessagesResult>;
   /**
-   * Web Phase 3 — enumerate projects from PilotDeck home + an optional
+   * Web Phase 3 — enumerate projects from EastYunDesk home + an optional
    * registry.
    */
   listProjects(): Promise<WebListProjectsResult>;
@@ -661,7 +661,7 @@ export interface Gateway {
    */
   describeProject(input: WebDescribeProjectInput): Promise<WebProjectSummary>;
   /**
-   * Trigger a config reload from `~/.pilotdeck/pilotdeck.yaml` and
+   * Trigger a config reload from `~/.eastyundesk/eastyundesk.yaml` and
    * invalidate cached runtimes. Returns the list of changed config paths
    * so callers can decide whether further action is needed.
    *
@@ -689,8 +689,8 @@ export interface Gateway {
 
   /**
    * Skill-management RPCs. The gateway is the authoritative owner of
-   * bundled read-only skills, `~/.pilotdeck/skills/` (user scope), and
-   * `<project>/.pilotdeck/skills/` (project scope). The Web UI's REST endpoints under `/api/skills/*`
+   * bundled read-only skills, `~/.eastyundesk/skills/` (user scope), and
+   * `<project>/.eastyundesk/skills/` (project scope). The Web UI's REST endpoints under `/api/skills/*`
    * are now thin shims that forward here, so a skill the agent loads
    * and a skill the UI shows always come from the same place.
    *

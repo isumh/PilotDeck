@@ -8,13 +8,13 @@ import { createAgentProjectSessionStorage } from "../../src/session/storage/Proj
 import { readWebSessionMessages } from "../../src/web/server/readSessionMessages.js";
 
 test("history replay restores structured agent file artifacts", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-artifact-history-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-artifact-history-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-artifact-history-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-artifact-history-home-"));
   try {
     const sessionKey = "web:s_file_artifacts";
     const storage = createAgentProjectSessionStorage({
       projectRoot,
-      pilotHome,
+      eastyunHome,
       sessionId: sessionKey,
       now: () => new Date("2026-07-21T10:00:00.000Z"),
     });
@@ -44,7 +44,7 @@ test("history replay restores structured agent file artifacts", async () => {
       createdAt: "2026-07-21T10:00:00.000Z",
     }]);
 
-    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, pilotHome });
+    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, eastyunHome });
     const message = replay.messages.find((item) => item.kind === "file_artifacts");
     const assistantMessage = replay.messages.find((item) => item.kind === "text" && item.role === "assistant");
 
@@ -57,18 +57,18 @@ test("history replay restores structured agent file artifacts", async () => {
     assert.equal(message.artifacts?.[0]?.operation, "created");
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("history replay hides stale workspace-diff artifacts from turns with no tool results", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-stale-artifact-history-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-stale-artifact-history-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-stale-artifact-history-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-stale-artifact-history-home-"));
   try {
     const sessionKey = "web:s_stale_workspace_artifact";
     const storage = createAgentProjectSessionStorage({
       projectRoot,
-      pilotHome,
+      eastyunHome,
       sessionId: sessionKey,
       now: () => new Date("2026-08-02T10:00:00.000Z"),
     });
@@ -93,22 +93,22 @@ test("history replay hides stale workspace-diff artifacts from turns with no too
       createdAt: "2026-08-02T10:00:00.000Z",
     }]);
 
-    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, pilotHome });
+    const replay = await readWebSessionMessages({ sessionKey }, { projectRoot, eastyunHome });
 
     assert.equal(replay.messages.some((item) => item.kind === "file_artifacts"), false);
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("history replay hides Agent file artifacts in general conversations", async () => {
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-general-artifact-history-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-general-artifact-history-"));
   try {
     const sessionKey = "web:s_general_file_artifacts";
     const storage = createAgentProjectSessionStorage({
-      projectRoot: pilotHome,
-      pilotHome,
+      projectRoot: eastyunHome,
+      eastyunHome,
       sessionId: sessionKey,
       now: () => new Date("2026-07-22T10:00:00.000Z"),
     });
@@ -126,12 +126,12 @@ test("history replay hides Agent file artifacts in general conversations", async
     }]);
 
     const replay = await readWebSessionMessages(
-      { sessionKey, projectKey: pilotHome },
-      { projectRoot: pilotHome, pilotHome },
+      { sessionKey, projectKey: eastyunHome },
+      { projectRoot: eastyunHome, eastyunHome },
     );
 
     assert.equal(replay.messages.some((item) => item.kind === "file_artifacts"), false);
   } finally {
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });

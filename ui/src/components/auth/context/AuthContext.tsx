@@ -44,6 +44,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [authStatusError, setAuthStatusError] = useState<string | null>(null);
   const [modelConfiguration, setModelConfiguration] = useState<ModelConfigurationState>({ state: 'loading' });
+  // Server-persisted "the wizard was finished" flag. It is wider than the
+  // configuration state: a user whose key later stops working must not be sent
+  // through the first-run wizard again.
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [gatewayRuntime, setGatewayRuntime] = useState<GatewayRuntimeState>({ state: 'unmanaged' });
   const [error, setError] = useState<string | null>(null);
 
@@ -72,14 +76,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
+      const storedCompletion = payload?.hasCompletedOnboarding === true;
       if (payload?.configuration) {
         setModelConfiguration(payload.configuration);
         setGatewayRuntime(payload.gateway ?? { state: 'unmanaged' });
+        setHasCompletedOnboarding(
+          storedCompletion
+          || payload.configuration.state === 'ready'
+          || payload.configuration.state === 'empty',
+        );
         return;
       }
 
       // Compatibility with older UI servers during rolling upgrades.
       setGatewayRuntime({ state: 'unmanaged' });
+      setHasCompletedOnboarding(storedCompletion);
       setModelConfiguration(payload?.hasCompletedOnboarding
         ? { state: 'ready', modelRef: '', configPath: null, revision: '' }
         : {
@@ -119,12 +130,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // poll to reveal a workspace whose Gateway has finished starting.
   useEffect(() => {
     if (modelConfiguration.state !== 'ready') return;
-    const update = (status: ReturnType<NonNullable<NonNullable<Window['pilotdeckDesktop']>['getRuntimeStatus']>>) => {
+    const update = (status: ReturnType<NonNullable<NonNullable<Window['eastyundeskDesktop']>['getRuntimeStatus']>>) => {
       if (status?.phase === 'ready') setGatewayRuntime({ state: 'ready' });
       else if (status?.phase === 'gateway') setGatewayRuntime({ state: 'starting' });
     };
-    update(window.pilotdeckDesktop?.getRuntimeStatus?.() ?? null);
-    return window.pilotdeckDesktop?.onRuntimeStatus?.(update);
+    update(window.eastyundeskDesktop?.getRuntimeStatus?.() ?? null);
+    return window.eastyundeskDesktop?.onRuntimeStatus?.(update);
   }, [modelConfiguration.state]);
 
   useEffect(() => {
@@ -312,7 +323,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isLoading,
       needsSetup,
       authStatusError,
-      hasCompletedOnboarding: modelConfiguration.state === 'ready' || modelConfiguration.state === 'empty',
+      hasCompletedOnboarding: hasCompletedOnboarding
+        || modelConfiguration.state === 'ready'
+        || modelConfiguration.state === 'empty',
       modelConfiguration,
       gatewayRuntime,
       error,
@@ -332,6 +345,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logout,
       needsSetup,
       gatewayRuntime,
+      hasCompletedOnboarding,
       modelConfiguration,
       refreshOnboardingStatus,
       register,

@@ -1,11 +1,11 @@
-import { WEB_SEARCH_ENDPOINTS, type WebSearchProvider } from "../../../../../../../src/pilot/config/webSearchProviders.js";
-import type { PilotDeckConfig } from "../../modelPool/types";
-import { getWebSearchProviderConfig, migrateWebSearchProviderConfigs, resolveWebSearchConfig } from "../../../../../../../src/pilot/config/webSearchConfig.js";
+import { WEB_SEARCH_ENDPOINTS, type WebSearchProvider } from "../../../../../../../src/eastyun/config/webSearchProviders.js";
+import type { EastYunDeskConfig } from "../../modelPool/types";
+import { getWebSearchProviderConfig, migrateWebSearchProviderConfigs, resolveWebSearchConfig } from "../../../../../../../src/eastyun/config/webSearchConfig.js";
 
 export type { WebSearchProvider };
 
 type WebSearchConfig = NonNullable<
-  NonNullable<PilotDeckConfig["tools"]>["webSearch"]
+  NonNullable<EastYunDeskConfig["tools"]>["webSearch"]
 >;
 
 export function webSearchConfigForProvider(

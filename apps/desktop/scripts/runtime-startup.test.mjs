@@ -27,7 +27,7 @@ function fixture({ initialize, port, cleanup } = {}) {
     APP_ID: 'synthetic.desktop', DEFAULT_UPDATE_REPOSITORY: 'synthetic/repository', PROCESS_LAUNCH_CWD: '/synthetic',
     setRuntimeLogRetention() {}, createRuntimeLogWriter: () => ({ write() {}, close() {} }), rendererLog: undefined,
     publishRuntimeStatus: status => log.statuses.push(status), redactDiagnostic: value => value,
-    ensurePilotHome: () => ({ pilotHome: '/synthetic/profile' }),
+    ensureEastYunHome: () => ({ eastyunHome: '/synthetic/profile' }),
     resolveBundledGitPaths: () => undefined, resolvePlaywrightBrowsersPath: () => '/synthetic/browsers', readBuildMetadata: () => ({}),
     runtimeReportArguments: () => [],
     desktopInstallationRoot: () => '/synthetic/install', withRuntimeCommandPath: env => env,
@@ -98,7 +98,7 @@ test('a Gateway started before Web readiness is canceled by the same stop', asyn
   const f = fixture();
   const startup = f.start();
   await tick();
-  f.manager.handleServerMessage({ type: 'pilotdeck:configuration-state', configuration: { state: 'ready' } });
+  f.manager.handleServerMessage({ type: 'eastyundesk:configuration-state', configuration: { state: 'ready' } });
   await tick();
   assert.deepEqual(f.log.readiness.map(item => item.name), ['server', 'gateway']);
   await f.scope.stopRuntime();
@@ -113,7 +113,7 @@ test('Gateway startup failure cleanup cannot publish an error after shutdown beg
   const f = fixture({ cleanup: () => gate.promise });
   const startup = f.start();
   await tick();
-  f.manager.handleServerMessage({ type: 'pilotdeck:configuration-state', configuration: { state: 'ready' } });
+  f.manager.handleServerMessage({ type: 'eastyundesk:configuration-state', configuration: { state: 'ready' } });
   await tick();
   f.log.readiness.find(item => item.name === 'gateway').reject(new Error('synthetic failed startup'));
   await tick();
@@ -130,7 +130,7 @@ test('Web startup failure becomes cancellation if replacement starts during Gate
   const f = fixture({ cleanup: () => gate.promise });
   const startup = f.start();
   await tick();
-  f.manager.handleServerMessage({ type: 'pilotdeck:configuration-state', configuration: { state: 'ready' } });
+  f.manager.handleServerMessage({ type: 'eastyundesk:configuration-state', configuration: { state: 'ready' } });
   await tick();
   f.log.readiness.find(item => item.name === 'server').reject(new Error('synthetic failed startup'));
   await tick();
@@ -145,7 +145,7 @@ test('readiness fulfilled immediately before stop cannot publish a ready runtime
   const f = fixture();
   const startup = f.start();
   await tick();
-  f.manager.handleServerMessage({ type: 'pilotdeck:configuration-state', configuration: { state: 'ready' } });
+  f.manager.handleServerMessage({ type: 'eastyundesk:configuration-state', configuration: { state: 'ready' } });
   await tick();
   for (const pending of f.log.readiness) pending.release();
   await f.scope.stopRuntime();

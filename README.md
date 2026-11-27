@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="PilotDeck" width="680"/>
+  <img src="assets/banner.png" alt="EastYunDesk" width="680"/>
 </p>
 
 <p align="center">
@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://pilotdeck.openbmb.cn"><img src="https://img.shields.io/badge/Website-pilotdeck.openbmb.cn-FF6B35?style=flat-square&logo=googlechrome&logoColor=white" alt="Official Website"/></a>
-  <a href="https://pilotdeck.openbmb.cn/pilotdeck.github.io/demo/p/pilotdeck-demo"><img src="https://img.shields.io/badge/Demo-Live-brightgreen?style=flat-square" alt="Live Demo"/></a>
+  <a href="https://pilotdeck.openbmb.cn/eastyundesk.github.io/demo/p/eastyundesk-demo"><img src="https://img.shields.io/badge/Demo-Live-brightgreen?style=flat-square" alt="Live Demo"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_3.0-blue.svg?style=flat-square" alt="License"/></a>
   <a href="https://modelcontextprotocol.io/"><img src="https://img.shields.io/badge/MCP-Native-6366F1?style=flat-square" alt="MCP Native"/></a>
   <a href="https://github.com/OpenBMB/PilotDeck/stargazers"><img src="https://img.shields.io/github/stars/OpenBMB/PilotDeck?style=flat-square" alt="Stars"/></a>
@@ -26,21 +26,21 @@
 <p align="center">
   <b>English</b> | <a href="./README.zh.md">简体中文</a>
   <br/>
-  <a href="https://pilotdeck.openbmb.cn">Website</a> · <a href="https://pilotdeck.openbmb.cn/pilotdeck.github.io/demo/p/pilotdeck-demo">Live Demo</a> · <a href="https://pilotdeck.openbmb.cn/pilotdeck.github.io/docs/en/introduction">Tutorial</a> · <a href="#-installation--quick-start">Quick Start</a> · <a href="#-key-highlights">Highlights</a> · <a href="#use-cases">Use Cases</a> · <a href="#-community">Community</a>
+  <a href="https://pilotdeck.openbmb.cn">Website</a> · <a href="https://pilotdeck.openbmb.cn/eastyundesk.github.io/demo/p/eastyundesk-demo">Live Demo</a> · <a href="https://pilotdeck.openbmb.cn/eastyundesk.github.io/docs/en/introduction">Tutorial</a> · <a href="#-installation--quick-start">Quick Start</a> · <a href="#-key-highlights">Highlights</a> · <a href="#use-cases">Use Cases</a> · <a href="#-community">Community</a>
 </p>
 
 ---
 
 **News** 🔥
 
-- **[2026.10.15]** PilotDeck 2.0 is here! Get started with one-click installation and visual configuration, and keep long-running tasks on track, even across 2,000 interaction messages! New high-quality Word / Excel / PPT Skills deliver office-ready results with a single click. Visit [pilotdeck.openbmb.cn](https://pilotdeck.openbmb.cn) to try it out and contribute.
-- **[2026.05.28]** PilotDeck is now open source! Visit our official website at [pilotdeck.openbmb.cn](https://pilotdeck.openbmb.cn). We welcome contributions, feedback, and stars from the community.
+- **[2026.10.15]** EastYunDesk 2.0 is here! Get started with one-click installation and visual configuration, and keep long-running tasks on track, even across 2,000 interaction messages! New high-quality Word / Excel / PPT Skills deliver office-ready results with a single click. Visit [pilotdeck.openbmb.cn](https://pilotdeck.openbmb.cn) to try it out and contribute.
+- **[2026.05.28]** EastYunDesk is now open source! Visit our official website at [pilotdeck.openbmb.cn](https://pilotdeck.openbmb.cn). We welcome contributions, feedback, and stars from the community.
 
 ---
 
-## 💡 About PilotDeck
+## 💡 About EastYunDesk
 
-**PilotDeck** is an open-source agent operating system designed around the concept of "WorkSpace". It is jointly developed and open-sourced by Tsinghua University [THUNLP](https://nlp.csai.tsinghua.edu.cn/), [ModelBest](https://modelbest.cn/), [OpenBMB](https://www.openbmb.cn/), and [AI9Stars](https://github.com/AI9Stars). Targeting general-purpose, multi-task scenarios, PilotDeck is built to be a true *productivity tool* for the Agent era.
+**EastYunDesk** is an open-source agent operating system designed around the concept of "WorkSpace". It is jointly developed and open-sourced by Tsinghua University [THUNLP](https://nlp.csai.tsinghua.edu.cn/), [ModelBest](https://modelbest.cn/), [OpenBMB](https://www.openbmb.cn/), and [AI9Stars](https://github.com/AI9Stars). Targeting general-purpose, multi-task scenarios, EastYunDesk is built to be a true *productivity tool* for the Agent era.
 
 A wave of excellent AI Agent harnesses has emerged in recent years, each with its own focus: **Claude Code / Cursor / Trae Solo** brought model reasoning deep into the programming IDE; **Claude Cowork** introduced the notion of project-level isolation to desktop-side knowledge work; **WorkBuddy** connected agents to IM ecosystems such as WeCom and Feishu so AI is one message away.
 
@@ -51,7 +51,7 @@ When we shift the lens from "one-shot programming" or "immediate Q&A" to **long-
 - Can tasks of different difficulty **automatically be matched to different models**, instead of burning the flagship model on trivial calls?
 - When you step away from the keyboard, can the work keep moving? Can the agent **proactively discover what's worth doing, report progress, and land results as files on disk**?
 
-PilotDeck is an incremental exploration around exactly these questions. It uses the WorkSpace as the fundamental unit — completely isolating files, memory and skills per project — and pairs it with three pillar capabilities: **White-box Memory**, **Smart Routing** and **Always-on**. The entire system natively supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) and behaves consistently across front-ends (Web / CLI / IM).
+EastYunDesk is an incremental exploration around exactly these questions. It uses the WorkSpace as the fundamental unit — completely isolating files, memory and skills per project — and pairs it with three pillar capabilities: **White-box Memory**, **Smart Routing** and **Always-on**. The entire system natively supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) and behaves consistently across front-ends (Web / CLI / IM).
 
 ### ✨ Key Highlights
 
@@ -96,7 +96,7 @@ Task difficulty is auto-detected; complex calls go to flagship models (e.g. Clau
 
 **Always-on Background Execution**
 
-PilotDeck breaks the "you ask, it answers" loop: after you sign off, the agent keeps discovering candidate tasks, running long-horizon monitors, and finally lands deliverables as local files with a summary report waiting for you.
+EastYunDesk breaks the "you ask, it answers" loop: after you sign off, the agent keeps discovering candidate tasks, running long-horizon monitors, and finally lands deliverables as local files with a summary report waiting for you.
 
 <p align="center">
   <img src="assets/awo_en.gif" width="100%" alt="Always-on execution demo"/>
@@ -108,7 +108,7 @@ PilotDeck breaks the "you ask, it answers" loop: after you sign off, the agent k
 
 ### 🧪 Benchmark Results
 
-On **Workbuddy Bench**, we compared PilotDeck, Claude Code, and WorkBuddy on **260 real-world tasks** across office, web, code, and security, using the same base model and task set. Each task was run independently three times, with **gpt-5.6-sol** as the shared judge.
+On **Workbuddy Bench**, we compared EastYunDesk, Claude Code, and WorkBuddy on **260 real-world tasks** across office, web, code, and security, using the same base model and task set. Each task was run independently three times, with **gpt-5.6-sol** as the shared judge.
 
 Higher scores are better. **Bold** marks the best score in each column for the same base model; Avg. is the mean of the four categories.
 
@@ -118,7 +118,7 @@ Higher scores are better. **Bold** marks the best score in each column for the s
 |:---|---:|---:|---:|---:|---:|
 | WorkBuddy | 57.30 | 61.67 | 82.45 | 56.80 | 64.56 |
 | Claude Code | **74.60** | **70.29** | 83.17 | 65.38 | 73.36 |
-| PilotDeck | 74.18 | 66.95 | **85.20** | **68.30** | **73.66** |
+| EastYunDesk | 74.18 | 66.95 | **85.20** | **68.30** | **73.66** |
 
 #### GLM-5.3
 
@@ -126,7 +126,7 @@ Higher scores are better. **Bold** marks the best score in each column for the s
 |:---|---:|---:|---:|---:|---:|
 | WorkBuddy | 72.32 | 60.52 | 72.69 | 54.30 | 64.96 |
 | Claude Code | **81.81** | 63.76 | 73.76 | **69.88** | **72.30** |
-| PilotDeck | 76.47 | **68.33** | **74.83** | 66.31 | 71.49 |
+| EastYunDesk | 76.47 | **68.33** | **74.83** | 66.31 | 71.49 |
 
 ### 📊 Real-world Numbers
 
@@ -198,14 +198,14 @@ The research team benchmarked 7 complex tasks (multilingual podcast push, multi-
 
 #### 3. White-box Memory — layout & tone never bleed across projects
 
-In black-box agents, mixing tasks in a shared context pool inevitably pollutes memory. PilotDeck's WorkSpace-scoped white-box memory addresses this end-to-end:
+In black-box agents, mixing tasks in a shared context pool inevitably pollutes memory. EastYunDesk's WorkSpace-scoped white-box memory addresses this end-to-end:
 
 <table width="100%">
 <thead>
 <tr>
   <th width="14%" align="left">Dimension</th>
   <th width="41%" align="left">Current AI Agents (black-box)</th>
-  <th width="45%" align="left">PilotDeck (white-box)</th>
+  <th width="45%" align="left">EastYunDesk (white-box)</th>
 </tr>
 </thead>
 <tbody>
@@ -241,11 +241,11 @@ In black-box agents, mixing tasks in a shared context pool inevitably pollutes m
 
 ## 🖥️ UI & Demo
 
-PilotDeck ships an out-of-the-box Web UI with full WorkSpace management, white-box memory editing, and visualization of multi-agent collaboration.
+EastYunDesk ships an out-of-the-box Web UI with full WorkSpace management, white-box memory editing, and visualization of multi-agent collaboration.
 
 ### Use Cases
 
-> All demos below are generated entirely by edge-side models via PilotDeck's Smart Routing — no cloud-side frontier model required.
+> All demos below are generated entirely by edge-side models via EastYunDesk's Smart Routing — no cloud-side frontier model required.
 
 #### Work Document Generation
 
@@ -329,21 +329,21 @@ If Node.js or npm package downloads are slow or unreliable on your network, set 
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/OpenBMB/PilotDeck/main/install.sh | \
-  PILOTDECK_NODE_DIST_MIRROR=https://npmmirror.com/mirrors/node \
+  EASTYUNDESK_NODE_DIST_MIRROR=https://npmmirror.com/mirrors/node \
   NPM_CONFIG_REGISTRY=https://registry.npmmirror.com bash
 ```
 
-You can also keep the official Node.js host as the primary source and opt in to one or more trusted fallback mirrors with `PILOTDECK_NODE_DIST_FALLBACK_MIRRORS`.
+You can also keep the official Node.js host as the primary source and opt in to one or more trusted fallback mirrors with `EASTYUNDESK_NODE_DIST_FALLBACK_MIRRORS`.
 
 ```bash
-pilotdeck            # starts the server at http://localhost:3001
-pilotdeck status     # check runtime status
+eastyundesk            # starts the server at http://localhost:3001
+eastyundesk status     # check runtime status
 ```
 
-To open PilotDeck again later on macOS / Linux, run `pilotdeck` in a terminal and open the printed URL in your browser. If your shell has not picked up the PATH update yet, open a new terminal or source your shell profile first.
+To open EastYunDesk again later on macOS / Linux, run `eastyundesk` in a terminal and open the printed URL in your browser. If your shell has not picked up the PATH update yet, open a new terminal or source your shell profile first.
 
 ```bash
-pilotdeck
+eastyundesk
 # then open http://localhost:3001, or the URL printed by the command
 ```
 
@@ -355,9 +355,9 @@ Run PowerShell as a normal user, then execute:
 powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/OpenBMB/PilotDeck/main/install.ps1 | iex"
 ```
 
-The PowerShell installer uses Windows-native paths under `%USERPROFILE%\.pilotdeck`, checks Node.js 22.13+ with `node:sqlite`, installs missing prerequisites with `winget` when available, builds PilotDeck, and creates a `pilotdeck.cmd` launcher in `%USERPROFILE%\.pilotdeck\bin`. Git LFS media assets are optional for the core app; if Git LFS is unavailable or times out, the installer continues without demo videos/GIFs.
+The PowerShell installer uses Windows-native paths under `%USERPROFILE%\.eastyundesk`, checks Node.js 22.13+ with `node:sqlite`, installs missing prerequisites with `winget` when available, builds EastYunDesk, and creates a `eastyundesk.cmd` launcher in `%USERPROFILE%\.eastyundesk\bin`. Git LFS media assets are optional for the core app; if Git LFS is unavailable or times out, the installer continues without demo videos/GIFs.
 
-After installation, the script starts PilotDeck and prints the UI URL, usually `http://localhost:3001`. It does not automatically open a browser, so copy that URL into your browser to finish onboarding (provider + API key). You can also open it from PowerShell:
+After installation, the script starts EastYunDesk and prints the UI URL, usually `http://localhost:3001`. It does not automatically open a browser, so copy that URL into your browser to finish onboarding (provider + API key). You can also open it from PowerShell:
 
 ```powershell
 Start-Process http://localhost:3001
@@ -366,14 +366,14 @@ Start-Process http://localhost:3001
 If this is your first install, open a new PowerShell window after the script updates your user `PATH`, then run:
 
 ```powershell
-pilotdeck            # starts the server at http://localhost:3001
-pilotdeck status     # check runtime status
+eastyundesk            # starts the server at http://localhost:3001
+eastyundesk status     # check runtime status
 ```
 
-To open PilotDeck again later, run `pilotdeck` from a new PowerShell window, then open the printed URL in your browser. If `pilotdeck` is not yet on `PATH`, run the launcher directly:
+To open EastYunDesk again later, run `eastyundesk` from a new PowerShell window, then open the printed URL in your browser. If `eastyundesk` is not yet on `PATH`, run the launcher directly:
 
 ```powershell
-& "$HOME\.pilotdeck\bin\pilotdeck.cmd"
+& "$HOME\.eastyundesk\bin\eastyundesk.cmd"
 ```
 
 #### Windows PowerShell FAQ
@@ -412,21 +412,21 @@ GitHub may rate-limit repeated `raw.githubusercontent.com` requests from shared 
 
 ```bash
 GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/OpenBMB/PilotDeck.git
-cd PilotDeck
+cd EastYunDesk
 
 node --version          # must be v22.13.0 or newer, and below v23
 corepack enable         # enables the pinned pnpm version from package.json
-corepack pnpm install --frozen-lockfile --filter pilotdeck --filter pilotdeck-ui
+corepack pnpm install --frozen-lockfile --filter eastyun-desk --filter eastyun-desk-ui
 ```
 
-PilotDeck uses the committed `pnpm-lock.yaml` for reproducible source installs. The filters keep Electron packaging dependencies out of Web-only installs. Prefer the `corepack pnpm ...` command above instead of `npm install`; on macOS, this also avoids unnecessary native rebuild fallbacks when matching prebuilt packages are available.
+EastYunDesk uses the committed `pnpm-lock.yaml` for reproducible source installs. The filters keep Electron packaging dependencies out of Web-only installs. Prefer the `corepack pnpm ...` command above instead of `npm install`; on macOS, this also avoids unnecessary native rebuild fallbacks when matching prebuilt packages are available.
 
 **2. Configure a model provider**
 
-PilotDeck reads `~/.pilotdeck/pilotdeck.yaml`. You can create it manually, **or just open the Web UI and configure providers visually in onboarding.**
+EastYunDesk reads `~/.eastyundesk/eastyundesk.yaml`. You can create it manually, **or just open the Web UI and configure providers visually in onboarding.**
 Supported protocols include OpenAI, Anthropic, native Google Gemini, DeepSeek, Qwen, Kimi, MiniMax and other OpenAI-compatible endpoints.
 
-If the config file is missing, PilotDeck starts the Web UI without the Gateway and opens onboarding. Saving a valid provider, API key, and model writes the config and starts the Gateway automatically.
+If the config file is missing, EastYunDesk starts the Web UI without the Gateway and opens onboarding. Saving a valid provider, API key, and model writes the config and starts the Gateway automatically.
 
 ```yaml
 schemaVersion: 1
@@ -456,7 +456,7 @@ model:
         gemini-3.1-pro-preview: {}
 ```
 
-Local Ollama models can be configured without an API key. PilotDeck uses
+Local Ollama models can be configured without an API key. EastYunDesk uses
 Ollama's OpenAI-compatible `/v1/chat/completions` endpoint:
 
 ```bash
@@ -487,7 +487,7 @@ cd ui && npm run start   # production mode, visit http://localhost:3001
 
 ### Option C: Docker Compose
 
-If Docker is installed, you can start PilotDeck with:
+If Docker is installed, you can start EastYunDesk with:
 
 ```bash
 docker compose up -d --build
@@ -499,7 +499,7 @@ For full Docker configuration, see [README_DOCKER.md](README_DOCKER.md).
 
 ## 🛠️ Extension Protocol
 
-PilotDeck has an open plugin architecture with a strict boundary between the open-source core and plugin customization. Extending the system is a `plugin.json` away:
+EastYunDesk has an open plugin architecture with a strict boundary between the open-source core and plugin customization. Extending the system is a `plugin.json` away:
 
 - **MCP Servers** — first-class integration with any Model Context Protocol server.
 - **Tools & Skills** — register custom tools, or pull community skills via [ClawHub](https://www.npmjs.com/package/clawhub).
@@ -540,7 +540,7 @@ Workflow: **Fork → feature branch → PR**.
 
 We thank Agent OS pioneers such as OpenClaw, Claude Code, Codex, Cursor, and Hermes for their explorations that helped shape this field.
 
-PilotDeck builds upon the following outstanding open-source projects:
+EastYunDesk builds upon the following outstanding open-source projects:
 
 - [ClawXRouter](https://github.com/OpenBMB/ClawXRouter) — Intelligent model routing
 - [ClawXMemory](https://github.com/OpenBMB/ClawXMemory) — Agent memory system
@@ -560,22 +560,22 @@ PilotDeck builds upon the following outstanding open-source projects:
 
 ## 🏢 Joint Development
 
-PilotDeck is jointly developed by Tsinghua University [THUNLP](https://nlp.csai.tsinghua.edu.cn/), [ModelBest](https://modelbest.cn/), [OpenBMB](https://www.openbmb.cn/) and [AI9Stars](https://github.com/AI9Stars).
+EastYunDesk is jointly developed by Tsinghua University [THUNLP](https://nlp.csai.tsinghua.edu.cn/), [ModelBest](https://modelbest.cn/), [OpenBMB](https://www.openbmb.cn/) and [AI9Stars](https://github.com/AI9Stars).
 
 ---
 
 ## ⭐ Support Us
 
-If PilotDeck has been helpful in your work or research, please consider giving us a Star on GitHub!
+If EastYunDesk has been helpful in your work or research, please consider giving us a Star on GitHub!
 
 ---
 
 ## 📝 Citation
 
 ```bibtex
-@misc{pilotdeck2026,
-  author       = {PilotDeck Team},
-  title        = {PilotDeck: A WorkSpace-Centric Open-Source Agent Operating System},
+@misc{eastyundesk2026,
+  author       = {EastYunDesk Team},
+  title        = {EastYunDesk: A WorkSpace-Centric Open-Source Agent Operating System},
   howpublished = {\url{https://github.com/OpenBMB/PilotDeck}},
   year         = {2026},
   note         = {Accessed: 2026-05-29}

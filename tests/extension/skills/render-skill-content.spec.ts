@@ -7,9 +7,9 @@ test("skill root placeholder expands to the selected skill directory", () => {
   assert.equal(
     renderSkillContent(
       "SKILL_ROOT={{SKILL_ROOT_SHELL}}\n",
-      "/opt/pilotdeck/skills/docx/SKILL.md",
+      "/opt/eastyundesk/skills/docx/SKILL.md",
     ),
-    "SKILL_ROOT='/opt/pilotdeck/skills/docx'\n",
+    "SKILL_ROOT='/opt/eastyundesk/skills/docx'\n",
   );
 });
 
@@ -17,9 +17,9 @@ test("skill root placeholder is safe for shell paths containing spaces and quote
   assert.equal(
     renderSkillContent(
       "ROOT={{SKILL_ROOT_SHELL}}",
-      "/Users/A Person/Pilot's Skills/docx/SKILL.md",
+      "/Users/A Person/EastYun's Skills/docx/SKILL.md",
     ),
-    `ROOT='/Users/A Person/Pilot'"'"'s Skills/docx'`,
+    `ROOT='/Users/A Person/EastYun'"'"'s Skills/docx'`,
   );
 });
 
@@ -27,9 +27,9 @@ test("escaped skill root placeholders remain literal in authoring guidance", () 
   assert.equal(
     renderSkillContent(
       "Use {{!SKILL_ROOT_SHELL}}; runtime={{SKILL_ROOT_SHELL}}",
-      "/opt/pilotdeck/skills/skill-creator/SKILL.md",
+      "/opt/eastyundesk/skills/skill-creator/SKILL.md",
     ),
-    "Use {{SKILL_ROOT_SHELL}}; runtime='/opt/pilotdeck/skills/skill-creator'",
+    "Use {{SKILL_ROOT_SHELL}}; runtime='/opt/eastyundesk/skills/skill-creator'",
   );
 });
 

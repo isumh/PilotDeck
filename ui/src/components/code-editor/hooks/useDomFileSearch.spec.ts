@@ -5,9 +5,9 @@ import { findDomTextMatches } from './useDomFileSearch';
 describe('findDomTextMatches', () => {
   it('finds visible Chinese and English text nodes', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<p>PilotDeck 文件搜索</p><p>pilotdeck</p>';
+    root.innerHTML = '<p>EastYunDesk 文件搜索</p><p>eastyundesk</p>';
 
-    expect(findDomTextMatches(root, 'pilotdeck')).toHaveLength(2);
+    expect(findDomTextMatches(root, 'eastyundesk')).toHaveLength(2);
     expect(findDomTextMatches(root, '文件')).toHaveLength(1);
   });
 

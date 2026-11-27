@@ -8,9 +8,9 @@ import { canonicalWorkspacePath } from "./WorkspaceCoordinator.js";
 const requests = new Map<string, AbortController>();
 
 /** All Web file mutations execute in the Gateway, alongside agent operations. */
-export async function runWorkspaceFileOperation(root: string, pilotHome: string, input: CheckpointRequest["fileOperation"]) {
+export async function runWorkspaceFileOperation(root: string, eastyunHome: string, input: CheckpointRequest["fileOperation"]) {
   if (!input || !["save", "create", "mkdir", "rename", "delete", "upload"].includes(input.operation)) throw new CheckpointError("INVALID_ACTION", "Invalid file operation.");
-  const store = await getCheckpointStore(root, pilotHome);
+  const store = await getCheckpointStore(root, eastyunHome);
   if (input.requestId !== undefined && !/^[a-f0-9-]{36}$/.test(input.requestId)) throw new CheckpointError("INVALID_ID", "Invalid file request.");
   const requestKey = `${store.workspace}\0${input.requestId ?? randomUUID()}`;
   if (input.cancel) {
@@ -34,7 +34,7 @@ export async function runWorkspaceFileOperation(root: string, pilotHome: string,
   const name = await store.normalizeFilePath(relative(input.path));
   const target = await store.resolveFile(name);
   // User changes have their own journal identity and never become agent edits.
-  const history = new WorkspaceCheckpoints(store.workspace, pilotHome);
+  const history = new WorkspaceCheckpoints(store.workspace, eastyunHome);
   const turnId = randomUUID();
   const controller = new AbortController();
   // Path validation above awaits I/O; a cancellation can arrive during it.
@@ -77,7 +77,7 @@ export async function runWorkspaceFileOperation(root: string, pilotHome: string,
         if (!(await fs.lstat(source)).isFile()) throw new CheckpointError("INVALID_PATH", "Invalid staged upload.");
         await fs.mkdir(path.dirname(target), { recursive: true });
         // A temporary sibling keeps publication atomic even across filesystems.
-        const temporary = path.join(path.dirname(target), `.pilotdeck-restore-${randomUUID()}`);
+        const temporary = path.join(path.dirname(target), `.eastyundesk-restore-${randomUUID()}`);
         try { await fs.copyFile(source, temporary, constants.COPYFILE_EXCL); controller.signal.throwIfAborted(); await fs.link(temporary, target); }
         finally { await fs.unlink(temporary).catch(() => {}); }
       }

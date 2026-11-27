@@ -5,7 +5,7 @@ import { mkdtemp, mkdir, writeFile, readFile, appendFile, symlink, rm } from 'no
 import path from 'node:path';
 import os from 'node:os';
 import { createGlobalSearch } from './globalSearch.js';
-import { getPilotProjectChatDir } from '../../../src/pilot/paths.js';
+import { getEastYunProjectChatDir } from '../../../src/eastyun/paths.js';
 import { fileSymlinkOrSkip } from '../test-support/symlink.js';
 
 const temporary = [];
@@ -19,14 +19,14 @@ const entry = (type, sequence, extra = {}) => ({ type, sessionId: 'old-session',
 const message = (text, role = 'assistant') => ({ role, content: [{ type: 'text', text }] });
 
 async function fixture(options = {}) {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'pilotdeck-global-search-')); temporary.push(root);
-  const pilotHome = path.join(root, 'home'); const workspace = path.join(root, 'workspace');
-  await mkdir(pilotHome); await mkdir(workspace);
-  await mkdir(path.join(pilotHome, 'projects', 'registered'), { recursive: true });
-  await writeFile(path.join(pilotHome, 'projects', 'registered', '.cwd'), workspace);
+  const root = await mkdtemp(path.join(os.tmpdir(), 'eastyundesk-global-search-')); temporary.push(root);
+  const eastyunHome = path.join(root, 'home'); const workspace = path.join(root, 'workspace');
+  await mkdir(eastyunHome); await mkdir(workspace);
+  await mkdir(path.join(eastyunHome, 'projects', 'registered'), { recursive: true });
+  await writeFile(path.join(eastyunHome, 'projects', 'registered', '.cwd'), workspace);
   const project = { name: 'registered', displayName: 'Example', fullPath: workspace,
     sessions: [{ id: 'recent', title: 'Only the sidebar preview' }] };
-  const chatDir = getPilotProjectChatDir(workspace, pilotHome); await mkdir(chatDir, { recursive: true });
+  const chatDir = getEastYunProjectChatDir(workspace, eastyunHome); await mkdir(chatDir, { recursive: true });
   const file = path.join(chatDir, 'old-session.jsonl');
   const records = [
     entry('session_metadata', 0, { metadata: { title: 'Historical planning' } }),
@@ -36,8 +36,8 @@ async function fixture(options = {}) {
     entry('assistant_message', 4, { message: { role: 'assistant', content: [{ type: 'thinking', text: 'private needle reasoning' }] } }),
   ];
   await writeFile(file, records.map(item => JSON.stringify(item)).join('\n') + '\n');
-  const search = createGlobalSearch({ listProjects: async () => [project], pilotHome, ...options }); services.push(search);
-  return { root, pilotHome, workspace, project, chatDir, file, search };
+  const search = createGlobalSearch({ listProjects: async () => [project], eastyunHome, ...options }); services.push(search);
+  return { root, eastyunHome, workspace, project, chatDir, file, search };
 }
 
 test('searches messages outside the sidebar preview and returns a stable navigation target', async () => {
@@ -168,7 +168,7 @@ test('streams names before bodies and shares work across tabs, pages and subscri
 });
 
 test('uses incremental appends, rebuilds truncated history, and reuses a persistent index after restart', async () => {
-  const { search, file, project, pilotHome } = await fixture();
+  const { search, file, project, eastyunHome } = await fixture();
   await search({ query: 'needle', kind: 'chats' });
   const before = await search.metrics();
   await appendFile(file, JSON.stringify(entry('assistant_message', 5, { message: message('incremental needle') })) + '\n');
@@ -179,7 +179,7 @@ test('uses incremental appends, rebuilds truncated history, and reuses a persist
   await writeFile(file, JSON.stringify(entry('assistant_message', 0, { message: message('replacement history') })) + '\n');
   assert.equal((await search({ query: 'needle', kind: 'chats' })).counts.chats, 0);
   await search.close(); services.splice(services.indexOf(search), 1);
-  const restarted = createGlobalSearch({ pilotHome, listProjects: async () => [project] }); services.push(restarted);
+  const restarted = createGlobalSearch({ eastyunHome, listProjects: async () => [project] }); services.push(restarted);
   assert.equal((await restarted({ query: 'replacement', kind: 'chats' })).counts.chats, 1);
   assert.equal((await restarted.metrics()).metrics.transcriptFullReads, 0);
 });
@@ -260,20 +260,20 @@ test('an incomplete UTF-8 JSONL tail is retried after the record finishes writin
   assert.equal(complete.counts.chats, 1); assert.deepEqual(complete.partial, []);
 });
 
-for (const homeName of ['.pilotdeck', 'state[private]']) {
+for (const homeName of ['.eastyundesk', 'state[private]']) {
   test(`indexes a workspace containing ${homeName} while excluding internal files and watch events`, async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), 'pilotdeck-home-workspace-')); temporary.push(root);
+    const root = await mkdtemp(path.join(os.tmpdir(), 'eastyundesk-home-workspace-')); temporary.push(root);
     const workspace = path.join(root, 'workspace');
-    const pilotHome = path.join(workspace, homeName);
-    const registration = path.join(pilotHome, 'projects', 'registered');
+    const eastyunHome = path.join(workspace, homeName);
+    const registration = path.join(eastyunHome, 'projects', 'registered');
     await mkdir(registration, { recursive: true });
     await writeFile(path.join(registration, '.cwd'), workspace);
     await writeFile(path.join(workspace, 'needle.txt'), 'first line\npublic needle content\n');
-    await writeFile(path.join(pilotHome, 'needle-secret.txt'), 'internal-only-secret');
+    await writeFile(path.join(eastyunHome, 'needle-secret.txt'), 'internal-only-secret');
     const sibling = path.join(workspace, homeName + '-docs');
     await mkdir(sibling); await writeFile(path.join(sibling, 'needle.txt'), 'public sibling');
     const project = { name: 'registered', displayName: 'Home workspace', fullPath: workspace };
-    const search = createGlobalSearch({ pilotHome, listProjects: async () => [project], watch: true, refreshOnQuery: false });
+    const search = createGlobalSearch({ eastyunHome, listProjects: async () => [project], watch: true, refreshOnQuery: false });
     services.push(search);
     const result = await search({ query: 'needle', kind: 'files' });
     assert.equal(result.counts.files, 2);
@@ -283,7 +283,7 @@ for (const homeName of ['.pilotdeck', 'state[private]']) {
     await new Promise(resolve => setTimeout(resolve, 250));
     await search({ query: 'needle', kind: 'files' });
     const before = await search.metrics();
-    await appendFile(path.join(pilotHome, 'needle-secret.txt'), '\nchanged internal data');
+    await appendFile(path.join(eastyunHome, 'needle-secret.txt'), '\nchanged internal data');
     await new Promise(resolve => setTimeout(resolve, 250));
     const cached = await search({ query: 'needle', kind: 'files' });
     const after = await search.metrics();

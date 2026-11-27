@@ -6,8 +6,8 @@ import { join } from "node:path";
 import { createLocalGateway } from "../../src/cli/createLocalGateway.js";
 import { createCronManager } from "../../src/cron/index.js";
 import { createModelRuntime, type CanonicalModelEvent, type CanonicalModelRequest } from "../../src/model/index.js";
-import { createProjectId } from "../../src/pilot/paths.js";
-import { loadPilotConfig } from "../../src/pilot/config/loadPilotConfig.js";
+import { createProjectId } from "../../src/eastyun/paths.js";
+import { loadEastYunConfig } from "../../src/eastyun/config/loadEastYunConfig.js";
 
 const BASE = `
 schemaVersion: 1
@@ -36,20 +36,20 @@ for (const [name, yaml, enabled] of [
   ["explicitly disabled Cron", "cron: { enabled: false }\n", false],
 ] as const) {
   test(`${name}: Gateway creation and agent Cron tools agree`, async (t) => {
-    const home = await mkdtemp(join(tmpdir(), "pilotdeck-cron-defaults-"));
+    const home = await mkdtemp(join(tmpdir(), "eastyundesk-cron-defaults-"));
     t.after(() => rm(home, { recursive: true, force: true }));
     const project = join(home, "workspace");
     await mkdir(project);
     const projectRecord = join(home, "projects", createProjectId(project));
     await mkdir(projectRecord, { recursive: true });
     await writeFile(join(projectRecord, ".cwd"), project);
-    const configPath = join(home, "pilotdeck.yaml");
+    const configPath = join(home, "eastyundesk.yaml");
     await writeFile(configPath, BASE + yaml);
     await mkdir(join(home, "skills"));
-    const env = { PILOT_HOME: home, PILOTDECK_CONFIG_PATH: configPath };
-    const config = loadPilotConfig({ env }).config.cron;
+    const env = { EASTYUN_HOME: home, EASTYUNDESK_CONFIG_PATH: configPath };
+    const config = loadEastYunConfig({ env }).config.cron;
     assert.ok(config);
-    const cron = createCronManager({ config, pilotHome: home });
+    const cron = createCronManager({ config, eastyunHome: home });
     const requests: CanonicalModelRequest[] = [];
     const schedule = { type: "once" as const, runAt: new Date(Date.now() + 86_400_000).toISOString() };
     const weekly = { type: "calendar", times: ["10:00", "15:30"], weekdays: [1, 3], timezone: "Asia/Shanghai" };
@@ -64,7 +64,7 @@ for (const [name, yaml, enabled] of [
       { id: "calendar", message: "Weekly walks", schedule: weekly },
     ];
     const local = createLocalGateway({
-      pilotHome: home,
+      eastyunHome: home,
       projectRoot: project,
       builtinSkillsRoot: join(home, "skills"),
       env,

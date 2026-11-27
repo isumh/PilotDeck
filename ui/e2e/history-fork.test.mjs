@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { getPilotProjectChatDir } from '../../src/pilot/paths.ts';
+import { getEastYunProjectChatDir } from '../../src/eastyun/paths.ts';
 import { sanitizeSessionIdForPath } from '../../src/session/storage/ProjectSessionStorage.ts';
 import { JsonlTranscriptWriter } from '../../src/session/transcript/JsonlTranscriptWriter.ts';
 
@@ -34,7 +34,7 @@ async function waitForReady(child, readyMessage, { requireConfiguredModel = fals
   let configuration;
   for await (const [message] of on(child, 'message', { close: ['exit'], signal: AbortSignal.timeout(25_000) })) {
     if (message?.type === readyMessage) port = message.port;
-    if (message?.type === 'pilotdeck:configuration-state') configuration = message.configuration;
+    if (message?.type === 'eastyundesk:configuration-state') configuration = message.configuration;
     if (port && (!requireConfiguredModel || configuration)) {
       if (requireConfiguredModel) {
         // An empty model pool uses disk reads in the bridge and would bypass Gateway.
@@ -47,11 +47,11 @@ async function waitForReady(child, readyMessage, { requireConfiguredModel = fals
 }
 
 test('forks a stored conversation over Web HTTP and reads the inherited history via Gateway', { timeout: 60_000 }, async t => {
-  const fixture = await realpath(await mkdtemp(join(tmpdir(), 'pilotdeck-fork-http-')));
-  const pilotHome = join(fixture, 'pilot-home');
+  const fixture = await realpath(await mkdtemp(join(tmpdir(), 'eastyundesk-fork-http-')));
+  const eastyunHome = join(fixture, 'eastyun-home');
   const projectRoot = join(fixture, 'workspace with spaces');
-  const configPath = join(pilotHome, 'pilotdeck.yaml');
-  const databasePath = join(pilotHome, 'auth.db');
+  const configPath = join(eastyunHome, 'eastyundesk.yaml');
+  const databasePath = join(eastyunHome, 'auth.db');
   let gateway;
   let web;
   t.after(async () => {
@@ -63,7 +63,7 @@ test('forks a stored conversation over Web HTTP and reads the inherited history 
     }
   });
 
-  await mkdir(pilotHome);
+  await mkdir(eastyunHome);
   await mkdir(projectRoot);
   // Prevent Web's legacy database migration from importing a local auth DB.
   await writeFile(databasePath, '', { mode: 0o600 });
@@ -80,7 +80,7 @@ runtime: { python: { enabled: false } }
 telemetry: { enabled: false }
 `);
   const sessionId = 'web:s_fork_source';
-  const chatDir = getPilotProjectChatDir(projectRoot, pilotHome);
+  const chatDir = getEastYunProjectChatDir(projectRoot, eastyunHome);
   await mkdir(chatDir, { recursive: true });
   const transcript = new JsonlTranscriptWriter({
     path: join(chatDir, `${sanitizeSessionIdForPath(sessionId)}.jsonl`),
@@ -93,26 +93,26 @@ telemetry: { enabled: false }
   const env = {
     PATH: process.env.PATH,
     ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-    PILOT_HOME: pilotHome,
-    PILOTDECK_CONFIG_PATH: configPath,
-    PILOTDECK_GENERAL_WORKSPACE_DIRECTORY: projectRoot,
+    EASTYUN_HOME: eastyunHome,
+    EASTYUNDESK_CONFIG_PATH: configPath,
+    EASTYUNDESK_GENERAL_WORKSPACE_DIRECTORY: projectRoot,
   };
-  gateway = startProcess('src/cli/pilotdeck.ts', ['server'], projectRoot, {
-    ...env, PILOTDECK_GATEWAY_PORT: '0',
+  gateway = startProcess('src/cli/eastyundesk.ts', ['server'], projectRoot, {
+    ...env, EASTYUNDESK_GATEWAY_PORT: '0',
   });
-  const gatewayPort = await waitForReady(gateway.child, 'pilotdeck:gateway-ready');
+  const gatewayPort = await waitForReady(gateway.child, 'eastyundesk:gateway-ready');
   web = startProcess('ui/server/index.js', [], projectRoot, {
     ...env,
     HOST: '127.0.0.1',
     SERVER_PORT: '0',
     DATABASE_PATH: databasePath,
-    PILOTDECK_DISABLE_LOCAL_AUTH: '1',
-    PILOTDECK_SKIP_BROWSER_OPEN: '1',
-    PILOTDECK_RUNTIME_SUPERVISED: '1',
-    PILOTDECK_GATEWAY_URL: `ws://127.0.0.1:${gatewayPort}/ws`,
-    PILOTDECK_BRIDGE_TIMEOUT: '5000',
+    EASTYUNDESK_DISABLE_LOCAL_AUTH: '1',
+    EASTYUNDESK_SKIP_BROWSER_OPEN: '1',
+    EASTYUNDESK_RUNTIME_SUPERVISED: '1',
+    EASTYUNDESK_GATEWAY_URL: `ws://127.0.0.1:${gatewayPort}/ws`,
+    EASTYUNDESK_BRIDGE_TIMEOUT: '5000',
   });
-  const webPort = await waitForReady(web.child, 'pilotdeck:server-ready', { requireConfiguredModel: true });
+  const webPort = await waitForReady(web.child, 'eastyundesk:server-ready', { requireConfiguredModel: true });
   const origin = `http://127.0.0.1:${webPort}`;
   const sessionUrl = id => `${origin}/api/sessions/${encodeURIComponent(id)}`;
   async function requestJson(url, options) {

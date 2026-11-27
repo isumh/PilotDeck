@@ -6,8 +6,8 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { createLocalGateway } from "../../src/cli/createLocalGateway.js";
 import { createModelRuntime, type CanonicalModelEvent, type CanonicalModelRequest } from "../../src/model/index.js";
-import { createProjectId } from "../../src/pilot/index.js";
-import type { PilotConfigSnapshot } from "../../src/pilot/config/types.js";
+import { createProjectId } from "../../src/eastyun/index.js";
+import type { EastYunConfigSnapshot } from "../../src/eastyun/config/types.js";
 import { VideoStore, type GeneratedVideo } from "../../src/tool/builtin/videos/VideoStore.js";
 import type { GatewayEvent } from "../../src/gateway/protocol/types.js";
 
@@ -32,7 +32,7 @@ for (const source of ["parent", "sibling"] as const) {
     await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
     t.after(() => new Promise<void>(resolve => server.close(() => resolve())));
     const port = (server.address() as { port: number }).port;
-    await writeFile(join(home, "pilotdeck.yaml"), `schemaVersion: 1
+    await writeFile(join(home, "eastyundesk.yaml"), `schemaVersion: 1
 agent: { model: test/model, maxContextTokens: 65536, maxOutputTokens: 8192 }
 extension:
   builtinPluginsEnabled: { windows-skills: false, browser-use: false, funasr: false }
@@ -50,9 +50,9 @@ model:
 `);
     const sessionId = "web:delegation", store = new VideoStore(join(home, "generated-videos"));
     const unrelated = await store.save("web:unrelated", new Response(new Uint8Array(mp4)));
-    const options = { pilotHome: home, projectRoot: workspace, builtinSkillsRoot: join(home, "skills"),
-      env: { ...process.env, PILOT_HOME: home, PILOT_AGENT_MODEL: undefined, PILOTDECK_CONFIG_PATH: join(home, "pilotdeck.yaml") },
-      __testModelFactory: (snapshot: PilotConfigSnapshot) => ({
+    const options = { eastyunHome: home, projectRoot: workspace, builtinSkillsRoot: join(home, "skills"),
+      env: { ...process.env, EASTYUN_HOME: home, EASTYUN_AGENT_MODEL: undefined, EASTYUNDESK_CONFIG_PATH: join(home, "eastyundesk.yaml") },
+      __testModelFactory: (snapshot: EastYunConfigSnapshot) => ({
         ...createModelRuntime(snapshot.config.model),
         async *stream(request: CanonicalModelRequest): AsyncIterable<CanonicalModelEvent> {
           const results = request.messages.flatMap(message => message.content.filter(block => block.type === "tool_result"));

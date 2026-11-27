@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { resolvePilotHome } from "../../../pilot/index.js";
+import { resolveEastYunHome } from "../../../eastyun/index.js";
 import { createRequire } from "node:module";
 import type { Gateway, GatewayChannelKey } from "../../../gateway/index.js";
 import type { CronResultDelivery } from "../../../cron/index.js";
@@ -29,7 +29,7 @@ export type MatrixChannelOptions = {
   homeserver?: string;
   userId?: string;
   storagePath?: string;
-  pilotHome?: string;
+  eastyunHome?: string;
   mapper?: MatrixSessionMapper;
 };
 
@@ -55,8 +55,8 @@ export class MatrixChannel implements ChannelAdapter {
     this.accessToken = options.accessToken ?? process.env.MATRIX_ACCESS_TOKEN;
     this.homeserver = (options.homeserver ?? process.env.MATRIX_HOMESERVER ?? "").replace(/\/$/, "") || undefined;
     this.userIdOption = options.userId ?? process.env.MATRIX_USER_ID;
-    const pilotHome = options.pilotHome ?? resolvePilotHome(process.env);
-    this.storagePath = options.storagePath ?? join(pilotHome, "matrix-bot-storage.json");
+    const eastyunHome = options.eastyunHome ?? resolveEastYunHome(process.env);
+    this.storagePath = options.storagePath ?? join(eastyunHome, "matrix-bot-storage.json");
   }
 
   async start(deps: ChannelStartDeps): Promise<ChannelHandle> {

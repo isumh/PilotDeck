@@ -26,17 +26,17 @@ function context(cwd: string) {
   };
 }
 
-test("large tool results are persisted under workspace .pilotdeck and readable by read_file", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-readable-tool-result-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-home-"));
+test("large tool results are persisted under workspace .eastyundesk and readable by read_file", async () => {
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-readable-tool-result-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-home-"));
   try {
     const storage = createAgentProjectSessionStorage({
       projectRoot,
-      pilotHome,
+      eastyunHome,
       sessionId: "web:s_test",
       now: () => new Date("2026-07-09T00:00:00.000Z"),
     });
-    assert.match(relative(projectRoot, storage.toolResultsDir), /^\.pilotdeck[\/\\]tool-results[\/\\]/);
+    assert.match(relative(projectRoot, storage.toolResultsDir), /^\.eastyundesk[\/\\]tool-results[\/\\]/);
 
     const budget = new ToolResultBudget({
       toolResultsDir: storage.toolResultsDir,
@@ -55,8 +55,8 @@ test("large tool results are persisted under workspace .pilotdeck and readable b
 
     const ref = message.content.find((block) => block.type === "tool_result_reference");
     assert.ok(ref, "expected a persisted tool_result_reference");
-    assert.match(relative(projectRoot, ref.path), /^\.pilotdeck[\/\\]tool-results[\/\\]/);
-    assert.equal(ref.readFilePath, ".pilotdeck/tool-results/refs/result-0001.txt");
+    assert.match(relative(projectRoot, ref.path), /^\.eastyundesk[\/\\]tool-results[\/\\]/);
+    assert.equal(ref.readFilePath, ".eastyundesk/tool-results/refs/result-0001.txt");
     assert.equal(await readFile(join(projectRoot, ref.readFilePath), "utf8"), `alpha\n${"x".repeat(200)}\nomega`);
 
     const read = await createReadFileTool().execute({ file_path: ref.readFilePath, offset: 1, limit: 2 }, context(projectRoot));
@@ -65,17 +65,17 @@ test("large tool results are persisted under workspace .pilotdeck and readable b
     assert.match(text, /2\|x+/);
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("large tool result read_file aliases are short and sequential", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-readable-tool-result-seq-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-readable-tool-result-seq-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-home-"));
   try {
     const storage = createAgentProjectSessionStorage({
       projectRoot,
-      pilotHome,
+      eastyunHome,
       sessionId: "web:s_test",
       now: () => new Date("2026-07-09T00:00:00.000Z"),
     });
@@ -99,10 +99,10 @@ test("large tool result read_file aliases are short and sequential", async () =>
     const secondRef = second.content.find((block) => block.type === "tool_result_reference");
     assert.ok(firstRef);
     assert.ok(secondRef);
-    assert.equal(firstRef.readFilePath, ".pilotdeck/tool-results/refs/result-0001.txt");
-    assert.equal(secondRef.readFilePath, ".pilotdeck/tool-results/refs/result-0002.txt");
+    assert.equal(firstRef.readFilePath, ".eastyundesk/tool-results/refs/result-0001.txt");
+    assert.equal(secondRef.readFilePath, ".eastyundesk/tool-results/refs/result-0002.txt");
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });

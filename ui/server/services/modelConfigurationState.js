@@ -1,14 +1,14 @@
 import fs from 'fs';
 import { parseModelConfig } from '../../../src/model/config/parseModelConfig.js';
-import { loadPilotConfig } from '../../../src/pilot/config/loadPilotConfig.js';
+import { loadEastYunConfig } from '../../../src/eastyun/config/loadEastYunConfig.js';
 import {
   configRevision,
-  readPilotDeckConfigFile,
+  readEastYunDeskConfigFile,
   resolveConfiguredProviderApiKey,
   resolveConfiguredProviderUrl,
   resolveModel,
-  validatePilotDeckConfig,
-} from './pilotdeckConfig.js';
+  validateEastYunDeskConfig,
+} from './eastyundeskConfig.js';
 
 const BOOTSTRAP_PLACEHOLDER_PROVIDER = '_placeholder';
 const BOOTSTRAP_PLACEHOLDER_KEY = 'PLACEHOLDER_RUN_ONBOARDING_TO_REPLACE';
@@ -44,7 +44,7 @@ function gatewayValidationErrors(record, env) {
   if (!record.configPath || !fs.existsSync(record.configPath)) return [];
 
   try {
-    loadPilotConfig({ configPath: record.configPath, env });
+    loadEastYunConfig({ configPath: record.configPath, env });
     return [];
   } catch (error) {
     if (Array.isArray(error?.diagnostics) && error.diagnostics.length > 0) {
@@ -77,7 +77,7 @@ export function evaluateModelConfigurationState(record, options = {}) {
   const config = record.config;
   const env = options.env ?? process.env;
   const configuredModelRef = normalizeString(config?.agent?.model);
-  const modelRef = normalizeString(env.PILOT_AGENT_MODEL) || configuredModelRef;
+  const modelRef = normalizeString(env.EASTYUN_AGENT_MODEL) || configuredModelRef;
   const effectiveConfig = modelRef === configuredModelRef
     ? config
     : {
@@ -100,7 +100,7 @@ export function evaluateModelConfigurationState(record, options = {}) {
       && !Array.isArray(providers) && Object.values(providers).every(provider =>
         provider?.models && typeof provider.models === 'object' && !Array.isArray(provider.models)
         && Object.keys(provider.models).length === 0)) {
-      const validation = validatePilotDeckConfig(config);
+      const validation = validateEastYunDeskConfig(config);
       return validation.valid
         ? { ...baseState(record), state: 'empty' }
         : invalidConfiguration(record, validation.errors);
@@ -154,7 +154,7 @@ export function evaluateModelConfigurationState(record, options = {}) {
       Object.entries(effectiveConfig.model.providers).filter(([id]) => Object.hasOwn(parsedModel.providers, id)),
     ) },
   };
-  const validation = validatePilotDeckConfig(runtimeConfig);
+  const validation = validateEastYunDeskConfig(runtimeConfig);
   if (!validation.valid) {
     return invalidConfiguration(record, validation.errors);
   }
@@ -175,5 +175,5 @@ export function evaluateModelConfigurationState(record, options = {}) {
 }
 
 export function getModelConfigurationState(options = {}) {
-  return evaluateModelConfigurationState(readPilotDeckConfigFile(), options);
+  return evaluateModelConfigurationState(readEastYunDeskConfigFile(), options);
 }

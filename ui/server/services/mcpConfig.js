@@ -1,21 +1,21 @@
 import fsPromises from 'fs/promises';
 import path from 'path';
-import { isVirtualProjectPath, resolvePilotHome } from '../utils/pilotPaths.js';
+import { isVirtualProjectPath, resolveEastYunHome } from '../utils/eastyunPaths.js';
 
 const DEFAULT_MCP_CONFIG = {
   mcpServers: {},
 };
 
-function pilotHome() {
-  return resolvePilotHome(process.env);
+function eastyunHome() {
+  return resolveEastYunHome(process.env);
 }
 
 export function getGlobalMcpConfigPath() {
-  return path.join(pilotHome(), 'mcp.json');
+  return path.join(eastyunHome(), 'mcp.json');
 }
 
 export function getProjectMcpConfigPath(projectPath) {
-  return path.join(projectPath, '.pilotdeck', 'mcp.json');
+  return path.join(projectPath, '.eastyundesk', 'mcp.json');
 }
 
 export function normalizeMcpConfig(input) {
@@ -49,7 +49,7 @@ export function normalizeMcpConfig(input) {
 }
 
 export async function readMcpConfigFile(scope, projectPath) {
-  if (scope === 'project' && (!projectPath || isVirtualProjectPath(projectPath, pilotHome()))) {
+  if (scope === 'project' && (!projectPath || isVirtualProjectPath(projectPath, eastyunHome()))) {
     return {
       exists: false,
       path: null,
@@ -84,7 +84,7 @@ export async function readMcpConfigFile(scope, projectPath) {
 
 export async function writeMcpConfigFile(scope, raw, projectPath) {
   const parsed = normalizeMcpConfig(JSON.parse(raw));
-  if (scope === 'project' && (!projectPath || isVirtualProjectPath(projectPath, pilotHome()))) {
+  if (scope === 'project' && (!projectPath || isVirtualProjectPath(projectPath, eastyunHome()))) {
     throw new Error('Project MCP config requires a real project. Use global scope for general chat.');
   }
   const filePath = scope === 'project' ? getProjectMcpConfigPath(projectPath) : getGlobalMcpConfigPath();

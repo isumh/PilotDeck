@@ -28,6 +28,17 @@ export type ModelTokenLimits = {
 };
 
 /** Defaults persisted for newly configured models; mirrors the engine's protocol defaults. */
+/**
+ * EastYunDesk ships a single builtin provider. It is deliberately not part of
+ * `CATALOG_PROVIDERS`: it must not appear in the provider picker, and the
+ * settings UI prevents it from being removed.
+ *
+ * Keep in sync with `BUILTIN_PROVIDER_ID` in ui/server/services/eastyundeskConfig.js.
+ */
+export const BUILTIN_PROVIDER_ID = 'yna-llm';
+export const BUILTIN_PROVIDER_URL = 'http://ai-gw.ceairyn.com/v1';
+export const BUILTIN_MODEL_ID = 'qwen3.8-27b';
+
 export const DEFAULT_MODEL_TOKEN_LIMITS: Record<CatalogProviderProtocol, ModelTokenLimits> = {
   anthropic: { maxContextTokens: 262_144, maxOutputTokens: 32_768 },
   openai: { maxContextTokens: 262_144, maxOutputTokens: 32_768 },

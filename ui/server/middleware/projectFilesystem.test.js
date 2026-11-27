@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { createLocalGateway } from '../../../src/cli/createLocalGateway.js';
 import { createCronManager, defaultCronConfig } from '../../../src/cron/index.js';
-import { createProjectId } from '../../../src/pilot/paths.js';
+import { createProjectId } from '../../../src/eastyun/paths.js';
 import { createModelRuntime } from '../../../src/model/index.js';
 import { SessionConfigOverrides } from '../../../src/always-on/runtime/SessionConfigOverrides.js';
 import { createCronWorkspaceResolver } from '../services/cronWorkspace.js';
@@ -58,7 +58,7 @@ beforeEach(async () => {
     const app = express();
     app.use(express.json({ limit: '50mb' }));
     const authenticateToken = (req, res, next) => req.headers.authorization === 'Bearer test' ? next() : res.sendStatus(401);
-    env = { PILOT_HOME: home };
+    env = { EASTYUN_HOME: home };
     const guard = createProjectFilesystemMiddleware({ env, resolveTaskWorkspace: async id => {
       if (taskResolver) return taskResolver(id);
       if (id === 'local') return { root: workspace, sourceRoot: workspace };
@@ -109,7 +109,7 @@ describe('reported project root injection', () => {
         await expect(fs.access(path.join(root, 'marker'))).rejects.toThrow();
     });
 
-    it('rejects registered PILOT_HOME, descendants and parents', async () => {
+    it('rejects registered EASTYUN_HOME, descendants and parents', async () => {
         for (const [id, location] of [['parent', root], ['home', home], ['child', path.join(home, 'projects')]]) {
             await fs.mkdir(path.join(home, 'projects', id));
             await fs.writeFile(path.join(home, 'projects', id, '.cwd'), location);
@@ -122,11 +122,11 @@ describe('reported project root injection', () => {
         expect((await request('general', '/file?filePath=server-token')).status).toBe(403);
     });
 
-    it.each([false, true])('rejects canonical home overlaps with a symlinked PILOT_HOME=%s', async (aliasHome) => {
+    it.each([false, true])('rejects canonical home overlaps with a symlinked EASTYUN_HOME=%s', async (aliasHome) => {
         if (aliasHome) {
             const homeAlias = path.join(root, 'configured-home-alias');
             await fs.symlink(home, homeAlias, process.platform === 'win32' ? 'junction' : 'dir');
-            env.PILOT_HOME = homeAlias;
+            env.EASTYUN_HOME = homeAlias;
         }
         for (const [id, location] of [['parent', root], ['home', home], ['child', path.join(home, 'projects')]]) {
             const alias = path.join(root, `${id}-alias`);
@@ -263,11 +263,11 @@ it('keeps task file-index pagination and queries scoped to the trusted workspace
 
 it('keeps a General task authorized in its saved execution directory after settings change and restart', async () => {
     const canonicalRoot = await fs.realpath(root);
-    env.PILOTDECK_GENERAL_WORKSPACE_DIRECTORY = path.join(canonicalRoot, 'general-a');
+    env.EASTYUNDESK_GENERAL_WORKSPACE_DIRECTORY = path.join(canonicalRoot, 'general-a');
     const generalA = await ensureGeneralWorkspaceDirectory(env);
     await fs.writeFile(path.join(generalA, 'report.md'), 'Task report in A');
     const gateway = { closeSession: async () => {}, async *submitTurn() { throw new Error('File requests must not execute a model turn'); } };
-    let manager = createCronManager({ config: defaultCronConfig(), pilotHome: home });
+    let manager = createCronManager({ config: defaultCronConfig(), eastyunHome: home });
     manager.bindGateway(gateway);
     taskResolver = createCronWorkspaceResolver({ getGateway: () => ({ cronList: input => manager.listTasks(input) }), env });
     try {
@@ -289,13 +289,13 @@ it('keeps a General task authorized in its saved execution directory after setti
             expect((await request(id, '/file?filePath=' + encodeURIComponent(path.join(home, 'auth.db')))).status).toBe(403);
         };
         await verifyFiles();
-        env.PILOTDECK_GENERAL_WORKSPACE_DIRECTORY = path.join(canonicalRoot, 'general-b');
+        env.EASTYUNDESK_GENERAL_WORKSPACE_DIRECTORY = path.join(canonicalRoot, 'general-b');
         const generalB = await ensureGeneralWorkspaceDirectory(env);
         await fs.writeFile(path.join(generalB, 'report.md'), 'New General report in B');
         await verifyFiles();
         expect((await request(id, '/file?filePath=' + encodeURIComponent(path.join(generalB, 'report.md')))).status).toBe(403);
         await manager.stop();
-        manager = createCronManager({ config: defaultCronConfig(), pilotHome: home });
+        manager = createCronManager({ config: defaultCronConfig(), eastyunHome: home });
         manager.bindGateway(gateway);
         await manager.start();
         await verifyFiles();
@@ -317,7 +317,7 @@ it('previews files from task chat before its first worktree execution and follow
     const registered = path.join(home, 'projects', createProjectId(workspace));
     await fs.mkdir(registered, { recursive: true }); await fs.writeFile(path.join(registered, '.cwd'), workspace);
     const skills = path.join(root, 'skills'); await fs.mkdir(skills);
-    const configPath = path.join(home, 'pilotdeck.yaml');
+    const configPath = path.join(home, 'eastyundesk.yaml');
     await fs.writeFile(configPath, `schemaVersion: 1
 agent: { model: test/model }
 model:
@@ -334,10 +334,10 @@ memory: { enabled: false }
 telemetry: { enabled: false }
 `);
     const sessionOverrides = new SessionConfigOverrides();
-    const cron = createCronManager({ config: defaultCronConfig(), pilotHome: home, sessionOverrides });
+    const cron = createCronManager({ config: defaultCronConfig(), eastyunHome: home, sessionOverrides });
     let calls = 0, writtenCwd;
-    const local = createLocalGateway({ pilotHome: home, projectRoot: workspace, builtinSkillsRoot: skills,
-        env: { ...env, PILOTDECK_CONFIG_PATH: configPath }, cron, sessionOverrides,
+    const local = createLocalGateway({ eastyunHome: home, projectRoot: workspace, builtinSkillsRoot: skills,
+        env: { ...env, EASTYUNDESK_CONFIG_PATH: configPath }, cron, sessionOverrides,
         extraTools: [{ name: 'write_report', kind: 'filesystem', description: 'Write the synthetic task report',
             inputSchema: { type: 'object', properties: {} }, isReadOnly: () => false,
             execute: async (_input, context) => { writtenCwd = context.cwd;

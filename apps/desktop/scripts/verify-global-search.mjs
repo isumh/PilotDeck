@@ -9,7 +9,7 @@ import { pathToFileURL } from 'node:url';
 const runtime = path.resolve(process.argv[2]);
 assert.ok(!existsSync(path.join(runtime, 'src')), 'Packaged search must run without source files');
 assert.ok(!existsSync(path.join(runtime, 'node_modules', 'tsx')), 'Packaged search must run without tsx');
-const temporary = await mkdtemp(path.join(os.tmpdir(), 'pilotdeck-packaged-search-'));
+const temporary = await mkdtemp(path.join(os.tmpdir(), 'eastyundesk-packaged-search-'));
 let search;
 try {
   // Keep the worker outside the checkout so it cannot accidentally resolve the
@@ -20,9 +20,9 @@ try {
   await cp(path.join(runtime, 'ui', 'server'), path.join(isolated, 'ui', 'server'), { recursive: true });
   await symlink(path.join(runtime, 'dist'), path.join(isolated, 'dist'), process.platform === 'win32' ? 'junction' : 'dir');
   await symlink(path.join(runtime, 'node_modules'), path.join(isolated, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
-  const pilotHome = path.join(temporary, 'home');
+  const eastyunHome = path.join(temporary, 'home');
   const workspace = path.join(temporary, 'workspace');
-  const registration = path.join(pilotHome, 'projects', 'registered');
+  const registration = path.join(eastyunHome, 'projects', 'registered');
   await mkdir(path.join(registration, 'chats'), { recursive: true });
   await mkdir(workspace);
   await writeFile(path.join(registration, '.cwd'), workspace);
@@ -33,7 +33,7 @@ try {
     message: { role: 'assistant', content: [{ type: 'text', text: 'runtime-needle' }] },
   }) + '\n');
   const { createGlobalSearch } = await import(pathToFileURL(path.join(isolated, 'ui', 'server', 'services', 'globalSearch.js')));
-  search = createGlobalSearch({ pilotHome, watch: false });
+  search = createGlobalSearch({ eastyunHome, watch: false });
   await search.warm();
   const result = await search({ query: 'runtime-needle', kind: 'all' });
   assert.equal(result.counts.chats, 1);

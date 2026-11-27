@@ -2,9 +2,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import ModelReferenceDetail, { modelReferencePath } from './ModelReferenceDetail';
-import type { PilotDeckConfig } from '../../view/modelPool/types';
+import type { EastYunDeskConfig } from '../../view/modelPool/types';
 afterEach(cleanup);
-const config = { agent: { model: 'other/new' }, model: { providers: { 'HX API': { models: { 'qwen3.6/27b': {} } }, other: { models: { new: {} } } } } } as PilotDeckConfig;
+const config = { agent: { model: 'other/new' }, model: { providers: { 'HX API': { models: { 'qwen3.6/27b': {} } }, other: { models: { new: {} } } } } } as EastYunDeskConfig;
 it('keeps dots and slashes in pricing model IDs as one path key', () => {
   const reference = 'router.stats.modelPricing.HX API/qwen3.6/27b';
   expect(modelReferencePath(reference)).toEqual(['router','stats','modelPricing','HX API/qwen3.6/27b']);
@@ -13,7 +13,7 @@ it('keeps dots and slashes in pricing model IDs as one path key', () => {
   expect(screen.queryByRole('combobox')).toBeNull();
 });
 it('preserves object reference metadata and updates both ID and provider/model', async () => {
-  const next={...config,agent:{model:'HX API/qwen3.6/27b'},router:{scenarios:{default:{id:'HX API/qwen3.6/27b',provider:'HX API',model:'qwen3.6/27b',tag:'keep'}}}} as unknown as PilotDeckConfig;
+  const next={...config,agent:{model:'HX API/qwen3.6/27b'},router:{scenarios:{default:{id:'HX API/qwen3.6/27b',provider:'HX API',model:'qwen3.6/27b',tag:'keep'}}}} as unknown as EastYunDeskConfig;
   const save=vi.fn();
   render(<ModelReferenceDetail config={next} reference="router.scenarios.default" onChange={save} />);
   fireEvent.change(screen.getByRole('combobox'),{target:{value:'other/new'}});

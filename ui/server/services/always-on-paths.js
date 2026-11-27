@@ -1,10 +1,10 @@
 import path from 'path';
-import { resolvePilotHome, resolveProjectStorageId } from '../utils/pilotPaths.js';
+import { resolveEastYunHome, resolveProjectStorageId } from '../utils/eastyunPaths.js';
 
 export function getAlwaysOnRoot(projectRoot) {
-  const pilotHome = resolvePilotHome();
-  const projectId = resolveProjectStorageId(path.resolve(projectRoot), pilotHome);
-  return path.join(pilotHome, 'always-on', 'projects', projectId);
+  const eastyunHome = resolveEastYunHome();
+  const projectId = resolveProjectStorageId(path.resolve(projectRoot), eastyunHome);
+  return path.join(eastyunHome, 'always-on', 'projects', projectId);
 }
 
 export function getAlwaysOnDiscoveryLockPath(projectRoot) {

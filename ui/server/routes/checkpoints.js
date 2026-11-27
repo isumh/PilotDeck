@@ -1,10 +1,10 @@
 import express from 'express';
-import { getPilotDeckGateway } from '../pilotdeck-bridge.js';
+import { getEastYunDeskGateway } from '../eastyundesk-bridge.js';
 import { extractProjectDirectory } from '../projects.js';
 
 const router = express.Router();
 
-export function createCheckpointHandler({ getGateway = getPilotDeckGateway, resolveProject = extractProjectDirectory } = {}) {
+export function createCheckpointHandler({ getGateway = getEastYunDeskGateway, resolveProject = extractProjectDirectory } = {}) {
   return async (req, res) => {
     try {
       const input = req.body ?? {};

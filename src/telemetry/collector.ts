@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { join, resolve } from "node:path";
 import { normalizeProviderBaseUrl } from "../model/normalizeProviderBaseUrl.js";
-import { resolvePilotHome } from "../pilot/paths.js";
+import { resolveEastYunHome } from "../eastyun/paths.js";
 import { hashTelemetryId, resolveTelemetryRuntimeContext } from "./context.js";
 import { TelemetrySender } from "./sender.js";
 import {
@@ -24,7 +24,7 @@ import {
 
 type CreateTelemetryCollectorInput = {
   env?: Record<string, string | undefined>;
-  pilotHome?: string;
+  eastyunHome?: string;
   fetchImpl?: typeof fetch;
   /** Explicit override for the enabled flag; takes precedence over env. */
   enabled?: boolean;
@@ -39,7 +39,7 @@ export function createTelemetryCollector(
   input: CreateTelemetryCollectorInput = {},
 ): TelemetryClient {
   const env = input.env ?? process.env;
-  const config = resolveTelemetryConfig(env, input.pilotHome);
+  const config = resolveTelemetryConfig(env, input.eastyunHome);
   if (input.enabled != null) {
     config.enabled = input.enabled;
   }
@@ -49,7 +49,7 @@ export function createTelemetryCollector(
   return {
     track(eventName, properties = {}, context = {}) {
       if (!config.enabled) return;
-      runtimeContext ??= resolveTelemetryRuntimeContext({ env, pilotHome: input.pilotHome });
+      runtimeContext ??= resolveTelemetryRuntimeContext({ env, eastyunHome: input.eastyunHome });
       sender.enqueue(buildEvent({
         eventName,
         properties: sanitizeProperties(properties),
@@ -136,13 +136,13 @@ export function createTelemetryCollector(
 
 function resolveTelemetryConfig(
   env: Record<string, string | undefined>,
-  pilotHomeOverride?: string,
+  eastyunHomeOverride?: string,
 ): TelemetryConfig {
   const enabled = parseEnabledFlag(env.ANALYTICS_ENABLED, false);
-  const pilotHome = pilotHomeOverride ?? resolvePilotHome(env);
+  const eastyunHome = eastyunHomeOverride ?? resolveEastYunHome(env);
   const queueFilePath = env.ANALYTICS_QUEUE_FILE
     ? resolve(env.ANALYTICS_QUEUE_FILE)
-    : join(pilotHome, "telemetry", "queue.jsonl");
+    : join(eastyunHome, "telemetry", "queue.jsonl");
 
   return {
     enabled,

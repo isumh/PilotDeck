@@ -10,25 +10,25 @@ export type LoadMcpServerConfigResult = {
   diagnostics: { path: string; message: string }[];
 };
 
-export function getGlobalMcpConfigFilePath(pilotHome: string): string {
-  return resolve(pilotHome, MCP_CONFIG_FILE_NAME);
+export function getGlobalMcpConfigFilePath(eastyunHome: string): string {
+  return resolve(eastyunHome, MCP_CONFIG_FILE_NAME);
 }
 
 export function getProjectMcpConfigFilePath(projectRoot: string): string {
-  return resolve(projectRoot, ".pilotdeck", MCP_CONFIG_FILE_NAME);
+  return resolve(projectRoot, ".eastyundesk", MCP_CONFIG_FILE_NAME);
 }
 
-export function loadMcpServerConfig(projectRoot: string, pilotHome: string): LoadMcpServerConfigResult {
+export function loadMcpServerConfig(projectRoot: string, eastyunHome: string): LoadMcpServerConfigResult {
   const diagnostics: LoadMcpServerConfigResult["diagnostics"] = [];
-  const global = readMcpConfig(getGlobalMcpConfigFilePath(pilotHome), diagnostics);
+  const global = readMcpConfig(getGlobalMcpConfigFilePath(eastyunHome), diagnostics);
   const project = readMcpConfig(getProjectMcpConfigFilePath(projectRoot), diagnostics);
-  const managedPath = process.env.PILOTDECK_COMPUTER_USE_MCP_CONFIG;
+  const managedPath = process.env.EASTYUNDESK_COMPUTER_USE_MCP_CONFIG;
   const managed = managedPath ? readMcpConfig(managedPath, diagnostics) : undefined;
   const servers = { ...(global?.mcpServers ?? {}), ...(project?.mcpServers ?? {}) };
   if (managedPath) {
-    delete servers['pilotdeck-computer-use'];
-    const driver = managed?.mcpServers?.['pilotdeck-computer-use'];
-    if (isRecord(driver)) servers['pilotdeck-computer-use'] = driver;
+    delete servers['eastyundesk-computer-use'];
+    const driver = managed?.mcpServers?.['eastyundesk-computer-use'];
+    if (isRecord(driver)) servers['eastyundesk-computer-use'] = driver;
   }
 
   return {

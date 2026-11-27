@@ -18,21 +18,21 @@ function deferred() {
 }
 
 test('the public stop API prevents submission after a real first worktree checkout', { timeout: 20_000 }, async t => {
-  const root = await mkdtemp(join(tmpdir(), 'pilotdeck-cron-stop-worktree-'));
+  const root = await mkdtemp(join(tmpdir(), 'eastyundesk-cron-stop-worktree-'));
   const home = join(root, 'state'), project = join(root, 'source');
   await mkdir(project);
   const git = (...args: string[]) => execFileSync('git', ['-C', project, ...args], { stdio: 'pipe' });
   git('init'); git('config', 'user.name', 'Task QA'); git('config', 'user.email', 'task@example.invalid');
   await writeFile(join(project, 'fixture.txt'), 'Committed source');
   git('add', '.'); git('commit', '-m', 'Synthetic fixture');
-  const paths = resolveCronPaths({ pilotHome: home, projectKey: project });
+  const paths = resolveCronPaths({ eastyunHome: home, projectKey: project });
   const store = new CronTaskStore(paths), entered = deferred(), release = deferred(), settled = deferred();
   let submitted = 0;
   const aborts: unknown[] = [];
   const gateway = { closeSession: async () => {}, abortTurn: async (input: unknown) => { aborts.push(input); },
     async *submitTurn() { submitted++; yield { type: 'assistant_text_delta', text: 'Should never run' }; },
   } as unknown as Gateway;
-  const runtime = createCronRuntime({ config: defaultCronConfig(), pilotHome: home, projectKey: project, store,
+  const runtime = createCronRuntime({ config: defaultCronConfig(), eastyunHome: home, projectKey: project, store,
     onTurnEvent: (_session, _channel, event) => { if (event.type === 'agent_status' && event.event === 'cron_settled') settled.resolve(); },
   });
   runtime.bindGateway(gateway);
@@ -65,11 +65,11 @@ test('the public stop API prevents submission after a real first worktree checko
 for (const trigger of ['manual', 'scheduled'] as const) {
   for (const boundary of ['preparation', 'workspace persistence'] as const) {
     test(`a stop during ${boundary} prevents ${trigger} execution from reaching Gateway`, { timeout: 10_000 }, async t => {
-      const root = await mkdtemp(join(tmpdir(), 'pilotdeck-cron-cancellation-'));
+      const root = await mkdtemp(join(tmpdir(), 'eastyundesk-cron-cancellation-'));
       t.after(() => rm(root, { recursive: true, force: true }));
       const home = join(root, 'state'), project = join(root, 'source'), workspace = join(root, 'task-worktree');
       await mkdir(project);
-      const store = new CronTaskStore(resolveCronPaths({ pilotHome: home, projectKey: project }));
+      const store = new CronTaskStore(resolveCronPaths({ eastyunHome: home, projectKey: project }));
       const task: CronTask = { schemaVersion: 1, taskId: 'task-1', projectKey: project, workspaceMode: 'worktree',
         sessionKey: 'cron:task-1', channelKey: 'cron', message: 'Prepare the report',
         schedule: { type: 'cron', expression: '0 * * * *', timezone: 'UTC' }, timezone: 'UTC',

@@ -1,15 +1,15 @@
-import { isOptionalFeatureEnabled } from "../../../../../../src/pilot/config/optionalFeature.js";
+import { isOptionalFeatureEnabled } from "../../../../../../src/eastyun/config/optionalFeature.js";
 import { useMemo, useState } from "react";
 import { Brain, Pencil } from "lucide-react";
 import { GeneralSelectControl, GeneralSettingRow, GeneralSettingsIcon } from "../../shared/view/GeneralSettingsPrimitives";
 import { useTranslation } from "react-i18next";
-import { usePilotDeckConfig } from "../../../../hooks/usePilotDeckConfig";
+import { useEastYunDeskConfig } from "../../../../hooks/useEastYunDeskConfig";
 import { findCatalogProviderById } from "../../../../shared/catalogProviders";
 import { ConfigSaveError, SettingsToggle } from "../../shared/view";
 import { queueSettingsSaveSuccess } from "../../shared/SettingsSuccessToast";
 import { patch } from "../modelPool/utils/patch";
 import { configToYamlString, safeParseYaml } from "../modelPool/utils/configYaml";
-import type { PilotDeckConfig } from "../modelPool/types";
+import type { EastYunDeskConfig } from "../modelPool/types";
 import {
   buildModelRefOptions,
   ensureModelRefConfigured,
@@ -53,8 +53,8 @@ function MemorySection({
   config,
   onChange,
 }: {
-  config: PilotDeckConfig;
-  onChange: (next: PilotDeckConfig) => void;
+  config: EastYunDeskConfig;
+  onChange: (next: EastYunDeskConfig) => void;
 }) {
   const { t } = useTranslation("settings");
   const m = config.memory ?? {};
@@ -96,7 +96,7 @@ function MemorySection({
 
   const selectedModelLabel =
     selected === "inherit"
-      ? t("pilotDeckConfig.panels.memory.model.inherit")
+      ? t("eastyunDeskConfig.panels.memory.model.inherit")
       : groupedModels
           .flatMap(([, group]) => group.options)
           .find((option) => option.value === selected)?.label ?? selected;
@@ -274,7 +274,7 @@ function MemorySection({
             compact id={unitId} disabled={controlsDisabled} ariaLabel={label}
             value={editing ? draftUnit : unit}
             onChange={value => { if (editing) onDraftUnit(parseIntervalUnit(value, units)); }}
-            options={units.map(value => ({ value, label: t(`pilotDeckConfig.panels.memory.intervalUnits.${value}`) }))}
+            options={units.map(value => ({ value, label: t(`eastyunDeskConfig.panels.memory.intervalUnits.${value}`) }))}
           />
           <div className="memory-interval-actions">
             {editing ? (
@@ -315,21 +315,21 @@ function MemorySection({
     <>
       <section className="general-card">
         <GeneralSettingRow icon={<GeneralSettingsIcon icon={Brain} />}
-          title={t("pilotDeckConfig.panels.memory.enabled.label")}
-          detail={t("pilotDeckConfig.panels.memory.enabled.description")}>
-          <SettingsToggle checked={enabled} ariaLabel={t("pilotDeckConfig.panels.memory.enabled.label")}
+          title={t("eastyunDeskConfig.panels.memory.enabled.label")}
+          detail={t("eastyunDeskConfig.panels.memory.enabled.description")}>
+          <SettingsToggle checked={enabled} ariaLabel={t("eastyunDeskConfig.panels.memory.enabled.label")}
             onChange={handleMemoryEnabled} suppressNextSaveToast />
         </GeneralSettingRow>
       </section>
 
       <section
         className="general-card memory-config-card"
-        aria-label={t("pilotDeckConfig.panels.memory.title")}
+        aria-label={t("eastyunDeskConfig.panels.memory.title")}
       >
         <div className={`memory-config-body${enabled ? "" : " disabled"}`}>
           <GeneralSettingRow htmlFor="memory-model"
-            title={t("pilotDeckConfig.panels.memory.model.label")}
-            detail={t("pilotDeckConfig.panels.memory.model.description")}>
+            title={t("eastyunDeskConfig.panels.memory.model.label")}
+            detail={t("eastyunDeskConfig.panels.memory.model.description")}>
             <div className="general-select-wrap">
               <select
                 id="memory-model"
@@ -342,7 +342,7 @@ function MemorySection({
                   const nextLabel =
                     event.target.selectedOptions[0]?.text || event.target.value;
                   queueSettingsSaveSuccess(
-                    `${t("pilotDeckConfig.panels.memory.model.label")}已切换为 ${nextLabel}`,
+                    `${t("eastyunDeskConfig.panels.memory.model.label")}已切换为 ${nextLabel}`,
                   );
                   onChange(
                     patch(
@@ -354,7 +354,7 @@ function MemorySection({
                 }}
               >
                 <option value="inherit">
-                  {t("pilotDeckConfig.panels.memory.model.inherit")}
+                  {t("eastyunDeskConfig.panels.memory.model.inherit")}
                 </option>
                 {selected !== "inherit" &&
                 !groupedModels.some(([, group]) =>
@@ -379,9 +379,9 @@ function MemorySection({
           {renderIntervalRow({
             id: "memory-indexing-value",
             unitId: "memory-indexing-unit",
-            label: t("pilotDeckConfig.panels.memory.autoIndexInterval.label"),
+            label: t("eastyunDeskConfig.panels.memory.autoIndexInterval.label"),
             description: t(
-              "pilotDeckConfig.panels.memory.autoIndexInterval.description",
+              "eastyunDeskConfig.panels.memory.autoIndexInterval.description",
             ),
             editing: indexEditing,
             draftValue: indexDraftValue,
@@ -400,9 +400,9 @@ function MemorySection({
           {renderIntervalRow({
             id: "memory-dream-value",
             unitId: "memory-dream-unit",
-            label: t("pilotDeckConfig.panels.memory.autoDreamInterval.label"),
+            label: t("eastyunDeskConfig.panels.memory.autoDreamInterval.label"),
             description: t(
-              "pilotDeckConfig.panels.memory.autoDreamInterval.description",
+              "eastyunDeskConfig.panels.memory.autoDreamInterval.description",
             ),
             editing: dreamEditing,
             draftValue: dreamDraftValue,
@@ -428,10 +428,10 @@ export default function AgentMemorySections({
   projects,
 }: AgentMemorySectionsProps) {
   const { t } = useTranslation("settings");
-  const { raw, commitRaw, loading, error } = usePilotDeckConfig();
+  const { raw, commitRaw, loading, error } = useEastYunDeskConfig();
   const parsedConfig = useMemo(() => safeParseYaml(raw), [raw]);
 
-  const onFormChange = (next: PilotDeckConfig) => {
+  const onFormChange = (next: EastYunDeskConfig) => {
     try {
       void commitRaw(configToYamlString(next));
     } catch (caught) {
@@ -443,7 +443,7 @@ export default function AgentMemorySections({
     return (
       <div className="memory-page-content">
         <div className="py-6 text-xs text-muted-foreground">
-          {t("pilotDeckConfig.loading")}
+          {t("eastyunDeskConfig.loading")}
         </div>
       </div>
     );

@@ -7,9 +7,9 @@ import { migrateLegacyGeneralWorkspace } from './generalWorkspaceMigration.js';
 
 const temporaryRoots = [];
 async function fixture() {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'pilotdeck-general-migration-'));
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'eastyundesk-general-migration-'));
     temporaryRoots.push(root);
-    const options = { source: path.join(root, '用户 general'), destination: path.join(root, '文档 PilotDeck'), pilotHome: path.join(root, 'profile') };
+    const options = { source: path.join(root, '用户 general'), destination: path.join(root, '文档 EastYunDesk'), eastyunHome: path.join(root, 'profile') };
     await Promise.all(Object.values(options).map(directory => fs.mkdir(directory)));
     return options;
 }
@@ -20,7 +20,7 @@ async function write(directory, name, value) {
 }
 const read = (directory, name) => fs.readFile(path.join(directory, name), 'utf8');
 async function manifests(options) {
-    const directory = path.join(options.pilotHome, 'migrations');
+    const directory = path.join(options.eastyunHome, 'migrations');
     const files = await fs.readdir(directory).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
     return Promise.all(files.filter(file => file.endsWith('.json')).map(async file => JSON.parse(await read(directory, file))));
 }
@@ -43,7 +43,7 @@ it('copies nested files, dotfiles and binary bytes while keeping the legacy copy
     expect(await fs.readFile(path.join(options.destination, 'image.bin'))).toEqual(Buffer.from([0, 255, 128, 42]));
     await write(options.destination, '报告/report.md', 'new version');
     expect(await read(options.source, '报告/report.md')).toBe('existing report');
-    expect(await fs.readdir(options.destination)).not.toContain(expect.stringMatching(/^\.pilotdeck-migration/));
+    expect(await fs.readdir(options.destination)).not.toContain(expect.stringMatching(/^\.eastyundesk-migration/));
     expect(await manifests(options)).toMatchObject([{ copied: 3, conflicts: [], skipped: [] }]);
 });
 
@@ -173,14 +173,14 @@ it.each(['source', 'destination'])('rejects a junction at the %s root', async fi
 it('rejects source/destination overlap and legacy paths exposing the profile', async () => {
     const options = await fixture();
     await expect(migrateLegacyGeneralWorkspace({ ...options, destination: options.source })).rejects.toMatchObject({ code: 'GENERAL_WORKSPACE_UNSAFE' });
-    await expect(migrateLegacyGeneralWorkspace({ ...options, pilotHome: path.dirname(options.source) })).rejects.toMatchObject({ code: 'GENERAL_WORKSPACE_UNSAFE' });
+    await expect(migrateLegacyGeneralWorkspace({ ...options, eastyunHome: path.dirname(options.source) })).rejects.toMatchObject({ code: 'GENERAL_WORKSPACE_UNSAFE' });
 });
 
 it('does nothing when no legacy workspace exists', async () => {
     const options = await fixture();
     await fs.rmdir(options.source);
     await migrateLegacyGeneralWorkspace(options);
-    expect(await fs.readdir(options.pilotHome)).toEqual([]);
+    expect(await fs.readdir(options.eastyunHome)).toEqual([]);
 });
 
 it('keeps conflict names within filename limits for long Unicode filenames', async () => {
@@ -209,7 +209,7 @@ it.each([false, true])('resolves a redirected parent even when the profile is mi
     const root = path.dirname(options.source);
     const alias = path.join(root, 'redirected parent');
     await fs.symlink(root, alias, process.platform === 'win32' ? 'junction' : 'dir');
-    if (missingProfile) await fs.rmdir(options.pilotHome);
+    if (missingProfile) await fs.rmdir(options.eastyunHome);
     await write(options.source, 'report.md', 'old report');
     const redirected = Object.fromEntries(Object.entries(options).map(([key, value]) => [key, path.join(alias, path.basename(value))]));
     await migrateLegacyGeneralWorkspace(redirected);

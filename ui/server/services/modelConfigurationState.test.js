@@ -1,7 +1,7 @@
 import { readFileSync, existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { WEB_SEARCH_PROVIDERS } from '../../../src/pilot/config/webSearchProviders.js';
+import { WEB_SEARCH_PROVIDERS } from '../../../src/eastyun/config/webSearchProviders.js';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   evaluateModelConfigurationState,
@@ -11,7 +11,7 @@ import {
 const tempDirs = [];
 
 afterEach(() => {
-  delete process.env.PILOTDECK_CONFIG_PATH;
+  delete process.env.EASTYUNDESK_CONFIG_PATH;
   for (const dir of tempDirs.splice(0)) {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -47,11 +47,11 @@ function configuredModel(overrides = {}) {
 }
 
 function useTempConfig(contents) {
-  const dir = mkdtempSync(join(tmpdir(), 'pilotdeck-model-state-'));
+  const dir = mkdtempSync(join(tmpdir(), 'eastyundesk-model-state-'));
   tempDirs.push(dir);
-  const configPath = join(dir, 'pilotdeck.yaml');
+  const configPath = join(dir, 'eastyundesk.yaml');
   if (contents !== null) writeFileSync(configPath, contents, 'utf8');
-  process.env.PILOTDECK_CONFIG_PATH = configPath;
+  process.env.EASTYUNDESK_CONFIG_PATH = configPath;
   return configPath;
 }
 
@@ -221,7 +221,7 @@ model:
 `);
 
     expect(getModelConfigurationState({
-      env: { PILOT_AGENT_MODEL: 'custom/model-a' },
+      env: { EASTYUN_AGENT_MODEL: 'custom/model-a' },
     })).toMatchObject({
       state: 'ready',
       modelRef: 'custom/model-a',

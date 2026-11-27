@@ -2,7 +2,7 @@ import type { ChannelAdapter } from "./protocol/ChannelAdapter.js";
 import type { ChannelStatePersistence } from "./protocol/ChannelStatePersistence.js";
 import type { SlackSessionMapperState } from "./slack/SlackSessionMapper.js";
 import type { TelegramSessionMapperState } from "./telegram/TelegramSessionMapper.js";
-import type { PilotAdaptersConfig, PilotPlatformAdapterConfig } from "../../pilot/config/types.js";
+import type { EastYunAdaptersConfig, EastYunPlatformAdapterConfig } from "../../eastyun/config/types.js";
 
 /**
  * Lazily import + instantiate every channel whose config has `enabled: true`.
@@ -10,7 +10,7 @@ import type { PilotAdaptersConfig, PilotPlatformAdapterConfig } from "../../pilo
  */
 const CHANNEL_LOADERS: Record<
   string,
-  (cfg: PilotPlatformAdapterConfig, options: LoadEnabledChannelsOptions) => Promise<ChannelAdapter>
+  (cfg: EastYunPlatformAdapterConfig, options: LoadEnabledChannelsOptions) => Promise<ChannelAdapter>
 > = {
   telegram: async (cfg, options) => {
     const { TelegramChannel } = await import("./telegram/TelegramChannel.js");
@@ -46,7 +46,7 @@ const CHANNEL_LOADERS: Record<
       accessToken: cfg.token,
       homeserver: cfg.extra?.homeserver as string | undefined,
       userId: cfg.extra?.userId as string | undefined,
-      pilotHome: options.pilotHome,
+      eastyunHome: options.eastyunHome,
     });
   },
   mattermost: async (cfg) => {
@@ -128,7 +128,7 @@ const CHANNEL_LOADERS: Record<
 };
 
 export type LoadEnabledChannelsOptions = {
-  pilotHome?: string;
+  eastyunHome?: string;
   /** Restores and saves per-chat session mappings (Slack, Telegram). */
   statePersistence?: Pick<ChannelStatePersistence, "load" | "save">;
 };
@@ -137,20 +137,20 @@ export type LoadEnabledChannelsOptions = {
  * Read permissionMode only from the config being loaded. An absent override
  * must stay absent: deps.config is the startup snapshot across hot reloads.
  */
-function permissionModeOf(cfg: PilotPlatformAdapterConfig): "default" | "bypassPermissions" | undefined {
+function permissionModeOf(cfg: EastYunPlatformAdapterConfig): "default" | "bypassPermissions" | undefined {
   const mode = cfg.extra?.permissionMode;
   return mode === "default" || mode === "bypassPermissions" ? mode : undefined;
 }
 
 export async function loadEnabledChannels(
-  adapters: PilotAdaptersConfig | undefined,
+  adapters: EastYunAdaptersConfig | undefined,
   options: LoadEnabledChannelsOptions = {},
 ): Promise<ChannelAdapter[]> {
   if (!adapters) return [];
   const channels: ChannelAdapter[] = [];
 
   for (const [key, loader] of Object.entries(CHANNEL_LOADERS)) {
-    const cfg = (adapters as Record<string, unknown>)[key] as PilotPlatformAdapterConfig | undefined;
+    const cfg = (adapters as Record<string, unknown>)[key] as EastYunPlatformAdapterConfig | undefined;
     if (!cfg?.enabled) continue;
 
     try {

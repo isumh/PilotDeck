@@ -240,8 +240,8 @@ export default function Sidebar({
   const cronSidebar = useCronSidebar();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const desktopOpenDirectory = window.pilotdeckDesktop?.openDirectory;
-  const desktopPlatform = window.pilotdeckDesktop?.platform;
+  const desktopOpenDirectory = window.eastyundeskDesktop?.openDirectory;
+  const desktopPlatform = window.eastyundeskDesktop?.platform;
   useCustomNamesVersion();
   const safeProjects = useMemo(() => (Array.isArray(projects) ? projects : []), [projects]);
 
@@ -647,7 +647,7 @@ export default function Sidebar({
     try {
       if (await desktopOpenDirectory(contextDirectory)) return;
     } catch { /* Surface the same localized error for missing paths and IPC errors. */ }
-    window.dispatchEvent(new CustomEvent('pilotdeck:toast', { detail: {
+    window.dispatchEvent(new CustomEvent('eastyundesk:toast', { detail: {
       kind: 'error', message: t('sidebar:contextMenu.openDirectoryFailed'),
     } }));
   };

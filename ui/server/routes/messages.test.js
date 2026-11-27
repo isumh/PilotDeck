@@ -19,9 +19,9 @@ describe('message routes', () => {
       ], total: 3 })),
       forkSession: vi.fn(async () => ({ newSessionKey: 'web:s_fork-fixture', prefillText: 'Continue here', carriedMessageCount: 2 })),
     };
-    vi.doMock('../pilotdeck-bridge.js', () => ({
-      getPilotDeckGateway: async () => gateway, isGatewayUnavailableError: () => false,
-      withPilotDeckGatewayReadRetry: operation => operation(gateway),
+    vi.doMock('../eastyundesk-bridge.js', () => ({
+      getEastYunDeskGateway: async () => gateway, isGatewayUnavailableError: () => false,
+      withEastYunDeskGatewayReadRetry: operation => operation(gateway),
     }));
     const { default: routes } = await import('./messages.js');
     const app = express(); app.use(express.json()); app.use('/api/sessions', routes);
@@ -48,8 +48,8 @@ describe('message routes', () => {
 
   it('rejects a fork without an entry ID before contacting Gateway', async () => {
     const getGateway = vi.fn();
-    vi.doMock('../pilotdeck-bridge.js', () => ({ getPilotDeckGateway: getGateway,
-      isGatewayUnavailableError: () => false, withPilotDeckGatewayReadRetry: vi.fn() }));
+    vi.doMock('../eastyundesk-bridge.js', () => ({ getEastYunDeskGateway: getGateway,
+      isGatewayUnavailableError: () => false, withEastYunDeskGatewayReadRetry: vi.fn() }));
     const { default: routes } = await import('./messages.js');
     const app = express(); app.use(express.json()); app.use('/api/sessions', routes);
     const server = app.listen(0, '127.0.0.1');
@@ -68,8 +68,8 @@ describe('message routes', () => {
     const error = Object.assign(new Error('Synthetic fork failure'), { code });
     const forkSession = vi.fn().mockRejectedValue(error);
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.doMock('../pilotdeck-bridge.js', () => ({ getPilotDeckGateway: async () => ({ forkSession }),
-      isGatewayUnavailableError: () => false, withPilotDeckGatewayReadRetry: vi.fn() }));
+    vi.doMock('../eastyundesk-bridge.js', () => ({ getEastYunDeskGateway: async () => ({ forkSession }),
+      isGatewayUnavailableError: () => false, withEastYunDeskGatewayReadRetry: vi.fn() }));
     const { default: routes } = await import('./messages.js');
     const app = express(); app.use(express.json()); app.use('/api/sessions', routes);
     const server = app.listen(0, '127.0.0.1');
@@ -86,8 +86,8 @@ describe('message routes', () => {
 
   it('preserves guidance identity from Gateway history for live/history reconciliation', async () => {
     const timeline = { version: 1, turnId: 'run', id: 'steer:guidance', order: 4, revision: 12 };
-    vi.doMock('../pilotdeck-bridge.js', () => ({ getPilotDeckGateway: vi.fn(), isGatewayUnavailableError: () => false,
-      withPilotDeckGatewayReadRetry: async () => ({ messages: [{ id: 'steer-history', turnId: 'run', kind: 'text', role: 'user',
+    vi.doMock('../eastyundesk-bridge.js', () => ({ getEastYunDeskGateway: vi.fn(), isGatewayUnavailableError: () => false,
+      withEastYunDeskGatewayReadRetry: async () => ({ messages: [{ id: 'steer-history', turnId: 'run', kind: 'text', role: 'user',
         text: 'Use primary sources', timeline, queueItemId: 'guidance', isSteer: true }] }),
     }));
     const { default: routes } = await import('./messages.js'); const app = express(); app.use('/api/sessions', routes); const server = app.listen(0);
@@ -98,8 +98,8 @@ describe('message routes', () => {
   });
   it('retains authoritative timing on a historical turn anchor', async () => {
     const turnTiming = { startedAt: '2026-09-01T00:00:00Z', completedAt: '2026-09-01T00:01:20Z', finishReason: 'model_error' };
-    vi.doMock('../pilotdeck-bridge.js', () => ({ getPilotDeckGateway: vi.fn(), isGatewayUnavailableError: () => false,
-      withPilotDeckGatewayReadRetry: async () => ({ messages: [{ id: 'user', turnId: 'r', kind: 'text', role: 'user', text: 'Inspect', turnTiming }] }),
+    vi.doMock('../eastyundesk-bridge.js', () => ({ getEastYunDeskGateway: vi.fn(), isGatewayUnavailableError: () => false,
+      withEastYunDeskGatewayReadRetry: async () => ({ messages: [{ id: 'user', turnId: 'r', kind: 'text', role: 'user', text: 'Inspect', turnTiming }] }),
     }));
     const { default: routes } = await import('./messages.js'); const app = express(); app.use('/api/sessions', routes); const server = app.listen(0);
     try {
@@ -116,9 +116,9 @@ describe('message routes', () => {
       }],
       total: 1,
     }));
-    vi.doMock('../pilotdeck-bridge.js', () => ({
-      getPilotDeckGateway: vi.fn(), isGatewayUnavailableError: () => false,
-      withPilotDeckGatewayReadRetry: operation => operation({ readSessionMessages: read }),
+    vi.doMock('../eastyundesk-bridge.js', () => ({
+      getEastYunDeskGateway: vi.fn(), isGatewayUnavailableError: () => false,
+      withEastYunDeskGatewayReadRetry: operation => operation({ readSessionMessages: read }),
     }));
     const { default: routes } = await import('./messages.js');
     const app = express();
@@ -137,8 +137,8 @@ describe('message routes', () => {
 
   it('forwards backward identity cursors and history replacement without converting them to offsets', async () => {
     const read = vi.fn(async () => ({ messages: [], total: 250, nextCursor: 'before:old-user', historyReset: true }));
-    vi.doMock('../pilotdeck-bridge.js', () => ({ getPilotDeckGateway: vi.fn(), isGatewayUnavailableError: () => false,
-      withPilotDeckGatewayReadRetry: operation => operation({ readSessionMessages: read }),
+    vi.doMock('../eastyundesk-bridge.js', () => ({ getEastYunDeskGateway: vi.fn(), isGatewayUnavailableError: () => false,
+      withEastYunDeskGatewayReadRetry: operation => operation({ readSessionMessages: read }),
     }));
     const { default: routes } = await import('./messages.js');
     const app = express(); app.use('/api/sessions', routes); const server = app.listen(0);
@@ -154,8 +154,8 @@ describe('message routes', () => {
     const breakdown = { systemTokens: 2200, toolsTokens: 10200, messageTokens: 65500 };
     const lastTurnUsage = { turnId: 'r', completedAt: '2026-09-01T00:01:00Z', usage: { inputTokens: 5000, cacheReadTokens: 5000 } };
     const read = vi.fn(async () => ({ messages: [], lastTurnUsage, modelContext: { version: 1, systemPrompt: 'real prompt', breakdown } }));
-    vi.doMock('../pilotdeck-bridge.js', () => ({ getPilotDeckGateway: vi.fn(), isGatewayUnavailableError: () => false,
-      withPilotDeckGatewayReadRetry: operation => operation({ readSessionMessages: read }),
+    vi.doMock('../eastyundesk-bridge.js', () => ({ getEastYunDeskGateway: vi.fn(), isGatewayUnavailableError: () => false,
+      withEastYunDeskGatewayReadRetry: operation => operation({ readSessionMessages: read }),
     }));
     const { default: routes } = await import('./messages.js');
     const app = express(); app.use('/api/sessions', routes);
@@ -178,10 +178,10 @@ describe('message routes', () => {
     } finally { await new Promise(resolve => server.close(resolve)); }
   });
   it('retains block IDs in the HTTP history returned to the browser', async () => {
-    vi.doMock('../pilotdeck-bridge.js', () => ({
-      getPilotDeckGateway: vi.fn(),
+    vi.doMock('../eastyundesk-bridge.js', () => ({
+      getEastYunDeskGateway: vi.fn(),
       isGatewayUnavailableError: () => false,
-      withPilotDeckGatewayReadRetry: vi.fn(async () => ({ messages: [
+      withEastYunDeskGatewayReadRetry: vi.fn(async () => ({ messages: [
         { id: 'history-1', kind: 'thinking', text: 'same', turnId: 'turn-1', blockId: 'response-1:thinking:0' },
         { id: 'history-2', kind: 'text', role: 'assistant', text: 'same', turnId: 'turn-1', blockId: 'response-1:text:0' },
       ] })),
@@ -200,10 +200,10 @@ describe('message routes', () => {
     }
   });
   it.each([['Gateway WebSocket is not connected.', 503, 'gateway_unavailable'], ['Transcript read failed', 500, 'session_messages_read_failed']])('reports read failure %s instead of a successful empty transcript', async (message, status, code) => {
-    vi.doMock('../pilotdeck-bridge.js', () => ({
-      getPilotDeckGateway: vi.fn(),
+    vi.doMock('../eastyundesk-bridge.js', () => ({
+      getEastYunDeskGateway: vi.fn(),
       isGatewayUnavailableError: (error) => /Gateway WebSocket/i.test(error?.message || ''),
-      withPilotDeckGatewayReadRetry: vi.fn(async () => {
+      withEastYunDeskGatewayReadRetry: vi.fn(async () => {
         throw new Error(message);
       }),
     }));
@@ -227,8 +227,8 @@ describe('message routes', () => {
 
 it.each(['generate_video', 'save_generated_video'])('retains %s attachment identity and purpose through HTTP history recovery', async toolName => {
   const videoGeneration = { videoId: 'video-id', sessionId: 'web:session', path: '/managed/video.mp4', mimeType: 'video/mp4', purpose: 'deliverable' };
-  vi.doMock('../pilotdeck-bridge.js', () => ({ getPilotDeckGateway: vi.fn(), isGatewayUnavailableError: () => false,
-    withPilotDeckGatewayReadRetry: vi.fn(async () => ({ messages: [{ id: 'result', kind: 'tool_result', toolName,
+  vi.doMock('../eastyundesk-bridge.js', () => ({ getEastYunDeskGateway: vi.fn(), isGatewayUnavailableError: () => false,
+    withEastYunDeskGatewayReadRetry: vi.fn(async () => ({ messages: [{ id: 'result', kind: 'tool_result', toolName,
       toolCallId: 'video-call', text: 'Video attached', ok: true, payload: { videoGeneration } }] })),
   }));
   const { default: routes } = await import('./messages.js'); const app = express(); app.use('/api/sessions', routes); const server = app.listen(0);
@@ -242,8 +242,8 @@ it.each(['ask_user_question', 'AskUserQuestion'])('retains %s answers and multi-
   const payload = { questions: [{ question: 'Which paths?', header: 'Scope', multiSelect: true,
     options: [{ label: 'A, B', description: 'A combined label' }, { label: 'C', description: 'Another path' }] }],
     answers: { 'Which paths?': ['A, B', 'C', 'Custom, answer'] } };
-  vi.doMock('../pilotdeck-bridge.js', () => ({ getPilotDeckGateway: vi.fn(), isGatewayUnavailableError: () => false,
-    withPilotDeckGatewayReadRetry: vi.fn(async () => ({ messages: [{ id: 'answer-result', kind: 'tool_result', toolName,
+  vi.doMock('../eastyundesk-bridge.js', () => ({ getEastYunDeskGateway: vi.fn(), isGatewayUnavailableError: () => false,
+    withEastYunDeskGatewayReadRetry: vi.fn(async () => ({ messages: [{ id: 'answer-result', kind: 'tool_result', toolName,
       toolCallId: 'question-call', text: 'User has answered', ok: true, payload }] })),
   }));
   const { default: routes } = await import('./messages.js');

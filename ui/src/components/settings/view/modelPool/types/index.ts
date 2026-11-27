@@ -14,7 +14,7 @@ export type V2Provider = {
   };
 };
 
-export type PilotDeckConfig = {
+export type EastYunDeskConfig = {
   runtime?: { python?: { enabled?: boolean } };
   agent?: {
     model?: string;
@@ -66,9 +66,9 @@ export type PilotDeckConfig = {
     maxConcurrentRuns?: number;
   } | null;
   tools?: {
-    videoGeneration?: import("../../../../../../../src/pilot/config/videoGenerationConfig.js").VideoGenerationConfig;
-    imageGeneration?: import("../../../../../../../src/pilot/config/imageGenerationConfig.js").ImageGenerationConfig;
-    webSearch?: import("../../../../../../../src/pilot/config/webSearchConfig.js").WebSearchConfig;
+    videoGeneration?: import("../../../../../../../src/eastyun/config/videoGenerationConfig.js").VideoGenerationConfig;
+    imageGeneration?: import("../../../../../../../src/eastyun/config/imageGenerationConfig.js").ImageGenerationConfig;
+    webSearch?: import("../../../../../../../src/eastyun/config/webSearchConfig.js").WebSearchConfig;
   };
   gateway?: {
     enabled?: boolean;

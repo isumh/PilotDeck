@@ -1,6 +1,6 @@
-import type { PilotDeckHookEvent } from "./events.js";
+import type { EastYunDeskHookEvent } from "./events.js";
 
-export type PilotDeckHookCommand =
+export type EastYunDeskHookCommand =
   | {
       type: "command";
       command: string;
@@ -47,12 +47,12 @@ export type PilotDeckHookCommand =
       statusMessage?: string;
     };
 
-export type PilotDeckHookMatcher = {
+export type EastYunDeskHookMatcher = {
   matcher?: string;
-  hooks: PilotDeckHookCommand[];
+  hooks: EastYunDeskHookCommand[];
   pluginName?: string;
   pluginId?: string;
   pluginRoot?: string;
 };
 
-export type PilotDeckHooksSettings = Partial<Record<PilotDeckHookEvent, PilotDeckHookMatcher[]>>;
+export type EastYunDeskHooksSettings = Partial<Record<EastYunDeskHookEvent, EastYunDeskHookMatcher[]>>;

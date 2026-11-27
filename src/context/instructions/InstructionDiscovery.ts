@@ -1,20 +1,20 @@
 /**
- * PILOTDECK.md instruction file discovery — multi-scope instruction hierarchy.
+ * EASTYUNDESK.md instruction file discovery — multi-scope instruction hierarchy.
  *
  * Files are loaded in the following order (later = higher priority, model pays
  * more attention to content that appears later in the system prompt):
  *
- *   1. Managed     — $PILOTDECK_MANAGED_CONFIG/PILOTDECK.md
- *   2. User        — ~/.pilotdeck/PILOTDECK.md
- *   3. User rules  — ~/.pilotdeck/rules/*.md
+ *   1. Managed     — $EASTYUNDESK_MANAGED_CONFIG/EASTYUNDESK.md
+ *   2. User        — ~/.eastyundesk/EASTYUNDESK.md
+ *   3. User rules  — ~/.eastyundesk/rules/*.md
  *   4. Project     — per directory from projectRoot toward cwd:
- *                      <dir>/PILOTDECK.md
- *                      <dir>/.pilotdeck/PILOTDECK.md
- *                      <dir>/.pilotdeck/rules/*.md
- *   5. Local       — <dir>/PILOTDECK.local.md  (private, not committed)
+ *                      <dir>/EASTYUNDESK.md
+ *                      <dir>/.eastyundesk/EASTYUNDESK.md
+ *                      <dir>/.eastyundesk/rules/*.md
+ *   5. Local       — <dir>/EASTYUNDESK.local.md  (private, not committed)
  *
  * Design mirrors the legacy upstream instruction-file discovery, adapted to
- * PilotDeck path conventions (~/.pilotdeck/, .pilotdeck/).
+ * EastYunDesk path conventions (~/.eastyundesk/, .eastyundesk/).
  */
 
 import { readFile, readdir } from "node:fs/promises";
@@ -37,7 +37,7 @@ export class InstructionDiscovery {
   constructor(
     private readonly projectRoot: string,
     private readonly cwd: string,
-    private readonly pilotHome: string,
+    private readonly eastyunHome: string,
   ) {}
 
   async discover(signal?: AbortSignal): Promise<InstructionLayer[]> {
@@ -45,24 +45,24 @@ export class InstructionDiscovery {
     const layers: InstructionLayer[] = [];
     const seen = new Set<string>();
 
-    // 1. Managed (administrator-level, e.g. /etc/pilotdeck/)
-    const managedDir = process.env.PILOTDECK_MANAGED_CONFIG;
+    // 1. Managed (administrator-level, e.g. /etc/eastyundesk/)
+    const managedDir = process.env.EASTYUNDESK_MANAGED_CONFIG;
     if (managedDir) {
-      await this.tryAdd(layers, seen, "managed", join(managedDir, "PILOTDECK.md"), signal);
+      await this.tryAdd(layers, seen, "managed", join(managedDir, "EASTYUNDESK.md"), signal);
     }
 
     // 2. User-level
-    await this.tryAdd(layers, seen, "user", join(this.pilotHome, "PILOTDECK.md"), signal);
-    await this.tryAddRulesDir(layers, seen, "user", join(this.pilotHome, "rules"), signal);
+    await this.tryAdd(layers, seen, "user", join(this.eastyunHome, "EASTYUNDESK.md"), signal);
+    await this.tryAddRulesDir(layers, seen, "user", join(this.eastyunHome, "rules"), signal);
 
     // 3–5. Project + Local — from root toward cwd (root first = lower priority)
     const dirs = this.collectDirectoryChain();
     for (const dir of dirs) {
       signal?.throwIfAborted();
-      await this.tryAdd(layers, seen, "project", join(dir, "PILOTDECK.md"), signal);
-      await this.tryAdd(layers, seen, "project", join(dir, ".pilotdeck", "PILOTDECK.md"), signal);
-      await this.tryAddRulesDir(layers, seen, "project-rules", join(dir, ".pilotdeck", "rules"), signal);
-      await this.tryAdd(layers, seen, "local", join(dir, "PILOTDECK.local.md"), signal);
+      await this.tryAdd(layers, seen, "project", join(dir, "EASTYUNDESK.md"), signal);
+      await this.tryAdd(layers, seen, "project", join(dir, ".eastyundesk", "EASTYUNDESK.md"), signal);
+      await this.tryAddRulesDir(layers, seen, "project-rules", join(dir, ".eastyundesk", "rules"), signal);
+      await this.tryAdd(layers, seen, "local", join(dir, "EASTYUNDESK.local.md"), signal);
     }
 
     signal?.throwIfAborted();

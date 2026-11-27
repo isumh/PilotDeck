@@ -12,7 +12,7 @@ import type { CronFire } from "../../src/cron/runtime/CronFire.js";
 import { createCronManager } from "../../src/cron/runtime/CronManager.js";
 import { generateCronTaskDetails } from "../../src/cron/runtime/CronTaskDetails.js";
 import { migrateCronStores } from "../../src/cron/storage/CronStoreMigration.js";
-import type { PilotDeckToolRuntimeContext } from "../../src/tool/index.js";
+import type { EastYunDeskToolRuntimeContext } from "../../src/tool/index.js";
 
 async function fixture(options: {
   submit?: (input: GatewaySubmitTurnInput) => AsyncIterable<GatewayEvent>;
@@ -20,11 +20,11 @@ async function fixture(options: {
   max?: number;
   details?: CreateCronRuntimeOptions["generateTaskDetails"];
 } = {}) {
-  const root = await mkdtemp(join(tmpdir(), "pilotdeck-cron-lifecycle-"));
+  const root = await mkdtemp(join(tmpdir(), "eastyundesk-cron-lifecycle-"));
   const home = join(root, "state");
   const project = join(root, "workspace");
   await mkdir(home); await mkdir(project);
-  const store = new CronTaskStore(resolveCronPaths({ pilotHome: home, projectKey: project }));
+  const store = new CronTaskStore(resolveCronPaths({ eastyunHome: home, projectKey: project }));
   const inputs: GatewaySubmitTurnInput[] = [];
   const closed: string[] = [];
   let now = new Date("2026-06-01T08:00:00Z");
@@ -37,7 +37,7 @@ async function fixture(options: {
     closeSession: async ({ sessionKey }: { sessionKey: string }) => { closed.push(sessionKey); },
     abortTurn: async () => undefined,
   } as unknown as Gateway;
-  const runtime = createCronRuntime({ config: { ...defaultCronConfig(), maxConcurrentRuns: options.max ?? 1 }, pilotHome: home,
+  const runtime = createCronRuntime({ config: { ...defaultCronConfig(), maxConcurrentRuns: options.max ?? 1 }, eastyunHome: home,
     projectKey: project, store, now: () => now, onResultDelivery: options.delivery, generateTaskDetails: options.details });
   runtime.bindGateway(gateway);
   const create = (input: Partial<CronCreateInput> = {}) => runtime.createTask({ name: "Daily report", message: "Generate a report",
@@ -206,11 +206,11 @@ test("legacy read-only tasks migrate to default permissions and Full Access is p
     const { task: oldDefault } = await f.create();
     const { task: oldReadOnly } = await f.create();
     const { task: fullAccess } = await f.create({ mode: "bypassPermissions" });
-    const { tasksFile } = resolveCronPaths({ pilotHome: f.home, projectKey: f.project });
+    const { tasksFile } = resolveCronPaths({ eastyunHome: f.home, projectKey: f.project });
     await writeFile(tasksFile, JSON.stringify({ schemaVersion: 1,
       tasks: [oldDefault, { ...oldReadOnly, mode: "plan" }, fullAccess] }));
-    await migrateCronStores({ pilotHome: f.home });
-    await migrateCronStores({ pilotHome: f.home });
+    await migrateCronStores({ eastyunHome: f.home });
+    await migrateCronStores({ eastyunHome: f.home });
     const saved = JSON.parse(await readFile(tasksFile, "utf8")).tasks as CronTask[];
     const modes = new Map(saved.map(task => [task.taskId, task.mode]));
     assert.equal(modes.get(oldDefault.taskId), "default");
@@ -226,7 +226,7 @@ test("damaged task stores reject reads and writes without replacing the original
   const f = await fixture();
   try {
     await f.create();
-    const file = resolveCronPaths({ pilotHome: f.home, projectKey: f.project }).tasksFile;
+    const file = resolveCronPaths({ eastyunHome: f.home, projectKey: f.project }).tasksFile;
     const broken = '{"schemaVersion":1,"tasks":[BROKEN';
     await writeFile(file, broken);
     await assert.rejects(f.store.listTasks(), /damaged.*preserved/);
@@ -324,13 +324,13 @@ test("restart recovers a committed one-time result instead of losing or repeatin
 
 test("Agent tools preserve General identity and execution directory, and manage tasks created by other entry points", async () => {
   const f = await fixture();
-  const manager = createCronManager({ config: defaultCronConfig(), pilotHome: f.home, now: () => new Date("2026-06-01T08:00:00Z") });
+  const manager = createCronManager({ config: defaultCronConfig(), eastyunHome: f.home, now: () => new Date("2026-06-01T08:00:00Z") });
   manager.bindGateway(f.gateway);
   try {
     await manager.start();
     const tools = manager.getTools();
     for (const name of ["cron_create", "cron_get", "cron_update", "cron_list", "cron_run_now", "cron_stop", "cron_delete"]) assert.ok(tools.some(tool => tool.name === name));
-    const context = { cwd: f.project, projectKey: f.home, sessionId: "web:general", now: () => new Date("2026-06-01T08:00:00Z") } as PilotDeckToolRuntimeContext;
+    const context = { cwd: f.project, projectKey: f.home, sessionId: "web:general", now: () => new Date("2026-06-01T08:00:00Z") } as EastYunDeskToolRuntimeContext;
     const created = await tools.find(tool => tool.name === "cron_create")!.execute({ name: "General report", message: "Synthetic task", schedule: { type: "delay", amount: 60, unit: "minute" }, timezone: "UTC" }, context);
     const task = (created.data as { task: CronTask }).task;
     assert.equal(task.projectKey, f.home);
@@ -360,7 +360,7 @@ for (const [label, schedule, dueAt] of [
       const update = f.runtime.getTools().find(tool => tool.name === "cron_update")!;
       const message = "Run the updated report";
       await update.execute({ taskId: task.taskId, expectedRevision: task.revision, message, schedule: task.schedule },
-        { cwd: f.project, projectKey: f.project, sessionId: "web:fixture" } as PilotDeckToolRuntimeContext);
+        { cwd: f.project, projectKey: f.project, sessionId: "web:fixture" } as EastYunDeskToolRuntimeContext);
       const saved = await f.store.getTask(task.taskId);
       assert.equal(saved?.message, message);
       assert.deepEqual(saved?.schedule, task.schedule);
@@ -631,7 +631,7 @@ test('Agent instruction updates preserve an omitted task name instead of regener
     const { task } = await f.create();
     const tool = f.runtime.getTools().find(tool => tool.name === 'cron_update')!;
     await tool.execute({ taskId: task.taskId, expectedRevision: task.revision, message: 'Report using primary sources.' },
-      { cwd: f.project, projectKey: f.project, sessionId: task.sessionKey } as PilotDeckToolRuntimeContext);
+      { cwd: f.project, projectKey: f.project, sessionId: task.sessionKey } as EastYunDeskToolRuntimeContext);
     const saved = (await f.store.getTask(task.taskId))!;
     assert.equal(saved.message, 'Report using primary sources.');
     assert.equal(saved.name, task.name);

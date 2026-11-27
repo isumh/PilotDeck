@@ -26,7 +26,7 @@ import {
 } from '../constants/thinkingModeAvailability';
 import { thinkingModeToConfig } from '../constants/thinkingModes';
 import { useSessionStore } from '../../../stores/useSessionStore';
-import { getDraftInputStorageKey, getPilotDeckSettings, safeLocalStorage } from '../utils/chatStorage';
+import { getDraftInputStorageKey, getEastYunDeskSettings, safeLocalStorage } from '../utils/chatStorage';
 import { buildAttachmentPathNote } from '../utils/attachmentNotes';
 import {
   createUserTurnRunId,
@@ -212,9 +212,9 @@ function ChatInterface({
     allMessagesLoaded,
     isLoadingAllMessages,
     claudeStatus,
-    pilotDeckStatus,
+    eastyunDeskStatus,
     setClaudeStatus,
-    setPilotDeckStatus,
+    setEastYunDeskStatus,
     createDiff,
     scrollContainerRef,
     scrollToBottom,
@@ -372,7 +372,7 @@ function ChatInterface({
     setCanAbortSession,
     setIsAborting,
     setClaudeStatus,
-    setPilotDeckStatus,
+    setEastYunDeskStatus,
     setIsUserScrolledUp,
     pendingPermissionRequests,
     setPendingPermissionRequests,
@@ -423,7 +423,7 @@ function ChatInterface({
 
   useChatRealtimeHandlers({
     sessionScope,
-    provider: 'pilotdeck',
+    provider: 'eastyundesk',
     selectedProject,
     selectedSession,
     currentSessionId,
@@ -435,7 +435,7 @@ function ChatInterface({
     setCanAbortSession,
     setIsAborting,
     setClaudeStatus,
-    setPilotDeckStatus,
+    setEastYunDeskStatus,
     setTokenBudget,
     setPendingPermissionRequests,
     pendingViewSessionRef,
@@ -648,7 +648,7 @@ function ChatInterface({
       runId,
       userVisibleInput: editedText,
       modelSelection: { ...modelSelection },
-      toolsSettings: getPilotDeckSettings(),
+      toolsSettings: getEastYunDeskSettings(),
       runMode,
       permissionMode: effectivePermissionMode,
       basePermissionMode: permissionMode,
@@ -755,7 +755,7 @@ function ChatInterface({
         />
       )}
       input={input}
-      placeholder={t('composer.placeholder', { defaultValue: 'Tell PilotDeck what you want to get done…' })}
+      placeholder={t('composer.placeholder', { defaultValue: 'Tell EastYunDesk what you want to get done…' })}
       textareaRef={textareaRef}
       inputHighlightRef={inputHighlightRef}
       renderInputWithMentions={renderInputWithMentions}
@@ -871,7 +871,7 @@ function ChatInterface({
               <MessageSquare className="h-4 w-4" strokeWidth={1.8} />
             </div>
             <p className="text-[13px] font-medium text-neutral-700 dark:text-neutral-300">
-              {t('workspace.emptyTitle', { defaultValue: 'Ask PilotDeck about this project' })}
+              {t('workspace.emptyTitle', { defaultValue: 'Ask EastYunDesk about this project' })}
             </p>
             <p className="mt-1 max-w-56 text-[12px] leading-5 text-neutral-400 dark:text-neutral-500">
               {t('workspace.emptyDescription', {
@@ -929,7 +929,7 @@ function ChatInterface({
           loadAllMessages={loadAllMessages}
           allMessagesLoaded={allMessagesLoaded}
           isLoadingAllMessages={isLoadingAllMessages}
-          provider={'pilotdeck' as Provider}
+          provider={'eastyundesk' as Provider}
           selectedProject={selectedProject}
           selectedSession={selectedSession}
           createDiff={createDiff}
@@ -944,7 +944,7 @@ function ChatInterface({
           pendingPermissionRequests={pendingPermissionRequests}
           sessionRuntimeState={sessionRuntimeState}
           activeRunId={activeRunId}
-          workingStatus={claudeStatus || pilotDeckStatus}
+          workingStatus={claudeStatus || eastyunDeskStatus}
           runMode={runMode}
           planModeActive={effectivePermissionMode === 'plan'}
           sessionStore={sessionStore}

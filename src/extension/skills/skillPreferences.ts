@@ -10,10 +10,10 @@ function preferenceKey(input: SkillAddressInput): string {
   return JSON.stringify([input.scope, process.platform === "win32" ? project?.toLowerCase() ?? null : project, input.slug]);
 }
 
-export function readSkillPreferences(pilotHome: string): SkillPreferences {
+export function readSkillPreferences(eastyunHome: string): SkillPreferences {
   let raw: string;
   try {
-    raw = readFileSync(join(pilotHome, "skill-preferences.json"), "utf8");
+    raw = readFileSync(join(eastyunHome, "skill-preferences.json"), "utf8");
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return { version: 1, disabled: [] };
     throw error;
@@ -31,13 +31,13 @@ export function isSkillEnabled(preferences: SkillPreferences, input: SkillAddres
 
 /** The single Gateway owns writes. Synchronous read/modify/rename keeps
  * concurrent requests from losing other skills' changes, including on Windows. */
-export function writeSkillEnabled(pilotHome: string, input: SkillAddressInput, enabled: boolean): void {
-  const preferences = readSkillPreferences(pilotHome);
+export function writeSkillEnabled(eastyunHome: string, input: SkillAddressInput, enabled: boolean): void {
+  const preferences = readSkillPreferences(eastyunHome);
   const key = preferenceKey(input);
   const disabled = preferences.disabled.filter(entry => entry !== key);
   if (!enabled) disabled.push(key);
-  mkdirSync(pilotHome, { recursive: true });
-  const target = join(pilotHome, "skill-preferences.json");
+  mkdirSync(eastyunHome, { recursive: true });
+  const target = join(eastyunHome, "skill-preferences.json");
   const temporary = `${target}.${randomUUID()}.tmp`;
   try {
     writeFileSync(temporary, JSON.stringify({ version: 1, disabled }, null, 2) + "\n", { mode: 0o600 });

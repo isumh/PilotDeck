@@ -8,7 +8,7 @@ import type { Gateway, GatewayCronController, GatewayServerInfo, GatewayTurnOpti
 
 export type GatewayProjectStorageOptions = {
   projectRoot: string;
-  pilotHome: string;
+  eastyunHome: string;
 };
 
 export type CreateGatewayOptions = {

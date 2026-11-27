@@ -1,6 +1,6 @@
 import { open, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { getPilotProjectChatDir } from "../../pilot/index.js";
+import { getEastYunProjectChatDir } from "../../eastyun/index.js";
 import { mergeMetadata } from "../metadata/SessionMetadataStore.js";
 import { readSessionLite, SESSION_LITE_READ_BYTES, type SessionLiteFile } from "./SessionLiteReader.js";
 import type { SessionMetadataValue } from "../transcript/TranscriptEntry.js";
@@ -26,15 +26,15 @@ export type SessionInfo = {
 
 export type ListProjectSessionsOptions = {
   projectRoot: string;
-  pilotHome: string;
+  eastyunHome: string;
   limit?: number;
   offset?: number;
   includeInternal?: boolean;
 };
 
 export async function listProjectSessions(options: ListProjectSessionsOptions): Promise<SessionInfo[]> {
-  const chatDir = getPilotProjectChatDir(options.projectRoot, options.pilotHome);
-  const files = (await listSessionFiles(options.pilotHome, chatDir))
+  const chatDir = getEastYunProjectChatDir(options.projectRoot, options.eastyunHome);
+  const files = (await listSessionFiles(options.eastyunHome, chatDir))
     .filter((file) => options.includeInternal || !isInternalSession(file.sessionId));
   const sessions: SessionInfo[] = [];
   const offset = Math.max(0, options.offset ?? 0);
@@ -414,20 +414,20 @@ function stringValue(value: unknown): string | undefined {
 
 /** Options for listing sessions across all known projects. */
 export type ListAllSessionsOptions = {
-  pilotHome: string;
+  eastyunHome: string;
   limit?: number;
   offset?: number;
   includeInternal?: boolean;
 };
 
 /**
- * List sessions across **all** projects under `{pilotHome}/projects/`. Each
+ * List sessions across **all** projects under `{eastyunHome}/projects/`. Each
  * project directory is scanned for `.jsonl` files in its `chats/` subfolder.
  * Results are sorted by lastModified descending (most-recent first), then
  * paginated via `limit` / `offset`.
  */
 export async function listAllSessions(options: ListAllSessionsOptions): Promise<SessionInfo[]> {
-  const projectsDir = resolve(options.pilotHome, "projects");
+  const projectsDir = resolve(options.eastyunHome, "projects");
   let projectIds: string[];
   try {
     projectIds = await readdir(projectsDir);
@@ -466,7 +466,7 @@ export async function listAllSessions(options: ListAllSessionsOptions): Promise<
 /** Options for title-based session search. */
 export type SearchSessionsByTitleOptions = {
   projectRoot: string;
-  pilotHome: string;
+  eastyunHome: string;
   query: string;
   limit?: number;
   includeInternal?: boolean;
@@ -478,7 +478,7 @@ export type SearchSessionsByTitleOptions = {
  * results sorted by lastModified descending.
  */
 export async function searchSessionsByTitle(options: SearchSessionsByTitleOptions): Promise<SessionInfo[]> {
-  const chatDir = getPilotProjectChatDir(options.projectRoot, options.pilotHome);
+  const chatDir = getEastYunProjectChatDir(options.projectRoot, options.eastyunHome);
   let names: string[];
   try {
     names = await readdir(chatDir);

@@ -10,19 +10,19 @@ const tempDirs = [];
 afterEach(() => {
   vi.restoreAllMocks();
   vi.resetModules();
-  delete process.env.PILOT_HOME;
+  delete process.env.EASTYUN_HOME;
   for (const dir of tempDirs.splice(0)) {
     rmSync(dir, { recursive: true, force: true });
   }
 });
 
 describe('commands routes', () => {
-  it('executes user commands discovered under custom PILOT_HOME', async () => {
-    const pilotHome = mkdtempSync(join(tmpdir(), 'pilotdeck-commands-route-'));
-    tempDirs.push(pilotHome);
-    process.env.PILOT_HOME = pilotHome;
+  it('executes user commands discovered under custom EASTYUN_HOME', async () => {
+    const eastyunHome = mkdtempSync(join(tmpdir(), 'eastyundesk-commands-route-'));
+    tempDirs.push(eastyunHome);
+    process.env.EASTYUN_HOME = eastyunHome;
 
-    const commandsDir = join(pilotHome, 'commands');
+    const commandsDir = join(eastyunHome, 'commands');
     mkdirSync(commandsDir, { recursive: true });
     const commandPath = join(commandsDir, 'hello.md');
     writeFileSync(commandPath, '---\ndescription: Says hello\n---\nHello $1', 'utf8');
@@ -34,7 +34,7 @@ describe('commands routes', () => {
       body: JSON.stringify({
         commandName: '/hello',
         commandPath,
-        args: ['PilotDeck'],
+        args: ['EastYunDesk'],
       }),
     });
 
@@ -42,14 +42,14 @@ describe('commands routes', () => {
     expect(result.body).toMatchObject({
       type: 'custom',
       command: '/hello',
-      content: 'Hello PilotDeck',
+      content: 'Hello EastYunDesk',
     });
   });
 });
 
 async function createCommandsApp() {
-  vi.doMock('../pilotdeck-bridge.js', () => ({
-    getPilotDeckGateway: vi.fn(() => { throw new Error('A local Markdown command must not connect to Gateway'); }),
+  vi.doMock('../eastyundesk-bridge.js', () => ({
+    getEastYunDeskGateway: vi.fn(() => { throw new Error('A local Markdown command must not connect to Gateway'); }),
   }));
   vi.doMock('../../shared/modelConstants.js', () => ({
     CODEX_MODELS: [],
@@ -59,8 +59,8 @@ async function createCommandsApp() {
     getClaudeRuntimeModelConfig: vi.fn(() => ({})),
     getClaudeRuntimeModelValues: vi.fn(() => []),
   }));
-  vi.doMock('../services/pilotdeckConfig.js', () => ({
-    readPilotDeckConfigFile: vi.fn(() => ({ config: {} })),
+  vi.doMock('../services/eastyundeskConfig.js', () => ({
+    readEastYunDeskConfigFile: vi.fn(() => ({ config: {} })),
     resolveModel: vi.fn((model) => model),
   }));
   vi.doMock('../turnkey-slash.js', () => ({

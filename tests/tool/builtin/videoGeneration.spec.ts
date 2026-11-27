@@ -11,12 +11,12 @@ import { createVideoGenerationTools } from "../../../src/tool/builtin/videoGener
 import { createBuiltinRegistry } from "../../../src/tool/registry/createBuiltinRegistry.js";
 import { createSubagentVideoInheritance, createSubagentVideoPreparation } from "../../../src/cli/subagentVideoInheritance.js";
 import { mapAgentEvent } from "../../../src/gateway/client/InProcessGateway.js";
-import { parseToolsConfig } from "../../../src/pilot/config/parseToolsConfig.js";
-import type { PilotDeckToolRuntimeContext } from "../../../src/tool/protocol/types.js";
+import { parseToolsConfig } from "../../../src/eastyun/config/parseToolsConfig.js";
+import type { EastYunDeskToolRuntimeContext } from "../../../src/tool/protocol/types.js";
 
 const mp4 = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from("ftypisom"), Buffer.alloc(32)]);
 const config = { enabled: true, apiKey: "video-secret", model: "minimax-h3", baseUrl: "https://videos.example/v1" };
-const context = (cwd: string, sessionId = "parent"): PilotDeckToolRuntimeContext => ({ sessionId, cwd, turnId: "turn", permissionMode: "default",
+const context = (cwd: string, sessionId = "parent"): EastYunDeskToolRuntimeContext => ({ sessionId, cwd, turnId: "turn", permissionMode: "default",
   permissionContext: { mode: "default", cwd, additionalWorkingDirectories: [], rules: { allow: [], deny: [], ask: [] }, canPrompt: true, bypassAvailable: true } });
 const body = () => new Response(new Uint8Array(mp4), { headers: { "content-type": "video/mp4" } });
 const json = (v: unknown) => new Response(JSON.stringify(v));

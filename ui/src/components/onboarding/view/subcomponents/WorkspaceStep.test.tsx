@@ -25,10 +25,6 @@ vi.mock('react-i18next', async () => {
   };
 });
 
-vi.mock('../../../project-creation-wizard/hooks/useGithubTokens', () => ({
-  useGithubTokens: () => ({ tokens: [], loading: false, loadError: null }),
-}));
-
 vi.mock('../../../project-creation-wizard/components/FolderBrowserModal', () => ({
   default: ({ isOpen, onFolderSelected }: { isOpen: boolean; onFolderSelected: (path: string) => void }) => (
     isOpen ? <button onClick={() => onFolderSelected('/tmp/from-browser')}>Use test folder</button> : null
@@ -38,10 +34,6 @@ vi.mock('../../../project-creation-wizard/components/FolderBrowserModal', () => 
 const draft = {
   workspaceType: 'new' as const,
   workspacePath: '',
-  githubUrl: '',
-  tokenMode: 'none' as const,
-  selectedGithubToken: '',
-  newGithubToken: '',
 };
 
 type OnboardingWorkspaceStepProps = Extract<WorkspaceStepProps, { variant?: 'onboarding' }>;
@@ -56,10 +48,6 @@ function renderStep(overrides: Partial<Omit<OnboardingWorkspaceStepProps, 'varia
       progress=""
       isCreating={false}
       onWorkspacePathChange={vi.fn()}
-      onGithubUrlChange={vi.fn()}
-      onTokenModeChange={vi.fn()}
-      onSelectedGithubTokenChange={vi.fn()}
-      onNewGithubTokenChange={vi.fn()}
       onBack={vi.fn()}
       onSkipChat={onSkipChat}
       onFinish={onFinish}
@@ -72,10 +60,10 @@ function renderStep(overrides: Partial<Omit<OnboardingWorkspaceStepProps, 'varia
 describe('WorkspaceStep', () => {
   afterEach(() => {
     cleanup();
-    delete window.pilotdeckDesktop;
+    delete window.eastyundeskDesktop;
   });
 
-  it('lets Start chatting skip workspace and GitHub validation', () => {
+  it('lets Start chatting skip workspace validation', () => {
     const { onFinish, onSkipChat } = renderStep();
 
     fireEvent.click(screen.getByRole('button', { name: 'Start chatting' }));
@@ -94,9 +82,9 @@ describe('WorkspaceStep', () => {
     expect(screen.getByText('Enter a workspace path.')).toBeTruthy();
   });
 
-  it('does not require GitHub URL when creating a workspace', () => {
+  it('creates the workspace once a path is provided', () => {
     const { onFinish } = renderStep({
-      draft: { ...draft, workspacePath: '/tmp/pilotdeck' },
+      draft: { ...draft, workspacePath: '/tmp/eastyundesk' },
     });
 
     fireEvent.click(screen.getByRole('button', { name: /Create workspace/ }));
@@ -114,10 +102,6 @@ describe('WorkspaceStep', () => {
         progress=""
         isCreating={false}
         onWorkspacePathChange={vi.fn()}
-        onGithubUrlChange={vi.fn()}
-        onTokenModeChange={vi.fn()}
-        onSelectedGithubTokenChange={vi.fn()}
-        onNewGithubTokenChange={vi.fn()}
         onCancel={onCancel}
         onFinish={vi.fn()}
       />,
@@ -145,7 +129,7 @@ describe('WorkspaceStep', () => {
   it('uses the shared folder browser in the desktop app', async () => {
     const onWorkspacePathChange = vi.fn();
     const pickFolder = vi.fn(async () => '/tmp/from-desktop');
-    window.pilotdeckDesktop = { pickFolder } as never;
+    window.eastyundeskDesktop = { pickFolder } as never;
     renderStep({ onWorkspacePathChange });
     fireEvent.click(screen.getByRole('button', { name: 'Choose file' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Use test folder' }));

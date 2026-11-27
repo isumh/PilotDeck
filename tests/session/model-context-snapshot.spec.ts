@@ -6,7 +6,7 @@ import test from 'node:test';
 import { createModelContextSnapshot, readModelContextSnapshot, writeModelContextSnapshot } from '../../src/session/context/ModelContextSnapshot.js';
 import { TokenAccountingRuntime } from '../../src/context/budget/TokenAccountingRuntime.js';
 import { readWebSessionMessages } from '../../src/web/server/readSessionMessages.js';
-import { getPilotProjectChatDir } from '../../src/pilot/index.js';
+import { getEastYunProjectChatDir } from '../../src/eastyun/index.js';
 import { mkdir } from 'node:fs/promises';
 import type { CanonicalModelRequest } from '../../src/model/index.js';
 
@@ -28,10 +28,10 @@ test('snapshot preserves assembled text/tools and omits binary media without cha
 });
 
 test('latest snapshot is atomic, opt-in on history reads and invalidated by a replaced/new turn', async () => {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-model-context-'));
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-model-context-'));
   try {
     const projectRoot = join(home, 'project');
-    const chatDir = getPilotProjectChatDir(projectRoot, home);
+    const chatDir = getEastYunProjectChatDir(projectRoot, home);
     await mkdir(chatDir, { recursive: true });
     const transcript = join(chatDir, 's.jsonl');
     const input = (turnId: string) => JSON.stringify({ type: 'accepted_input', sessionId: 's', turnId,
@@ -39,7 +39,7 @@ test('latest snapshot is atomic, opt-in on history reads and invalidated by a re
     await writeFile(transcript, input('turn-1'));
     assert.equal(await readModelContextSnapshot(transcript, chatDir), null);
     await writeModelContextSnapshot(transcript, createModelContextSnapshot(request, 'turn-1'));
-    const options = { projectRoot, pilotHome: home };
+    const options = { projectRoot, eastyunHome: home };
     assert.equal((await readWebSessionMessages({ sessionKey: 's' }, options)).modelContext, undefined);
     assert.equal((await readWebSessionMessages({ sessionKey: 's', includeModelContext: true }, options)).modelContext?.turnId, 'turn-1');
     await writeFile(transcript, input('turn-2'));
@@ -52,7 +52,7 @@ test('latest snapshot is atomic, opt-in on history reads and invalidated by a re
 });
 
 test('snapshot reads reject a symlinked directory escaping session storage', async () => {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-context-boundary-'));
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-context-boundary-'));
   try {
     const root = join(home, 'sessions');
     const outside = join(home, 'outside');

@@ -17,7 +17,7 @@ async function renderToolMessage(message: ChatMessage, language = 'en') {
       message={message}
       prevMessage={null}
       createDiff={() => []}
-      provider="pilotdeck"
+      provider="eastyundesk"
       onShowSettings={() => {}}
     /></I18nextProvider>,
   );

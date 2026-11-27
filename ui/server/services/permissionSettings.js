@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { resolvePilotHome } from '../utils/pilotPaths.js';
+import { resolveEastYunHome } from '../utils/eastyunPaths.js';
 
 const DEFAULT_SETTINGS = {
   version: 1,
@@ -26,7 +26,7 @@ const TOOL_NAME_ALIASES = new Map([
 ]);
 
 export function getPermissionSettingsPath(env = process.env) {
-  return path.join(resolvePilotHome(env), 'permissions.json');
+  return path.join(resolveEastYunHome(env), 'permissions.json');
 }
 
 export function normalizePermissionEntry(entry) {

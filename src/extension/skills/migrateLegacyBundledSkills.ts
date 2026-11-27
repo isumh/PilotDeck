@@ -13,7 +13,7 @@ import { join, relative, resolve } from "node:path";
 
 /**
  * Tree hashes of repo skills that the old bootstrap script copied into
- * `~/.pilotdeck/skills`. These are one-time migration fingerprints, not a
+ * `~/.eastyundesk/skills`. These are one-time migration fingerprints, not a
  * catalogue of the currently bundled skills. Future releases load bundled
  * skills directly and therefore do not need new entries here.
  */
@@ -43,7 +43,7 @@ export type LegacyBundledSkillMigrationReport = {
 };
 
 export type MigrateLegacyBundledSkillsOptions = {
-  pilotHome: string;
+  eastyunHome: string;
   builtinSkillsRoot: string;
   backupRoot?: string;
 };
@@ -57,13 +57,13 @@ export type MigrateLegacyBundledSkillsOptions = {
 export function migrateLegacyBundledSkillCopies(
   options: MigrateLegacyBundledSkillsOptions,
 ): LegacyBundledSkillMigrationReport {
-  const pilotHome = resolve(options.pilotHome);
+  const eastyunHome = resolve(options.eastyunHome);
   const builtinSkillsRoot = resolve(options.builtinSkillsRoot);
-  const userSkillsRoot = join(pilotHome, "skills");
+  const userSkillsRoot = join(eastyunHome, "skills");
   const backupRoot = resolve(
-    options.backupRoot ?? join(pilotHome, "skill-backups", "legacy-bundled-v1"),
+    options.backupRoot ?? join(eastyunHome, "skill-backups", "legacy-bundled-v1"),
   );
-  const completionMarker = join(pilotHome, ".legacy-bundled-skills-migrated-v1");
+  const completionMarker = join(eastyunHome, ".legacy-bundled-skills-migrated-v1");
   const report: LegacyBundledSkillMigrationReport = { migrated: [], failures: [] };
 
   if (existsSync(completionMarker)) {
@@ -122,7 +122,7 @@ export function migrateLegacyBundledSkillCopies(
   // override could be mistaken for an old bootstrap copy.
   if (report.failures.length === 0) {
     try {
-      mkdirSync(pilotHome, { recursive: true });
+      mkdirSync(eastyunHome, { recursive: true });
       writeFileSync(completionMarker, "completed\n", "utf8");
     } catch (error) {
       report.failures.push({

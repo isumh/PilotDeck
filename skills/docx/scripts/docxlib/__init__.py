@@ -1,1 +1,1 @@
-"""PilotDeck DOCX skill implementation."""
+"""EastYunDesk DOCX skill implementation."""

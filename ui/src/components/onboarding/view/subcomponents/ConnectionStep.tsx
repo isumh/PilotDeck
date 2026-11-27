@@ -23,6 +23,11 @@ type ConnectionStepProps = {
   llm: LlmSetupController;
   onBack: () => void;
   onContinue: () => void | Promise<void>;
+  /**
+   * EastYunDesk's first-run wizard demands a passing connection test before the
+   * key is saved. The settings shell reuses this step without that gate.
+   */
+  requirePassedTest?: boolean;
 };
 
 type ModelChipProps = {
@@ -133,7 +138,12 @@ function SelectedModelRow({
   );
 }
 
-export default function ConnectionStep({ llm, onBack, onContinue }: ConnectionStepProps) {
+export default function ConnectionStep({
+  llm,
+  onBack,
+  onContinue,
+  requirePassedTest = false,
+}: ConnectionStepProps) {
   const { t } = useTranslation('onboarding');
   const [showApiKey, setShowApiKey] = useState(false);
   const [extraAvailableIds, setExtraAvailableIds] = useState<string[]>([]);
@@ -223,6 +233,9 @@ export default function ConnectionStep({ llm, onBack, onContinue }: ConnectionSt
   const failedModelMessage = selectedIds
     .map((id) => llm.getModelTestState(id))
     .find((test) => test.status === 'error' && test.message)?.message;
+  // The wizard cannot be advanced without a passing test for every selected
+  // model, so the hint replaces the plain disabled button.
+  const testRequired = requirePassedTest && !llm.connectionTestPassed && !failedModelMessage;
 
   return (
     <div className="content-page connection-page">
@@ -428,6 +441,9 @@ export default function ConnectionStep({ llm, onBack, onContinue }: ConnectionSt
           </fieldset>
         </form>
 
+        {testRequired && (
+          <p className="connection-test-hint" role="status">{t('connection.testRequired')}</p>
+        )}
         {failedModelMessage && (
           <div className="connection-failure-reason">
             <WarningIcon />
@@ -451,7 +467,7 @@ export default function ConnectionStep({ llm, onBack, onContinue }: ConnectionSt
       <FooterActions
         backLabel={t('actions.back')}
         nextLabel={t('actions.next')}
-        nextDisabled={!llm.canContinue}
+        nextDisabled={!llm.canContinue || (requirePassedTest && !llm.connectionTestPassed)}
         nextBusy={llm.saving}
         onBack={onBack}
         onNext={() => {

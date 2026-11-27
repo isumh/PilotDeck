@@ -11,6 +11,8 @@ type NavItem = {
   key: SettingsMenuKey;
   labelKey: string;
   showDot?: boolean;
+  /** Menu entries kept visible for upstream parity but unusable in EastYunDesk. */
+  disabled?: boolean;
 };
 
 type NavSection = {
@@ -31,7 +33,7 @@ const AGENT_ITEMS: NavItem[] = [
   { key: "agentRoute", labelKey: "settingsPage.menu.agentRoute" },
   { key: "agentMemory", labelKey: "settingsPage.menu.agentMemory" },
   { key: "agentResident", labelKey: "settingsPage.menu.agentResident" },
-  { key: "agentSearch", labelKey: "settingsPage.menu.agentSearch" },
+  { key: "agentSearch", labelKey: "settingsPage.menu.agentSearch", disabled: true },
   { key: "multimodalGeneration", labelKey: "settingsPage.menu.multimodalGeneration" },
   { key: "agentSchedule", labelKey: "settingsPage.menu.agentSchedule" },
 ];
@@ -40,7 +42,7 @@ const EXTERNAL_ITEMS: NavItem[] = [
   { key: "integrations", labelKey: "settingsPage.menu.messageChannels" },
   { key: "mcpServers", labelKey: "settingsPage.menu.mcpServers" },
   { key: "officePreview", labelKey: "settingsPage.menu.officePreview" },
-  { key: "computerUse", labelKey: "settingsPage.menu.computerUse" },
+  { key: "computerUse", labelKey: "settingsPage.menu.computerUse", disabled: true },
 ];
 
 const FOOTER_ITEMS: NavItem[] = [
@@ -94,6 +96,7 @@ function NavButton({
       onClick={() => onSelect(item.key)}
       className={cn("nav-item", active && "active")}
       aria-current={active ? "page" : undefined}
+      disabled={item.disabled}
     >
       {icon ? <SettingsIcon svg={icon} /> : null}
       <span>{t(item.labelKey)}</span>

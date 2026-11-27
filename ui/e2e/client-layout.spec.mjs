@@ -1,5 +1,5 @@
 import { chromium, test, expect } from '@playwright/test';
-import { WEB_SEARCH_PROVIDERS } from '../../src/pilot/config/webSearchProviders.ts';
+import { WEB_SEARCH_PROVIDERS } from '../../src/eastyun/config/webSearchProviders.ts';
 
 test.use({ serviceWorkers: 'block' });
 
@@ -32,7 +32,7 @@ async function verifyLayout(page, platform) {
         document.documentElement.style.setProperty('--desktop-top-inset', '32px');
       };
       if (document.documentElement) caption(); else document.addEventListener('DOMContentLoaded', caption, { once: true });
-      window.pilotdeckDesktop = { platform, getAppearance: () => ({ language: 'en', themeMode: 'light' }),
+      window.eastyundeskDesktop = { platform, getAppearance: () => ({ language: 'en', themeMode: 'light' }),
         getRuntimeStatus: () => ({ phase: 'ready', progress: 96 }), onRuntimeStatus: () => () => {},
         setMenuState: async () => {}, onCommand: () => () => {}, setAppearance: async () => {}, getRuntimeInfo: async () => null,
         checkUpdates: async () => ({ current: { version: 'fixture' }, latest: null, hasUpdate: false, canDownload: false }),
@@ -52,7 +52,7 @@ async function verifyLayout(page, platform) {
     let body = {};
     if (p === '/api/auth/status') body = { authDisabled: true };
     else if (p === '/api/projects') body = [{ name: 'demo', displayName: 'Layout fixture', kind: 'workspace', fullPath: '/fixture/demo', sessions: [], capabilities: { files: true } }];
-    else if (p === '/api/settings/general-workspace') body = { directory: '', effectiveDirectory: '/fixture/PilotDeckGeneral', defaultDirectory: '/fixture/PilotDeckGeneral' };
+    else if (p === '/api/settings/general-workspace') body = { directory: '', effectiveDirectory: '/fixture/EastYunDeskGeneral', defaultDirectory: '/fixture/EastYunDeskGeneral' };
     else if (p.includes('onboarding-status')) body = { hasCompletedOnboarding: !onboarding };
     else if (p === '/api/config') body = { exists: true, raw: JSON.stringify({ tools: { webSearch: { enabled: true, provider: 'serpapi' } } }), validation: { valid: true, errors: [], warnings: [] } };
     else if (p.includes('models')) body = { models: [] };
@@ -65,7 +65,7 @@ async function verifyLayout(page, platform) {
   await page.routeWebSocket('**/ws**', socket => socket.onMessage(() => {}));
   await page.goto('/p/demo');
   await expect(page.locator('.app-shell')).toBeVisible({ timeout: 30000 });
-  await expect(page.locator('#root')).not.toHaveAttribute('data-pilotdeck-startup');
+  await expect(page.locator('#root')).not.toHaveAttribute('data-eastyundesk-startup');
   if (platform === 'pwa') {
     expect(await page.evaluate(() => matchMedia('(display-mode: standalone)').matches)).toBe(true);
     const root = page.locator('#root');
@@ -88,10 +88,10 @@ async function verifyLayout(page, platform) {
   expect(options.map(option => option.value).sort()).toEqual([...WEB_SEARCH_PROVIDERS].sort());
   for (const { value, label } of options) {
     expect(label, value).not.toBe('');
-    expect(label, value).not.toContain('pilotDeckConfig.');
+    expect(label, value).not.toContain('eastyunDeskConfig.');
   }
   await expect(page.locator('#search-engine')).toBeVisible();
-  expect(await page.locator('body').innerText()).not.toContain('pilotDeckConfig.panels.tools.provider.');
+  expect(await page.locator('body').innerText()).not.toContain('eastyunDeskConfig.panels.tools.provider.');
   await expectHorizontalFit(page, '.settings-main', '.settings-content', '.search-card');
   onboarding = true; await page.goto('/');
   await expect(page.locator('.desktop-prototype-shell')).toBeVisible();

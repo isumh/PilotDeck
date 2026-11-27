@@ -10,8 +10,8 @@ import { createSubagentImageInheritance, createSubagentImagePreparation } from "
 import { acquireWorkspaceOperation, operationContext } from "../session/checkpoints/WorkspaceCoordinator.js";
 import { runWorkspaceFileOperation } from "../session/checkpoints/workspaceFileOperation.js";
 import type { ExplicitModelSelection } from "../gateway/protocol/types.js";
-import { isOptionalFeatureEnabled } from "../pilot/config/optionalFeature.js";
-import { resolveWebSearchConfig } from "../pilot/config/webSearchConfig.js";
+import { isOptionalFeatureEnabled } from "../eastyun/config/optionalFeature.js";
+import { resolveWebSearchConfig } from "../eastyun/config/webSearchConfig.js";
 import { createHash, randomUUID } from "node:crypto";
 import { appendFileSync, existsSync, mkdirSync as mkdirSyncFs, renameSync, readFileSync, watchFile, unwatchFile } from "node:fs";
 import { dirname, resolve, join as joinPath } from "node:path";
@@ -80,14 +80,14 @@ import { UsageCounter, withUsageCounter } from "../model/usage/UsageCounter.js";
 import { createDefaultPermissionContext, type PermissionRule } from "../permission/index.js";
 import {
   ensureWritableDirectory,
-  loadPilotConfig,
-  resolvePilotHome,
+  loadEastYunConfig,
+  resolveEastYunHome,
   resolveProjectStorageId,
   resolveRuntimeArtifactFallbackDir,
-  type PilotProxyConfig,
-} from "../pilot/index.js";
-import { createPilotConfigStoreSync, type PilotConfigStore } from "../pilot/config/PilotConfigStore.js";
-import type { PilotAgentModelSelection, PilotConfigSnapshot } from "../pilot/config/types.js";
+  type EastYunProxyConfig,
+} from "../eastyun/index.js";
+import { createEastYunConfigStoreSync, type EastYunConfigStore } from "../eastyun/config/EastYunConfigStore.js";
+import type { EastYunAgentModelSelection, EastYunConfigSnapshot } from "../eastyun/config/types.js";
 import { DEFAULT_JUDGE_TIMEOUT_MS, DEFAULT_ALLOWED_TOOLS, DEFAULT_TRIGGER_TIERS, type RouterConfig } from "../router/config/schema.js";
 import { createAgentProjectSessionStorage, listProjectSessions, readTranscript, replayTranscriptEntries, resumeAgentSession } from "../session/index.js";
 import { sanitizeSessionIdForPath } from "../session/storage/ProjectSessionStorage.js";
@@ -103,9 +103,9 @@ import { createRegisteredWebProjectResolver, describeWebProject, listRegisteredW
 import { BackgroundTaskRuntime, type BackgroundTaskCompletionEvent } from "../task/runtime/BackgroundTaskRuntime.js";
 import { createBuiltinRegistry, createPlanFileManager, filterAvailableTools } from "../tool/index.js";
 import type {
-  PilotDeckElicitationChannel,
-  PilotDeckToolDefinition,
-  PilotDeckUnavailableToolDiagnostic,
+  EastYunDeskElicitationChannel,
+  EastYunDeskToolDefinition,
+  EastYunDeskUnavailableToolDiagnostic,
   ToolRegistry,
 } from "../tool/index.js";
 import { createRouterRuntime, type RouterRuntime } from "../router/index.js";
@@ -114,7 +114,7 @@ import type { RouterEventBus, RouterEvent } from "../router/protocol/events.js";
 import type { EdgeClawMemoryProvider } from "../context/index.js";
 import { loadBuiltinPlugins } from "../extension/plugins/builtin/loadBuiltinPlugins.js";
 import { SkillManager, migrateLegacyBundledSkillCopies } from "../extension/skills/index.js";
-import { getPilotDeckInstallCommand, patchProjectScopedMcpSpec } from "../mcp/runtime/projectMcpSpec.js";
+import { getEastYunDeskInstallCommand, patchProjectScopedMcpSpec } from "../mcp/runtime/projectMcpSpec.js";
 import { createMcpToolCatalogRefresher } from "../mcp/runtime/McpToolRegistryBinding.js";
 import { ExtensionWatchManager, type ExtensionWatchEvent } from "./ExtensionWatchManager.js";
 import { createTelemetryCollector, type TelemetryClient } from "../telemetry/index.js";
@@ -127,13 +127,13 @@ import { listCommands } from "../gateway/dialog/commands.js";
 
 export type CreateLocalGatewayOptions = {
   projectRoot?: string;
-  pilotHome?: string;
-  /** Read-only skills shipped with this PilotDeck build. Auto-discovered when omitted. */
+  eastyunHome?: string;
+  /** Read-only skills shipped with this EastYunDesk build. Auto-discovered when omitted. */
   builtinSkillsRoot?: string;
   env?: Record<string, string | undefined>;
   permissionMode?: AgentRuntimeConfig["permissionMode"];
   /** Tools merged into every per-project ToolRegistry. */
-  extraTools?: PilotDeckToolDefinition[];
+  extraTools?: EastYunDeskToolDefinition[];
   /** Per-sessionKey config overrides (cwd / permissionMode). */
   sessionOverrides?: SessionConfigOverrides;
   /** Optional Cron runtime controller exposed through Gateway management methods. */
@@ -149,12 +149,12 @@ export type CreateLocalGatewayOptions = {
    * stream) so the rest of the wiring (Router, Tools, Context, AgentLoop) runs
    * end-to-end against a deterministic transport. NOT part of the public API.
    */
-  __testModelFactory?: (snapshot: PilotConfigSnapshot) => ModelRuntime;
+  __testModelFactory?: (snapshot: EastYunConfigSnapshot) => ModelRuntime;
   /**
    * Fallback project root used as the agent cwd when no explicit
    * `projectKey` is provided (e.g. IM channels without a bound project).
    * Defaults to `projectRoot` when omitted; server mode should set this
-   * to `pilotHome` so IM sessions land in the general workspace instead
+   * to `eastyunHome` so IM sessions land in the general workspace instead
    * of the gateway process's cwd.
    */
   fallbackProjectRoot?: string;
@@ -168,7 +168,7 @@ export type CreateLocalGatewayOptions = {
 };
 
 export type SubsystemUpdate = {
-  extraTools: PilotDeckToolDefinition[];
+  extraTools: EastYunDeskToolDefinition[];
   sessionOverrides?: SessionConfigOverrides;
   cron?: GatewayCronController;
   alwaysOnApply?: InProcessGatewayOptions["alwaysOnApply"];
@@ -178,7 +178,7 @@ export type SubsystemUpdate = {
 export type CreateLocalGatewayResult = {
   generateTaskDetails: NonNullable<CreateCronRuntimeOptions["generateTaskDetails"]>;
   gateway: Gateway;
-  configStore: PilotConfigStore;
+  configStore: EastYunConfigStore;
   registry: ProjectRuntimeRegistry;
   dispose: () => void;
   bindServer: (server: { broadcastNotification(name: string, payload?: unknown): void }) => void;
@@ -197,16 +197,16 @@ export type CreateLocalGatewayResult = {
 };
 
 export function resolveBrowserUseOutputDir(input: {
-  pilotHome: string;
+  eastyunHome: string;
   projectRoot: string;
   sessionKey: string;
 }): string {
-  const projectId = resolveProjectStorageId(input.projectRoot, input.pilotHome);
+  const projectId = resolveProjectStorageId(input.projectRoot, input.eastyunHome);
   const sessionId = sanitizeSessionIdForPath(input.sessionKey);
   return ensureWritableDirectory({
-    preferredDir: joinPath(input.pilotHome, "browser_screenshots", projectId, sessionId),
+    preferredDir: joinPath(input.eastyunHome, "browser_screenshots", projectId, sessionId),
     fallbackDir: resolveRuntimeArtifactFallbackDir({
-      pilotHome: input.pilotHome,
+      eastyunHome: input.eastyunHome,
       purpose: "browser_screenshots",
       key: `${projectId}-${sessionId}`,
     }),
@@ -217,13 +217,13 @@ export function resolveBrowserUseOutputDir(input: {
 export function createLocalGateway(options: CreateLocalGatewayOptions = {}): CreateLocalGatewayResult {
   const baseEnv = options.env ?? process.env;
   const projectRoot = resolve(options.projectRoot ?? process.cwd());
-  const pilotHome = options.pilotHome ?? resolvePilotHome(baseEnv);
+  const eastyunHome = options.eastyunHome ?? resolveEastYunHome(baseEnv);
   const replacementTransactionOwner = { instanceId: randomUUID(), pid: process.pid };
-  const replacementRecovery = recoverPendingLastTurnReplacements(pilotHome);
+  const replacementRecovery = recoverPendingLastTurnReplacements(eastyunHome);
   if (replacementRecovery.committed > 0 || replacementRecovery.rolledBack > 0) {
     // eslint-disable-next-line no-console
     console.log(
-      `[pilotdeck] Recovered last-turn replacements: committed=${replacementRecovery.committed} ` +
+      `[eastyundesk] Recovered last-turn replacements: committed=${replacementRecovery.committed} ` +
       `rolledBack=${replacementRecovery.rolledBack}.`,
     );
   }
@@ -231,31 +231,31 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
     // Keep the backup/journal in place so a later startup can retry safely.
     // eslint-disable-next-line no-console
     console.warn(
-      `[pilotdeck] Could not recover replacement transaction for ${failure.transcriptPath}: ${failure.message}`,
+      `[eastyundesk] Could not recover replacement transaction for ${failure.transcriptPath}: ${failure.message}`,
     );
   }
-  const env = options.pilotHome ? { ...baseEnv, PILOT_HOME: pilotHome } : baseEnv;
+  const env = options.eastyunHome ? { ...baseEnv, EASTYUN_HOME: eastyunHome } : baseEnv;
   const builtinSkillsRoot = resolveBuiltinSkillsRoot(options.builtinSkillsRoot, env);
-  const legacySkillMigration = migrateLegacyBundledSkillCopies({ pilotHome, builtinSkillsRoot });
+  const legacySkillMigration = migrateLegacyBundledSkillCopies({ eastyunHome, builtinSkillsRoot });
   if (legacySkillMigration.migrated.length > 0) {
     // eslint-disable-next-line no-console
     console.log(
-      `[pilotdeck] Activated bundled skills directly; moved ${legacySkillMigration.migrated.length} ` +
+      `[eastyundesk] Activated bundled skills directly; moved ${legacySkillMigration.migrated.length} ` +
       `unchanged legacy ${legacySkillMigration.migrated.length === 1 ? "copy" : "copies"} to ` +
-      `${joinPath(pilotHome, "skill-backups", "legacy-bundled-v1")}.`,
+      `${joinPath(eastyunHome, "skill-backups", "legacy-bundled-v1")}.`,
     );
   }
   for (const failure of legacySkillMigration.failures) {
     // eslint-disable-next-line no-console
-    console.warn(`[pilotdeck] Could not migrate legacy skill '${failure.slug}': ${failure.message}`);
+    console.warn(`[eastyundesk] Could not migrate legacy skill '${failure.slug}': ${failure.message}`);
   }
   const now = () => new Date();
-  const telemetry = options.telemetry ?? createTelemetryCollector({ env, pilotHome });
+  const telemetry = options.telemetry ?? createTelemetryCollector({ env, eastyunHome });
   const ownsTelemetry = !options.telemetry;
   let registry!: ProjectRuntimeRegistry;
   let router: SessionRouter | undefined;
   const extensionWatchManager = new ExtensionWatchManager({
-    pilotHome,
+    eastyunHome,
     builtinSkillsRoot,
     onChange: (event) => {
       handleExtensionWatchEvent(event, registry, router);
@@ -263,7 +263,7 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
     onError: (scope, error) => {
       // eslint-disable-next-line no-console
       console.warn(
-        `[pilotdeck] Extension watcher failed for ${describeExtensionScope(scope)}:`,
+        `[eastyundesk] Extension watcher failed for ${describeExtensionScope(scope)}:`,
         error.message,
       );
     },
@@ -271,7 +271,7 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
   const fallbackProjectRoot = options.fallbackProjectRoot ?? projectRoot;
   registry = new ProjectRuntimeRegistry({
     fallbackProjectRoot,
-    pilotHome,
+    eastyunHome,
     builtinSkillsRoot,
     env,
     permissionMode: options.permissionMode ?? "default",
@@ -290,12 +290,12 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
     defaultRuntime.snapshot.config.gateway?.memoryDiagnostics,
   );
 
-  const configStore = createPilotConfigStoreSync({ projectRoot, env });
+  const configStore = createEastYunConfigStoreSync({ projectRoot, env });
   const stopConfigWatching = configStore.startWatching();
   const stopExtensionWatching = extensionWatchManager.start();
 
   let boundServer: { broadcastNotification(name: string, payload?: unknown): void } | undefined;
-  const managedMcpPath = process.env.PILOTDECK_COMPUTER_USE_MCP_CONFIG;
+  const managedMcpPath = process.env.EASTYUNDESK_COMPUTER_USE_MCP_CONFIG;
   const readManagedRevision = () => {
     if (!managedMcpPath) return '';
     try { return createHash('sha256').update(readFileSync(managedMcpPath)).digest('hex'); } catch { return ''; }
@@ -319,11 +319,11 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
     }
     if (changeClasses.every((c) => c === "restart-required")) {
       // eslint-disable-next-line no-console
-      console.warn("[pilotdeck] Config change requires process restart:", changedPaths.join(", "));
+      console.warn("[eastyundesk] Config change requires process restart:", changedPaths.join(", "));
       return;
     }
     // eslint-disable-next-line no-console
-    console.log("[pilotdeck] Config reloaded, invalidating runtimes:", changedPaths.join(", "));
+    console.log("[eastyundesk] Config reloaded, invalidating runtimes:", changedPaths.join(", "));
     registry.invalidate();
     if (memoryDiagnosticsEnabled) {
       logGatewayMemoryDiagnostic({
@@ -367,11 +367,11 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
         }
       : undefined,
   });
-  const skillManager = new SkillManager({ pilotHome, builtinSkillsRoot, env });
+  const skillManager = new SkillManager({ eastyunHome, builtinSkillsRoot, env });
   const dialogProjects = createDialogProjectRegistry({
-    pilotHome,
-    listProjects: () => listRegisteredWebProjects({ pilotHome }),
-    resolveProject: createRegisteredWebProjectResolver({ pilotHome }),
+    eastyunHome,
+    listProjects: () => listRegisteredWebProjects({ eastyunHome }),
+    resolveProject: createRegisteredWebProjectResolver({ eastyunHome }),
   });
   const uploadStore = new UploadStore({
     listProjects: dialogProjects.listProjectKeys,
@@ -379,12 +379,12 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
   });
   const readSavedModel = async (projectKey: string, sessionKey: string): Promise<SessionModelSelection | undefined> => {
     if (!sessionKey?.trim()) throw new DialogGatewayError("INVALID_SESSION_KEY", "sessionKey is required.");
-    const storage = createAgentProjectSessionStorage({ projectRoot: projectKey, pilotHome, sessionId: sessionKey, now });
+    const storage = createAgentProjectSessionStorage({ projectRoot: projectKey, eastyunHome, sessionId: sessionKey, now });
     const replay = replayTranscriptEntries((await readTranscript(storage.transcriptPath)).entries);
     return replay.metadata.modelSelection ? restoreSessionModelSelection(projectKey, replay.metadata.modelSelection, env) : undefined;
   };
   const modelResult = async (projectKey: string, sessionKey: string, saved?: SessionModelSelection) => {
-    const snapshot = loadPilotConfig({ projectRoot: projectKey, env }).config;
+    const snapshot = loadEastYunConfig({ projectRoot: projectKey, env }).config;
     const explicit = saved?.mode === "model" ? saved : undefined;
     return {
       projectKey,
@@ -405,24 +405,24 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
   };
   const gateway = new InProcessGateway(router, {
     activeBackgroundTaskCount: () => registry.activeBackgroundTaskCount(),
-    funasrInstallCommand: getPilotDeckInstallCommand(),
+    funasrInstallCommand: getEastYunDeskInstallCommand(),
     now,
     serverInfo: { mode: "in_process", projectKey: projectRoot },
     telemetry,
-    toolResultsDir: resolve(tmpdir(), "pilotdeck-tool-output", process.pid.toString()),
+    toolResultsDir: resolve(tmpdir(), "eastyundesk-tool-output", process.pid.toString()),
     cron: options.cron,
     skillManager,
     async manageCheckpoints(input) {
       if (!input.sessionKey?.trim() || !["list", "diff", "preview", "restore", "undo", "git", "filesystem"].includes(input.action)) throw new CheckpointError("INVALID_ACTION", "A conversation and valid checkpoint action are required.");
       const projectKey = await dialogProjects.resolveProjectKey(input.projectKey);
-      const store = await getCheckpointStore(projectKey, pilotHome);
-      if (input.action === "filesystem") return runWorkspaceFileOperation(projectKey, pilotHome, input.fileOperation);
+      const store = await getCheckpointStore(projectKey, eastyunHome);
+      if (input.action === "filesystem") return runWorkspaceFileOperation(projectKey, eastyunHome, input.fileOperation);
       if (input.action === "list" || input.action === "diff") {
         if (!store.busy && !router.hasActiveTurn(input.sessionKey)) {
           const release = await store.acquire();
           try { await store.recoverInterrupted(input.sessionKey); } finally { release(); }
         }
-        const storage = createAgentProjectSessionStorage({ projectRoot: projectKey, pilotHome, sessionId: input.sessionKey, now });
+        const storage = createAgentProjectSessionStorage({ projectRoot: projectKey, eastyunHome, sessionId: input.sessionKey, now });
         const { entries } = await readTranscript(storage.transcriptPath);
         const activeTurns = new Set(activeTranscriptEntries(entries).filter(entry => entry.type === "accepted_input").map(entry => entry.turnId));
         if (input.action === "diff") return store.diff(input.sessionKey, input.checkpointId ?? "", input.filePath ?? "", input.scope, activeTurns);
@@ -443,7 +443,7 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
       if ((!conversationOnly && store.busy) || (input.action !== "git" && router.hasActiveTurn(input.sessionKey))) throw new CheckpointError("WORKSPACE_BUSY", store.busyReason ?? "The conversation is running. Stop this turn before restoring its history.");
       if (input.action === "git") {
         const root = input.repositoryOperation?.operation === "init" ? projectKey : await repositoryRoot(projectKey);
-        const repositoryStore = await getCheckpointStore(root, pilotHome);
+        const repositoryStore = await getCheckpointStore(root, eastyunHome);
         if (repositoryStore.busy) throw new CheckpointError("WORKSPACE_BUSY", "The repository is being modified. Stop active turns and background tasks before operating Git.");
         return repositoryStore.withExclusive(async () => {
           const common = input.repositoryOperation?.operation === "init" ? undefined : await repositoryCommonDirectory(root);
@@ -458,7 +458,7 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
       if (!router.beginTurn(input.sessionKey, runId)) throw new CheckpointError("WORKSPACE_BUSY", "The conversation is busy.");
       const perform = async () => {
         await router.close(input.sessionKey);
-        const storage = createAgentProjectSessionStorage({ projectRoot: projectKey, pilotHome, sessionId: input.sessionKey, now });
+        const storage = createAgentProjectSessionStorage({ projectRoot: projectKey, eastyunHome, sessionId: input.sessionKey, now });
         const { entries, diagnostics } = await readTranscript(storage.transcriptPath);
         if (diagnostics.some(item => item.severity === "error")) throw new CheckpointError("TRANSCRIPT_UNAVAILABLE", "Conversation history cannot be read safely.");
         const activeEntries = activeTranscriptEntries(entries);
@@ -505,7 +505,7 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
     },
     async commandsList(input) {
       const projectKey = await dialogProjects.resolveProjectKey(input.projectKey);
-      return listCommands({ ...input, projectKey }, pilotHome);
+      return listCommands({ ...input, projectKey }, eastyunHome);
     },
     async modelCatalogList(input) {
       return listModelCatalog(input, env);
@@ -520,7 +520,7 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
       if (!input.selection || typeof input.selection !== "object") throw new DialogGatewayError("INVALID_MODEL_OVERRIDE", "selection is required.");
       validateModelSelection(projectKey, input.selection, env);
       input = { ...input, selection: normalizeSessionModelSelection(input.selection) };
-      const storage = createAgentProjectSessionStorage({ projectRoot: projectKey, pilotHome, sessionId: input.sessionKey, now });
+      const storage = createAgentProjectSessionStorage({ projectRoot: projectKey, eastyunHome, sessionId: input.sessionKey, now });
       await storage.transcript.recordSessionMetadata(input.sessionKey, "model-selection", {
         modelSelection: input.selection,
         updatedAt: now().toISOString(),
@@ -532,7 +532,7 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
       const projectKey = await dialogProjects.resolveProjectKey(input.projectKey);
       if (!input.sessionKey?.trim()) throw new DialogGatewayError("INVALID_SESSION_KEY", "sessionKey is required.");
       if (router.hasActiveTurn(input.sessionKey)) throw new DialogGatewayError("SESSION_BUSY", "Cannot clear the model during an active turn.");
-      const storage = createAgentProjectSessionStorage({ projectRoot: projectKey, pilotHome, sessionId: input.sessionKey, now });
+      const storage = createAgentProjectSessionStorage({ projectRoot: projectKey, eastyunHome, sessionId: input.sessionKey, now });
       await storage.transcript.recordSessionMetadata(input.sessionKey, "model-selection-clear", {
         modelSelection: null,
         updatedAt: now().toISOString(),
@@ -559,7 +559,7 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
       if (saved?.mode === "model") {
         return { selection: saved, source: "session" as const };
       }
-      const config = loadPilotConfig({ projectRoot: projectKey, env }).config;
+      const config = loadEastYunConfig({ projectRoot: projectKey, env }).config;
       return { source: config.router?.enabled ? "router" as const : "default" as const };
     },
     async resolveUploadedAttachments(input) {
@@ -586,7 +586,7 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
     readSessionMessages: (input) =>
       readWebSessionMessages(input, {
         projectRoot: input.projectKey ? input.projectKey : fallbackProjectRoot,
-        pilotHome,
+        eastyunHome,
         maxContextTokens: defaultRuntime.snapshot.config.agent.maxContextTokens,
         maxOutputTokens: defaultRuntime.snapshot.config.agent.maxOutputTokens,
         now,
@@ -594,32 +594,32 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
     readSubagentMessages: (input) =>
       readSubagentWebMessages(input, {
         projectRoot: input.projectKey ? input.projectKey : fallbackProjectRoot,
-        pilotHome,
+        eastyunHome,
         now,
       }),
     forkSession: (input) =>
       forkWebSession(input, {
         projectRoot: input.projectKey ? input.projectKey : fallbackProjectRoot,
-        pilotHome,
+        eastyunHome,
         now,
       }),
     replaceLastTurn: (input) =>
       replaceLastWebSessionTurn(input, {
         projectRoot: input.projectKey ? input.projectKey : fallbackProjectRoot,
-        pilotHome,
+        eastyunHome,
         now,
         transactionOwner: replacementTransactionOwner,
       }),
     finalizeLastTurnReplacement: (input) =>
       finalizeLastWebSessionTurnReplacement(input, {
         projectRoot: input.projectKey ? input.projectKey : fallbackProjectRoot,
-        pilotHome,
+        eastyunHome,
         now,
       }),
     async recordAgentStatusMessage(input) {
       const storage = createAgentProjectSessionStorage({
         projectRoot: input.projectKey ? input.projectKey : fallbackProjectRoot,
-        pilotHome,
+        eastyunHome,
         sessionId: input.sessionKey,
         now,
       });
@@ -627,9 +627,9 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
       return { recorded: true };
     },
     listProjects: () =>
-      listWebProjects({ pilotHome }),
+      listWebProjects({ eastyunHome }),
     describeProject: (input) =>
-      describeWebProject(input.projectKey, { pilotHome }),
+      describeWebProject(input.projectKey, { eastyunHome }),
     async reloadConfig() {
       let changedPaths: string[] = [];
       const unsubscribe = configStore.subscribe((event) => {
@@ -656,14 +656,14 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
       if (input?.projectKey) {
         // eslint-disable-next-line no-console
         console.log(
-          `[pilotdeck] Extensions reload requested for project ${input.projectKey}:`,
+          `[eastyundesk] Extensions reload requested for project ${input.projectKey}:`,
           changedPaths.join(", ") || "(manual)",
         );
         registry.invalidate(input.projectKey);
         router?.markProjectDirty(input.projectKey, "extension_changed");
       } else {
         // eslint-disable-next-line no-console
-        console.log("[pilotdeck] Extensions reload requested for all runtimes:", changedPaths.join(", ") || "(manual)");
+        console.log("[eastyundesk] Extensions reload requested for all runtimes:", changedPaths.join(", ") || "(manual)");
         registry.invalidate();
         router?.markAllDirty("extension_changed");
       }
@@ -676,7 +676,7 @@ export function createLocalGateway(options: CreateLocalGatewayOptions = {}): Cre
     // Defensive: re-check the on-disk config at the start of every
     // turn so an apiKey/url edit applied between two messages takes
     // effect on the next one, even if the fs watcher missed it.
-    // Singleton-deduped inside PilotConfigStore.reload — concurrent
+    // Singleton-deduped inside EastYunConfigStore.reload — concurrent
     // turns share a single in-flight read, and unchanged config is a
     // no-op (no invalidation, no session recreation).
     async refreshConfigBeforeTurn() {
@@ -746,7 +746,7 @@ function resolveBuiltinSkillsRoot(
   configuredRoot: string | undefined,
   env: Record<string, string | undefined>,
 ): string {
-  const explicit = configuredRoot ?? env.PILOTDECK_BUNDLED_SKILLS_DIR;
+  const explicit = configuredRoot ?? env.EASTYUNDESK_BUNDLED_SKILLS_DIR;
   if (explicit) return resolve(explicit);
 
   const moduleDir = dirname(fileURLToPath(import.meta.url));
@@ -760,16 +760,16 @@ function resolveBuiltinSkillsRoot(
 
 type ProjectRuntimeRegistryOptions = {
   fallbackProjectRoot: string;
-  pilotHome: string;
+  eastyunHome: string;
   builtinSkillsRoot?: string;
   env: Record<string, string | undefined>;
   permissionMode: AgentRuntimeConfig["permissionMode"];
   now: () => Date;
-  extraTools?: PilotDeckToolDefinition[];
+  extraTools?: EastYunDeskToolDefinition[];
   sessionOverrides?: SessionConfigOverrides;
   additionalWorkingDirectories?: string[];
   /** @internal Test hook from `CreateLocalGatewayOptions.__testModelFactory`. */
-  modelFactory?: (snapshot: PilotConfigSnapshot) => ModelRuntime;
+  modelFactory?: (snapshot: EastYunConfigSnapshot) => ModelRuntime;
   autoElicitation?: boolean;
   telemetry: TelemetryClient;
   onProjectActivated?: (projectRoot: string) => void;
@@ -779,17 +779,17 @@ type ProjectRuntime = {
   users: number;
   python?: PythonRuntimeSnapshot;
   projectRoot: string;
-  snapshot: ReturnType<typeof loadPilotConfig>;
+  snapshot: ReturnType<typeof loadEastYunConfig>;
   model: ModelRuntime;
   tokenAccounting: TokenAccountingRuntime;
   router: RouterRuntime;
   pluginRuntime: PluginRuntime;
   tools: ToolRegistry;
-  unavailableTools?: PilotDeckUnavailableToolDiagnostic[];
+  unavailableTools?: EastYunDeskUnavailableToolDiagnostic[];
   projectStorage: GatewayProjectStorageOptions;
   /** Per-project background task runtime (shared across sessions). C5. */
   backgroundTasks: BackgroundTaskRuntime;
-  /** Memory provider, undefined when memory is disabled in PilotConfig. */
+  /** Memory provider, undefined when memory is disabled in EastYunConfig. */
   memory?: EdgeClawMemoryProvider;
   /** Backing memory service for maintenance / introspection. */
   memoryService?: EdgeClawMemoryService;
@@ -810,7 +810,7 @@ type ProjectRuntime = {
    * these specs so that e.g. browser-use gets an isolated process per
    * session.  Populated during `ensureMcpReady()`.
    */
-  perSessionServerSpecs?: import("../mcp/protocol/types.js").PilotDeckMcpServerSpec[];
+  perSessionServerSpecs?: import("../mcp/protocol/types.js").EastYunDeskMcpServerSpec[];
 };
 
 const DEFAULT_BROWSER_ACTION_TIMEOUT_MS = 30_000;
@@ -833,7 +833,7 @@ class ProjectRuntimeRegistry {
    *     push session-scoped allow rules on `remember=true` and have the
    *     very next `decide()` call inside this turn see them.
    * Without this fallback, remote-gateway clients (Web UI talking to
-   * `pilotdeck server`) wouldn't be able to round-trip permission
+   * `eastyundesk server`) wouldn't be able to round-trip permission
    * prompts because they can't reach into the server's `sessionOverrides`
    * map from outside the process.
    */
@@ -850,15 +850,15 @@ class ProjectRuntimeRegistry {
    */
   private readonly sessionMcpRuntimes = new Map<string, McpRuntime>();
 
-  private _extraTools: PilotDeckToolDefinition[];
+  private _extraTools: EastYunDeskToolDefinition[];
   private _sessionOverrides: SessionConfigOverrides | undefined;
   private readonly sharedSessionStore = new SessionRouterStore({
     now: () => this.options.now().getTime(),
   });
 
   constructor(private readonly options: ProjectRuntimeRegistryOptions) {
-    this.python = new PythonRuntimeManager({ pilotHome: options.pilotHome, env: options.env,
-      onError: error => console.warn('[pilotdeck] Bundled Python initialization failed:', error instanceof Error ? error.message : String(error)),
+    this.python = new PythonRuntimeManager({ eastyunHome: options.eastyunHome, env: options.env,
+      onError: error => console.warn('[eastyundesk] Bundled Python initialization failed:', error instanceof Error ? error.message : String(error)),
     });
     this._extraTools = options.extraTools ? [...options.extraTools] : [];
     this._sessionOverrides = options.sessionOverrides;
@@ -947,12 +947,12 @@ class ProjectRuntimeRegistry {
   }
 
   private buildRouterEventBus(): RouterEventBus {
-    const pilotHome = this.options.pilotHome;
-    const routerDir = joinPath(pilotHome, "router");
+    const eastyunHome = this.options.eastyunHome;
+    const routerDir = joinPath(eastyunHome, "router");
     try { mkdirSyncFs(routerDir, { recursive: true }); } catch { /* exists */ }
     const eventsPath = joinPath(routerDir, "events.jsonl");
     try {
-      const oldPath = joinPath(pilotHome, "router-events.jsonl");
+      const oldPath = joinPath(eastyunHome, "router-events.jsonl");
       if (!existsSync(eventsPath) && existsSync(oldPath)) {
         renameSync(oldPath, eventsPath);
       }
@@ -963,7 +963,7 @@ class ProjectRuntimeRegistry {
         try {
           appendFileSync(eventsPath, JSON.stringify(event) + "\n");
         } catch { /* best-effort, never crash the agent loop */ }
-        if (event.type === "pilotdeck_router_retry_progress") {
+        if (event.type === "eastyundesk_router_retry_progress") {
           try {
             self.gateway?.broadcastRetryProgress(event);
           } catch { /* best-effort */ }
@@ -1037,7 +1037,7 @@ class ProjectRuntimeRegistry {
    * map. Also invalidates cached runtimes.
    */
   updateSubsystems(config: {
-    extraTools: PilotDeckToolDefinition[];
+    extraTools: EastYunDeskToolDefinition[];
     sessionOverrides?: SessionConfigOverrides;
   }): void {
     this._extraTools = config.extraTools;
@@ -1065,18 +1065,18 @@ class ProjectRuntimeRegistry {
       return cached;
     }
 
-    const snapshot = loadPilotConfig({ projectRoot, env: this.options.env });
+    const snapshot = loadEastYunConfig({ projectRoot, env: this.options.env });
     const baseModel = this.options.modelFactory
       ? this.options.modelFactory(snapshot)
       : createModelRuntime(snapshot.config.model, { requestContext: { projectPath: projectRoot } });
-    this.usageCounter ??= new UsageCounter(this.options.pilotHome, this.options.now);
+    this.usageCounter ??= new UsageCounter(this.options.eastyunHome, this.options.now);
     const model = withUsageCounter(baseModel, this.usageCounter);
     const tokenAccounting = new TokenAccountingRuntime({
       modelConfig: snapshot.config.model,
     });
     const pluginRuntime = new PluginRuntime({
       projectRoot,
-      pilotHome: this.options.pilotHome,
+      eastyunHome: this.options.eastyunHome,
       builtinSkillsRoot: this.options.builtinSkillsRoot,
       builtinPlugins: loadBuiltinPlugins(),
       builtinPluginsEnabled: snapshot.config.extension.builtinPluginsEnabled,
@@ -1108,12 +1108,12 @@ class ProjectRuntimeRegistry {
       : undefined;
     const tools = createBuiltinRegistry({
       videoGeneration: {
-        store: new VideoStore(resolve(this.options.pilotHome, "generated-videos")),
-        getConfig: () => loadPilotConfig({ projectRoot, env: this.options.env }).config.tools?.videoGeneration,
+        store: new VideoStore(resolve(this.options.eastyunHome, "generated-videos")),
+        getConfig: () => loadEastYunConfig({ projectRoot, env: this.options.env }).config.tools?.videoGeneration,
       },
       imageGeneration: {
-        store: new ImageStore(resolve(this.options.pilotHome, "generated-images")),
-        getConfig: () => loadPilotConfig({ projectRoot, env: this.options.env }).config.tools?.imageGeneration,
+        store: new ImageStore(resolve(this.options.eastyunHome, "generated-images")),
+        getConfig: () => loadEastYunConfig({ projectRoot, env: this.options.env }).config.tools?.imageGeneration,
       },
       backgroundTasks: { runtime: backgroundTasks },
       readSkill: {
@@ -1164,7 +1164,7 @@ class ProjectRuntimeRegistry {
       memoryService: memory?.service,
       projectStorage: {
         projectRoot,
-        pilotHome: this.options.pilotHome,
+        eastyunHome: this.options.eastyunHome,
       },
     };
     this.runtimes.set(projectRoot, runtime);
@@ -1205,7 +1205,7 @@ class ProjectRuntimeRegistry {
           });
           // eslint-disable-next-line no-console
           console.warn(
-            `[pilotdeck] memory maintenance failed for project ${runtime.projectRoot}:`,
+            `[eastyundesk] memory maintenance failed for project ${runtime.projectRoot}:`,
             error instanceof Error ? error.message : String(error),
           );
         }
@@ -1228,25 +1228,25 @@ class ProjectRuntimeRegistry {
     if (runtime.mcpReady) return runtime.mcpReady;
     runtime.mcpReady = (async () => {
       try {
-        const configServers = loadMcpServerConfig(runtime.projectRoot, this.options.pilotHome);
+        const configServers = loadMcpServerConfig(runtime.projectRoot, this.options.eastyunHome);
         for (const diagnostic of configServers.diagnostics) {
           // eslint-disable-next-line no-console
-          console.warn(`[pilotdeck] Ignoring invalid MCP config ${diagnostic.path}: ${diagnostic.message}`);
+          console.warn(`[eastyundesk] Ignoring invalid MCP config ${diagnostic.path}: ${diagnostic.message}`);
         }
         const rawServers = {
           ...runtime.pluginRuntime.mcpServers(),
           ...configServers.servers,
         };
-        if (process.env.PILOTDECK_COMPUTER_USE_MCP_CONFIG) {
-          delete rawServers['pilotdeck-computer-use'];
-          const managed = configServers.servers['pilotdeck-computer-use'];
-          if (managed) rawServers['pilotdeck-computer-use'] = managed;
+        if (process.env.EASTYUNDESK_COMPUTER_USE_MCP_CONFIG) {
+          delete rawServers['eastyundesk-computer-use'];
+          const managed = configServers.servers['eastyundesk-computer-use'];
+          if (managed) rawServers['eastyundesk-computer-use'] = managed;
         }
         const { servers: parsedServers } = parsePluginMcpServers(rawServers);
         const servers = parsedServers.map((server) => withPythonMcpEnvironment(patchProjectScopedMcpSpec(
           server,
           runtime.projectRoot,
-          this.options.pilotHome,
+          this.options.eastyunHome,
         ), runtime.python!));
         if (servers.length === 0) return;
 
@@ -1263,7 +1263,7 @@ class ProjectRuntimeRegistry {
             if (status.status === "error") {
               // eslint-disable-next-line no-console
               console.warn(
-                `[pilotdeck] ${status.serverId === "funasr" ? "ASR unavailable" : "MCP server unavailable"} ` +
+                `[eastyundesk] ${status.serverId === "funasr" ? "ASR unavailable" : "MCP server unavailable"} ` +
                 `(server=${status.serverId}): ${status.error ?? "unknown error"}`,
               );
             }
@@ -1272,14 +1272,14 @@ class ProjectRuntimeRegistry {
           for (const def of defs) {
             // Bundled component updates and global Driver configuration belong
             // to the application release, never to model-selected MCP tools.
-            if (/^mcp__pilotdeck-computer-use__(check_for_update|install_extension|install_ffmpeg|set_config|get_config|replay_trajectory)$/.test(def.name)) continue;
+            if (/^mcp__eastyundesk-computer-use__(check_for_update|install_extension|install_ffmpeg|set_config|get_config|replay_trajectory)$/.test(def.name)) continue;
             if (!runtime.tools.has(def.name)) runtime.tools.register(def);
           }
         }
       } catch (err) {
         // eslint-disable-next-line no-console
         console.warn(
-          `[pilotdeck] MCP runtime startup partial-failed for project ${runtime.projectRoot}:`,
+          `[eastyundesk] MCP runtime startup partial-failed for project ${runtime.projectRoot}:`,
           (err as Error).message,
         );
       }
@@ -1342,7 +1342,7 @@ class ProjectRuntimeRegistry {
   }
 
   private shouldCollectFileArtifacts(runtime: ProjectRuntime): boolean {
-    return resolve(runtime.projectRoot) !== resolve(this.options.pilotHome);
+    return resolve(runtime.projectRoot) !== resolve(this.options.eastyunHome);
   }
 
   private async prepareSessionRuntime(context: GatewaySessionContext) {
@@ -1382,7 +1382,7 @@ class ProjectRuntimeRegistry {
       const patchedPerSpecs = perSpecs.map((spec) => {
         if (spec.transport === "stdio" && spec.id === "browser-use") {
           const outDir = resolveBrowserUseOutputDir({
-            pilotHome: this.options.pilotHome,
+            eastyunHome: this.options.eastyunHome,
             projectRoot: runtime.projectRoot,
             sessionKey: context.sessionKey,
           });
@@ -1408,7 +1408,7 @@ class ProjectRuntimeRegistry {
           if (status.status === "error") {
             // eslint-disable-next-line no-console
             console.warn(
-              `[pilotdeck] ${status.serverId === "funasr" ? "ASR unavailable" : "Per-session MCP unavailable"} ` +
+              `[eastyundesk] ${status.serverId === "funasr" ? "ASR unavailable" : "Per-session MCP unavailable"} ` +
               `(server=${status.serverId}, session=${context.sessionKey}): ${status.error ?? "unknown error"}`,
             );
           }
@@ -1427,14 +1427,14 @@ class ProjectRuntimeRegistry {
       } catch (err) {
         // eslint-disable-next-line no-console
         console.warn(
-          `[pilotdeck] Per-session MCP startup failed for ${context.sessionKey}:`,
+          `[eastyundesk] Per-session MCP startup failed for ${context.sessionKey}:`,
           (err as Error).message,
         );
       }
     } else if (perSpecs && perSpecs.length > 0) {
       // eslint-disable-next-line no-console
       console.warn(
-        `[pilotdeck] Per-session MCP limit reached (${maxInstances}). ` +
+        `[eastyundesk] Per-session MCP limit reached (${maxInstances}). ` +
         `Session ${context.sessionKey} will not start: ${perSpecs.map((spec) => spec.id).join(", ")}.`,
       );
     }
@@ -1477,7 +1477,7 @@ class ProjectRuntimeRegistry {
     const excludedTools = new Set(override?.excludeTools ?? []);
     const catalog = createMcpToolCatalogRefresher([runtime.mcpRuntime, sessionMcp].filter((mcp): mcp is McpRuntime => mcp !== undefined),
       tool => !excludedTools.has(tool.name) && !(tool.aliases ?? []).some(alias => excludedTools.has(alias))
-        && !/^mcp__pilotdeck-computer-use__(check_for_update|install_extension|install_ffmpeg|set_config|get_config|replay_trajectory)$/.test(tool.name));
+        && !/^mcp__eastyundesk-computer-use__(check_for_update|install_extension|install_ffmpeg|set_config|get_config|replay_trajectory)$/.test(tool.name));
     ownResource(() => catalog.dispose());
 
     // Inject the gateway's interactive permission hook so the agent's
@@ -1528,8 +1528,8 @@ class ProjectRuntimeRegistry {
     const memoryResolver = runtime.memory;
     const now = this.options.now;
     const eventBuf = createAgentEventBuffer();
-    const videoStore = new VideoStore(resolve(this.options.pilotHome, "generated-videos"));
-    const imageStore = new ImageStore(resolve(this.options.pilotHome, "generated-images"));
+    const videoStore = new VideoStore(resolve(this.options.eastyunHome, "generated-videos"));
+    const imageStore = new ImageStore(resolve(this.options.eastyunHome, "generated-images"));
 
     const baseDependencies: CreateAgentSessionOptions["dependencies"] = {
       releaseSessionResources,
@@ -1553,8 +1553,8 @@ class ProjectRuntimeRegistry {
       drainEvents: eventBuf.drain,
       inheritSubagentToolResult: async input => await createSubagentVideoInheritance(videoStore)(input) ?? await createSubagentImageInheritance(imageStore)(input),
       prepareSubagentArtifacts: async input => [
-        ...await createSubagentImagePreparation(imageStore, () => loadPilotConfig({ projectRoot, env: this.options.env }).config.tools?.imageGeneration?.enabled === true)(input),
-        ...await createSubagentVideoPreparation(videoStore, () => loadPilotConfig({ projectRoot, env: this.options.env }).config.tools?.videoGeneration?.enabled === true)(input),
+        ...await createSubagentImagePreparation(imageStore, () => loadEastYunConfig({ projectRoot, env: this.options.env }).config.tools?.imageGeneration?.enabled === true)(input),
+        ...await createSubagentVideoPreparation(videoStore, () => loadEastYunConfig({ projectRoot, env: this.options.env }).config.tools?.videoGeneration?.enabled === true)(input),
       ],
       tokenAccounting: runtime.tokenAccounting,
       getModelMaxContextTokens: (provider, model) => resolveRoutedModelMaxContextTokens({
@@ -1644,11 +1644,11 @@ class ProjectRuntimeRegistry {
       const instructionDiscovery = new InstructionDiscovery(
         projectRoot,
         projectRoot,
-        this.options.pilotHome,
+        this.options.eastyunHome,
       );
       const contextRuntime = new DefaultContextRuntime({
         sessionArtifactContext: async sessionId => {
-          if (loadPilotConfig({ projectRoot, env: this.options.env }).config.tools?.videoGeneration?.enabled !== true) return;
+          if (loadEastYunConfig({ projectRoot, env: this.options.env }).config.tools?.videoGeneration?.enabled !== true) return;
           return new VideoJobManager({ store: videoStore, getConfig: () => undefined }).contextForSession(sessionId);
         },
         extension,
@@ -1667,7 +1667,7 @@ class ProjectRuntimeRegistry {
         now,
       });
       const fileHistory = this.shouldCollectFileArtifacts(runtime)
-        ? new WorkspaceCheckpoints(this.createAgentConfig(runtime, context.sessionKey).cwd, this.options.pilotHome)
+        ? new WorkspaceCheckpoints(this.createAgentConfig(runtime, context.sessionKey).cwd, this.options.eastyunHome)
         : undefined;
       const gw = this.gateway;
       const elicitation = this.options.autoElicitation
@@ -1679,7 +1679,7 @@ class ProjectRuntimeRegistry {
               emit: (event) => gw.emitForSession(context.sessionKey, event),
               dispatchHook: (hookEvent, payload) => {
                 lifecycle.dispatch({
-                  event: hookEvent as import("../extension/hooks/protocol/events.js").PilotDeckHookEvent,
+                  event: hookEvent as import("../extension/hooks/protocol/events.js").EastYunDeskHookEvent,
                   baseInput: { sessionId: context.sessionKey, transcriptPath: "", cwd: projectRoot },
                   payload,
                   matchQuery: hookEvent,
@@ -1728,7 +1728,7 @@ class ProjectRuntimeRegistry {
       };
       const planFileManager = createPlanFileManager({
         projectRoot,
-        pilotHome: this.options.pilotHome,
+        eastyunHome: this.options.eastyunHome,
         env: this.options.env,
       });
       const planTodoManager = createPlanTodoStateManager();
@@ -1757,7 +1757,7 @@ class ProjectRuntimeRegistry {
     const safeOffset = Number.isFinite(offset) ? offset : 0;
     const sessions = await listProjectSessions({
       projectRoot,
-      pilotHome: this.options.pilotHome,
+      eastyunHome: this.options.eastyunHome,
       limit: input.limit,
       offset: safeOffset,
     });
@@ -1798,7 +1798,7 @@ class ProjectRuntimeRegistry {
     } catch {
       maxContextTokens = agent.maxContextTokens;
     }
-    maxOutputTokens = readPositiveIntegerEnv(this.options.env.PILOTDECK_MAX_OUTPUT_TOKENS)
+    maxOutputTokens = readPositiveIntegerEnv(this.options.env.EASTYUNDESK_MAX_OUTPUT_TOKENS)
       ?? agent.maxOutputTokens
       ?? maxOutputTokens;
     const subagentModel = agent.subagents?.default;
@@ -1829,7 +1829,7 @@ class ProjectRuntimeRegistry {
         ...(subagentMaxContextTokens !== undefined ? { maxContextTokens: subagentMaxContextTokens } : {}),
         ...(subagentMaxOutputTokens !== undefined
           ? {
-              maxOutputTokens: readPositiveIntegerEnv(this.options.env.PILOTDECK_MAX_OUTPUT_TOKENS)
+              maxOutputTokens: readPositiveIntegerEnv(this.options.env.EASTYUNDESK_MAX_OUTPUT_TOKENS)
                 ?? subagentMaxOutputTokens,
             }
           : {}),
@@ -1896,14 +1896,14 @@ function handleExtensionWatchEvent(
   const changed = event.changedPaths.join(", ");
   if (event.scope.kind === "global") {
     // eslint-disable-next-line no-console
-    console.log("[pilotdeck] Extensions changed, invalidating all runtimes:", changed);
+    console.log("[eastyundesk] Extensions changed, invalidating all runtimes:", changed);
     registry.invalidate();
     router?.markAllDirty("extension_changed");
     return;
   }
   // eslint-disable-next-line no-console
   console.log(
-    `[pilotdeck] Extensions changed for project ${event.scope.projectRoot}, invalidating runtime:`,
+    `[eastyundesk] Extensions changed for project ${event.scope.projectRoot}, invalidating runtime:`,
     changed,
   );
   registry.invalidate(event.scope.projectRoot);
@@ -1914,7 +1914,7 @@ function describeExtensionScope(scope: ExtensionWatchEvent["scope"]): string {
   return scope.kind === "global" ? "global extensions" : `project extensions (${scope.projectRoot})`;
 }
 
-function createAutoElicitationChannel(): PilotDeckElicitationChannel {
+function createAutoElicitationChannel(): EastYunDeskElicitationChannel {
   return {
     async askUser(request) {
       const answers: Record<string, string | string[]> = {};
@@ -1934,7 +1934,7 @@ function createAutoElicitationChannel(): PilotDeckElicitationChannel {
 
 function ensureRouterConfig(
   router: RouterConfig | undefined,
-  defaultSelection: PilotAgentModelSelection,
+  defaultSelection: EastYunAgentModelSelection,
 ): RouterConfig {
   const defaultRef = { id: defaultSelection.id, provider: defaultSelection.provider, model: defaultSelection.model };
   if (!router || !isOptionalFeatureEnabled(router)) {
@@ -1986,7 +1986,7 @@ export function buildBrowserUseArgs(
   baseArgs: string[],
   outputDir: string,
   env: Record<string, string | undefined>,
-  configProxy?: PilotProxyConfig,
+  configProxy?: EastYunProxyConfig,
 ): string[] {
   let args = [...baseArgs];
   args = appendCliArg(args, "--output-dir", outputDir);
@@ -1994,8 +1994,8 @@ export function buildBrowserUseArgs(
     args,
     "--timeout-action",
     String(
-      readPositiveIntegerEnv(env.PILOTDECK_BROWSER_TIMEOUT_ACTION_MS)
-        ?? readPositiveIntegerEnv(env.PILOTDECK_BROWSER_ACTION_TIMEOUT_MS)
+      readPositiveIntegerEnv(env.EASTYUNDESK_BROWSER_TIMEOUT_ACTION_MS)
+        ?? readPositiveIntegerEnv(env.EASTYUNDESK_BROWSER_ACTION_TIMEOUT_MS)
         ?? DEFAULT_BROWSER_ACTION_TIMEOUT_MS,
     ),
   );
@@ -2003,8 +2003,8 @@ export function buildBrowserUseArgs(
     args,
     "--timeout-navigation",
     String(
-      readPositiveIntegerEnv(env.PILOTDECK_BROWSER_TIMEOUT_NAVIGATION_MS)
-        ?? readPositiveIntegerEnv(env.PILOTDECK_BROWSER_NAVIGATION_TIMEOUT_MS)
+      readPositiveIntegerEnv(env.EASTYUNDESK_BROWSER_TIMEOUT_NAVIGATION_MS)
+        ?? readPositiveIntegerEnv(env.EASTYUNDESK_BROWSER_NAVIGATION_TIMEOUT_MS)
         ?? DEFAULT_BROWSER_NAVIGATION_TIMEOUT_MS,
     ),
   );
@@ -2031,16 +2031,16 @@ type BrowserProxySource = "browser-env" | "env" | "config";
 
 function resolveBrowserProxyServer(
   env: Record<string, string | undefined>,
-  configProxy?: PilotProxyConfig,
+  configProxy?: EastYunProxyConfig,
 ): { server: string; source: BrowserProxySource } | undefined {
-  const explicit = cleanEnvValue(env.PILOTDECK_BROWSER_PROXY_SERVER);
+  const explicit = cleanEnvValue(env.EASTYUNDESK_BROWSER_PROXY_SERVER);
   if (explicit) {
     if (/^(0|false|off|none|direct)$/i.test(explicit)) return undefined;
     return { server: explicit, source: "browser-env" };
   }
-  if (/^(1|true|on|yes)$/i.test(cleanEnvValue(env.PILOTDECK_BROWSER_PROXY_FROM_ENV) ?? "")) {
+  if (/^(1|true|on|yes)$/i.test(cleanEnvValue(env.EASTYUNDESK_BROWSER_PROXY_FROM_ENV) ?? "")) {
     const envProxy = (
-      cleanEnvValue(env.PILOTDECK_PROXY)
+      cleanEnvValue(env.EASTYUNDESK_PROXY)
       ?? cleanEnvValue(env.https_proxy)
       ?? cleanEnvValue(env.HTTPS_PROXY)
       ?? cleanEnvValue(env.http_proxy)
@@ -2054,10 +2054,10 @@ function resolveBrowserProxyServer(
 
 function resolveBrowserProxyBypass(
   env: Record<string, string | undefined>,
-  configProxy: PilotProxyConfig | undefined,
+  configProxy: EastYunProxyConfig | undefined,
   proxySource: BrowserProxySource,
 ): string {
-  const explicit = cleanEnvValue(env.PILOTDECK_BROWSER_PROXY_BYPASS);
+  const explicit = cleanEnvValue(env.EASTYUNDESK_BROWSER_PROXY_BYPASS);
   if (explicit) return explicit;
   const noProxy = cleanEnvValue(env.no_proxy) ?? cleanEnvValue(env.NO_PROXY);
   const configNoProxy = proxySource === "config" ? cleanEnvValue(configProxy?.noProxy) : undefined;

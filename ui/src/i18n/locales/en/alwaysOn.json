@@ -169,7 +169,7 @@
         "repeatInterval": "Repeat interval"
       },
       "placeholders": {
-        "prompt": "Describe what PilotDeck should do when this task runs.",
+        "prompt": "Describe what EastYunDesk should do when this task runs.",
         "workspace": "Select a workspace",
         "expression": "30 8 * * 1",
         "name": "For example, daily sales report"
@@ -294,7 +294,7 @@
     "preview": "Next runs",
     "latestResult": "Latest result",
     "unread": "Unread result",
-    "localNotice": "Keep this computer and PilotDeck running for local tasks.",
+    "localNotice": "Keep this computer and EastYunDesk running for local tasks.",
     "ordinals": {
       "1": "First",
       "2": "Second",

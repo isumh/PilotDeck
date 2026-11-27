@@ -1,5 +1,5 @@
-export class PilotDeckLifecycleRuntimeError extends Error {
-  readonly name = "PilotDeckLifecycleRuntimeError";
+export class EastYunDeskLifecycleRuntimeError extends Error {
+  readonly name = "EastYunDeskLifecycleRuntimeError";
 
   constructor(
     readonly code: "hook_blocked" | "hook_failed",

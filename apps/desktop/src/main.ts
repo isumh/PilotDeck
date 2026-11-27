@@ -11,7 +11,7 @@ import { RuntimeProcessDiagnostics, runtimeReportArguments } from './runtimeDiag
 import { desktopInstallationRoot, withRuntimeCommandPath } from './runtimeEnvironment';
 import { findFreePort } from './startupNetwork';
 import { waitForPortOrProcessExit } from './runtimeReadiness';
-import { createRuntimeLogWriter, normalizeLogRetentionDays, redactDiagnostic, registerDiagnosticSecrets, setRuntimeLogRetention, type RuntimeLogWriter } from '@pilotdeck/config';
+import { createRuntimeLogWriter, normalizeLogRetentionDays, redactDiagnostic, registerDiagnosticSecrets, setRuntimeLogRetention, type RuntimeLogWriter } from '@eastyundesk/config';
 import { startupProgress } from './startupPresentation';
 import { exportRuntimeLogs } from './runtimeLogExport';
 import { createDesktopUninstaller } from './desktopUninstall';
@@ -81,7 +81,7 @@ let rendererLog: RuntimeLogWriter | undefined;
 let updateOrigin: string | null = null;
 let desktopTray: ReturnType<typeof createDesktopTray> | null = null;
 
-const APP_ID = "cn.pilotdeck.desktop";
+const APP_ID = "cn.eastyundesk.desktop";
 const EXTERNAL_NAVIGATION_PROTOCOLS = new Set(["http:", "https:", "mailto:", "tel:"]);
 const PLAYWRIGHT_BROWSER_DIR = "playwright-browsers";
 const DEFAULT_UPDATE_REPOSITORY = "OpenBMB/PilotDeck";
@@ -111,7 +111,7 @@ class RuntimeManager {
   private gatewayStartPromise: Promise<void> | null = null;
   private gatewayStopPromise: Promise<void> | null = null;
   private commonEnv: NodeJS.ProcessEnv | null = null;
-  private pilotHome: string | null = null;
+  private eastyunHome: string | null = null;
   private gatewayPort: number | null = null;
   private configurationState: ModelConfigurationState | null = null;
   private gatewayState: GatewayRuntimeState = { state: "stopped" };
@@ -139,9 +139,9 @@ class RuntimeManager {
 
   async hasRunningTasks(): Promise<boolean> {
     if (!this.gatewayProcess || this.gatewayProcess.exitCode !== null) return false;
-    if (this.gatewayState.state !== 'ready' || !this.pilotHome || !this.gatewayPort) return true;
+    if (this.gatewayState.state !== 'ready' || !this.eastyunHome || !this.gatewayPort) return true;
     try {
-      const token = fs.readFileSync(path.join(this.pilotHome, 'server-token'), 'utf8').trim();
+      const token = fs.readFileSync(path.join(this.eastyunHome, 'server-token'), 'utf8').trim();
       const response = await fetch(`http://127.0.0.1:${this.gatewayPort}/api/web/runtime/activity`, {
         headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(2_000),
       });
@@ -164,8 +164,8 @@ class RuntimeManager {
     // uses the default here; the normal model validation still owns its errors.
     let days = 7;
     try {
-      const home = process.env.PILOT_HOME || path.join(os.homedir(), '.pilotdeck');
-      const file = process.env.PILOTDECK_CONFIG_PATH || path.join(home, 'pilotdeck.yaml');
+      const home = process.env.EASTYUN_HOME || path.join(os.homedir(), '.eastyundesk');
+      const file = process.env.EASTYUNDESK_CONFIG_PATH || path.join(home, 'eastyundesk.yaml');
       if (fs.statSync(file).size <= 1024 * 1024) {
         const yaml = require(require.resolve('yaml', { paths: [path.join(this.runtimeRoot, 'ui')] }));
         const config = yaml.parse(fs.readFileSync(file, 'utf8'));
@@ -178,16 +178,16 @@ class RuntimeManager {
     rendererLog ??= createRuntimeLogWriter(path.join(path.dirname(this.logPath), 'renderer.log'), { retentionDays: days });
     publishRuntimeStatus({
       phase: "starting",
-      message: "Preparing PilotDeck runtime...",
+      message: "Preparing EastYunDesk runtime...",
       logPath: this.logPath,
     });
-    this.log(`PilotDeck Desktop runtime starting from ${this.runtimeRoot}`);
+    this.log(`EastYunDesk Desktop runtime starting from ${this.runtimeRoot}`);
     publishRuntimeStatus({
       phase: "config",
       message: "Checking local configuration...",
       logPath: this.logPath,
     });
-    const config = ensurePilotHome((message) => this.log(message));
+    const config = ensureEastYunHome((message) => this.log(message));
     const computerUseDirectory = path.join(app.getPath('userData'), 'computer-use');
     // macOS uses the same LaunchServices helper as standalone Web deployments.
     // Electron's own grants must not gate or request this helper's permissions.
@@ -217,48 +217,48 @@ class RuntimeManager {
     this.log(`Runtime context: ${JSON.stringify({ version: app.getVersion(), commit: buildMetadata.commitSha, platform: process.platform, arch: process.arch, nodeBinary: this.nodeBinary, inheritedNodeOptions: Boolean(process.env.NODE_OPTIONS) })}`);
     this.log(`Playwright browsers path: ${playwrightBrowsersPath}`);
     const inheritedEnv = { ...process.env };
-    const configuredConfigPath = inheritedEnv.PILOTDECK_CONFIG_PATH?.trim();
+    const configuredConfigPath = inheritedEnv.EASTYUNDESK_CONFIG_PATH?.trim();
     if (configuredConfigPath) {
-      inheritedEnv.PILOTDECK_CONFIG_PATH = path.resolve(PROCESS_LAUNCH_CWD, configuredConfigPath);
+      inheritedEnv.EASTYUNDESK_CONFIG_PATH = path.resolve(PROCESS_LAUNCH_CWD, configuredConfigPath);
     } else {
-      delete inheritedEnv.PILOTDECK_CONFIG_PATH;
+      delete inheritedEnv.EASTYUNDESK_CONFIG_PATH;
     }
     const commonEnv = withRuntimeCommandPath({
       ...inheritedEnv,
       HOME: process.env.HOME || os.homedir(),
       HOST: "127.0.0.1",
-      PILOTDECK_RUNTIME_ROOT: this.runtimeRoot,
-      PILOTDECK_PYTHON_ROOT: app.isPackaged
+      EASTYUNDESK_RUNTIME_ROOT: this.runtimeRoot,
+      EASTYUNDESK_PYTHON_ROOT: app.isPackaged
         ? path.join(process.resourcesPath, 'python-runtime')
         : path.join(__dirname, '..', 'resources', 'python-runtime'),
-      PILOTDECK_DESKTOP_RUNTIME_ROOT: this.runtimeRoot,
-      PILOTDECK_DESKTOP_INSTALL_ROOT: app.isPackaged ? desktopInstallationRoot(process.resourcesPath) : this.runtimeRoot,
-      PILOT_HOME: config.pilotHome,
-      PILOTDECK_CONFIG_DIR: config.pilotHome,
+      EASTYUNDESK_DESKTOP_RUNTIME_ROOT: this.runtimeRoot,
+      EASTYUNDESK_DESKTOP_INSTALL_ROOT: app.isPackaged ? desktopInstallationRoot(process.resourcesPath) : this.runtimeRoot,
+      EASTYUN_HOME: config.eastyunHome,
+      EASTYUNDESK_CONFIG_DIR: config.eastyunHome,
       SERVER_PORT: String(serverPort),
-      PILOTDECK_GATEWAY_PORT: String(gatewayPort),
-      PILOTDECK_GATEWAY_URL: `ws://127.0.0.1:${gatewayPort}/ws`,
-      PILOTDECK_DESKTOP: "1",
-      ...(process.platform === 'win32' ? { PILOTDECK_DOCUMENTS_DIRECTORY: app.getPath('documents') } : {}),
-      PILOTDECK_COMPUTER_USE_DIRECTORY: computerUseDirectory,
-      PILOTDECK_COMPUTER_USE_MCP_CONFIG: path.join(computerUseDirectory, 'mcp.json'),
-      PILOTDECK_DESKTOP_VERSION: app.getVersion(),
-      PILOTDECK_VERSION: app.getVersion(),
-      PILOTDECK_DESKTOP_BUILD_TIME: buildMetadata.buildTime,
-      PILOTDECK_COMMIT_SHA: buildMetadata.commitSha,
-      PILOTDECK_GIT_SHA: buildMetadata.commitSha,
-      PILOTDECK_UPDATE_REPOSITORY:
-        process.env.PILOTDECK_UPDATE_REPOSITORY || buildMetadata.repository || DEFAULT_UPDATE_REPOSITORY,
-      PILOTDECK_DISABLE_LOCAL_AUTH: process.env.PILOTDECK_DISABLE_LOCAL_AUTH || "1",
-      PILOTDECK_SKIP_BROWSER_OPEN: "1",
-      PILOTDECK_SKIP_DEFAULT_PROJECT: "1",
-      PILOTDECK_RUNTIME_SUPERVISED: "1",
-      PILOTDECK_LOG_PATH: this.logPath,
-      PILOTDECK_LOG_CAPTURED: "1",
+      EASTYUNDESK_GATEWAY_PORT: String(gatewayPort),
+      EASTYUNDESK_GATEWAY_URL: `ws://127.0.0.1:${gatewayPort}/ws`,
+      EASTYUNDESK_DESKTOP: "1",
+      ...(process.platform === 'win32' ? { EASTYUNDESK_DOCUMENTS_DIRECTORY: app.getPath('documents') } : {}),
+      EASTYUNDESK_COMPUTER_USE_DIRECTORY: computerUseDirectory,
+      EASTYUNDESK_COMPUTER_USE_MCP_CONFIG: path.join(computerUseDirectory, 'mcp.json'),
+      EASTYUNDESK_DESKTOP_VERSION: app.getVersion(),
+      EASTYUNDESK_VERSION: app.getVersion(),
+      EASTYUNDESK_DESKTOP_BUILD_TIME: buildMetadata.buildTime,
+      EASTYUNDESK_COMMIT_SHA: buildMetadata.commitSha,
+      EASTYUNDESK_GIT_SHA: buildMetadata.commitSha,
+      EASTYUNDESK_UPDATE_REPOSITORY:
+        process.env.EASTYUNDESK_UPDATE_REPOSITORY || buildMetadata.repository || DEFAULT_UPDATE_REPOSITORY,
+      EASTYUNDESK_DISABLE_LOCAL_AUTH: process.env.EASTYUNDESK_DISABLE_LOCAL_AUTH || "1",
+      EASTYUNDESK_SKIP_BROWSER_OPEN: "1",
+      EASTYUNDESK_SKIP_DEFAULT_PROJECT: "1",
+      EASTYUNDESK_RUNTIME_SUPERVISED: "1",
+      EASTYUNDESK_LOG_PATH: this.logPath,
+      EASTYUNDESK_LOG_CAPTURED: "1",
       PLAYWRIGHT_BROWSERS_PATH: playwrightBrowsersPath,
     }, this.runtimeRoot, this.nodeBinary, bundledGit, { packaged: app.isPackaged });
     this.commonEnv = commonEnv;
-    this.pilotHome = config.pilotHome;
+    this.eastyunHome = config.eastyunHome;
     this.gatewayPort = gatewayPort;
     publishRuntimeStatus({
       phase: "server",
@@ -297,11 +297,11 @@ class RuntimeManager {
       runtimeRoot: this.runtimeRoot,
       logPath: this.logPath,
     };
-    this.log(`PilotDeck Web UI ready: http://127.0.0.1:${serverPort}`);
+    this.log(`EastYunDesk Web UI ready: http://127.0.0.1:${serverPort}`);
     if (!this.configurationState || this.configurationState.state !== "ready") {
       publishRuntimeStatus({
         phase: "awaiting_configuration",
-        message: "PilotDeck is ready for model setup.",
+        message: "EastYunDesk is ready for model setup.",
         logPath: this.logPath,
       });
     }
@@ -339,38 +339,38 @@ class RuntimeManager {
     this.serverProcess = null;
     this.gatewayProcess = null;
     this.gatewayStartPromise = null;
-    this.log("PilotDeck Desktop runtime stopped");
+    this.log("EastYunDesk Desktop runtime stopped");
     this.logStream?.close();
     this.logStream = null;
     this.info = null;
     this.commonEnv = null;
-    this.pilotHome = null;
+    this.eastyunHome = null;
     this.gatewayPort = null;
     this.gatewayStopPromise = null;
     this.configurationState = null;
     this.gatewayState = { state: "stopped" };
     publishRuntimeStatus({
       phase: "stopped",
-      message: "PilotDeck runtime stopped.",
+      message: "EastYunDesk runtime stopped.",
       logPath: this.logPath,
     });
   }
 
   private gatewayCommand(): string[] {
-    const builtEntry = path.join(this.runtimeRoot, "dist", "src", "cli", "pilotdeck.js");
+    const builtEntry = path.join(this.runtimeRoot, "dist", "src", "cli", "eastyundesk.js");
     if (fs.existsSync(builtEntry)) {
       return [this.nodeBinary, ...runtimeReportArguments(), builtEntry, "server"];
     }
-    if (app.isPackaged || process.env.PILOTDECK_DESKTOP_RUNTIME_ROOT) {
-      throw new Error(`Compiled PilotDeck gateway entry not found: ${builtEntry}`);
+    if (app.isPackaged || process.env.EASTYUNDESK_DESKTOP_RUNTIME_ROOT) {
+      throw new Error(`Compiled EastYunDesk gateway entry not found: ${builtEntry}`);
     }
-    return [this.nodeBinary, ...runtimeReportArguments(), "--import", "tsx", path.join(this.runtimeRoot, "src", "cli", "pilotdeck.ts"), "server"];
+    return [this.nodeBinary, ...runtimeReportArguments(), "--import", "tsx", path.join(this.runtimeRoot, "src", "cli", "eastyundesk.ts"), "server"];
   }
 
   private serverCommand(): string[] {
     const entry = fs.existsSync(path.join(this.runtimeRoot, 'ui/server/supervisedBootstrap.js'))
       ? 'server/supervisedBootstrap.js' : 'server/index.js';
-    if (app.isPackaged || process.env.PILOTDECK_DESKTOP_RUNTIME_ROOT) {
+    if (app.isPackaged || process.env.EASTYUNDESK_DESKTOP_RUNTIME_ROOT) {
       return [this.nodeBinary, entry];
     }
     return [this.nodeBinary, "--import", "tsx", entry];
@@ -447,13 +447,13 @@ class RuntimeManager {
       value?: unknown;
       days?: unknown;
     };
-    if (runtimeMessage.type === 'pilotdeck:log-retention') {
+    if (runtimeMessage.type === 'eastyundesk:log-retention') {
       setRuntimeLogRetention(runtimeMessage.days);
       return;
     }
-    if (runtimeMessage.type === 'pilotdeck:computer-use-request' && typeof runtimeMessage.id === 'string') {
+    if (runtimeMessage.type === 'eastyundesk:computer-use-request' && typeof runtimeMessage.id === 'string') {
       const reply = (status?: unknown, error?: string) => {
-        if (this.serverProcess?.connected) this.serverProcess.send({ type: 'pilotdeck:computer-use-response', id: runtimeMessage.id, status, error }, () => {});
+        if (this.serverProcess?.connected) this.serverProcess.send({ type: 'eastyundesk:computer-use-response', id: runtimeMessage.id, status, error }, () => {});
       };
       void (async () => {
         if (this.stopping || !this.computerUse) throw new Error('Computer use host is not ready');
@@ -468,7 +468,7 @@ class RuntimeManager {
       })().then(status => reply(status), error => reply(undefined, String(error.message || error)));
       return;
     }
-    if (runtimeMessage.type === "pilotdeck:configuration-state" && runtimeMessage.configuration) {
+    if (runtimeMessage.type === "eastyundesk:configuration-state" && runtimeMessage.configuration) {
       this.configurationState = runtimeMessage.configuration;
       if (runtimeMessage.configuration.state === "ready") {
         void this.startGateway().catch(error => this.reportGatewayError(error));
@@ -478,13 +478,13 @@ class RuntimeManager {
           phase: "awaiting_configuration",
           message: runtimeMessage.configuration.state === "invalid"
             ? "Model configuration needs attention."
-            : "PilotDeck is ready for model setup.",
+            : "EastYunDesk is ready for model setup.",
           logPath: this.logPath,
         });
       }
       return;
     }
-    if (runtimeMessage.type === "pilotdeck:retry-gateway" && this.configurationState?.state === "ready") {
+    if (runtimeMessage.type === "eastyundesk:retry-gateway" && this.configurationState?.state === "ready") {
       void this.stopGateway().then(() => this.startGateway()).catch(error => this.reportGatewayError(error));
     }
   }
@@ -511,7 +511,7 @@ class RuntimeManager {
   }
 
   private async launchGateway(): Promise<void> {
-    if (!this.commonEnv || !this.pilotHome || !this.gatewayPort) return;
+    if (!this.commonEnv || !this.eastyunHome || !this.gatewayPort) return;
     this.setGatewayState({ state: "starting" });
     publishRuntimeStatus({
       phase: "gateway",
@@ -531,7 +531,7 @@ class RuntimeManager {
       gateway = this.spawnRuntime(
         "gateway",
         this.gatewayCommand(),
-        this.pilotHome,
+        this.eastyunHome,
         this.commonEnv,
       );
       this.gatewayProcess = gateway;
@@ -549,7 +549,7 @@ class RuntimeManager {
       this.setGatewayState({ state: "ready" });
       publishRuntimeStatus({
         phase: "ready",
-        message: "PilotDeck is ready.",
+        message: "EastYunDesk is ready.",
         logPath: this.logPath,
       });
     } catch (error) {
@@ -613,7 +613,7 @@ class RuntimeManager {
     const server = this.serverProcess;
     if (!server || !server.connected) return;
     server.send({
-      type: "pilotdeck:gateway-state",
+      type: "eastyundesk:gateway-state",
       ...state,
     }, (error) => {
       if (error) this.log(`Failed to publish Gateway state: ${error.message}`);
@@ -695,7 +695,7 @@ async function createOrShowWindow(): Promise<void> {
     height: 900,
     minWidth: 960,
     minHeight: 640,
-    title: "PilotDeck",
+    title: "EastYunDesk",
     ...(icon ? { icon } : {}),
     // Windows and Linux show their application menus in the title-bar overlay.
     autoHideMenuBar: process.platform === "win32" || process.platform === "linux",
@@ -812,7 +812,7 @@ function publishRuntimeStatus(status: RuntimeStatus): void {
 
 function sendRuntimeStatus(status: RuntimeStatus): void {
   if (!mainWindow || mainWindow.isDestroyed()) return;
-  mainWindow.webContents.send("pilotdeck:runtime-status", status);
+  mainWindow.webContents.send("eastyundesk:runtime-status", status);
 }
 
 function shouldOpenInSystemBrowser(rawUrl: string): boolean {
@@ -860,7 +860,7 @@ async function startRuntimeAndLoad(): Promise<void> {
       : new RuntimeProcessDiagnostics("desktop", runtime?.getLogPath() || path.join(app.getPath("logs"), "runtime.log")).failure(error instanceof Error ? error.stack ?? error.message : String(error));
     publishRuntimeStatus({
       phase: "error",
-      message: "PilotDeck failed to start.",
+      message: "EastYunDesk failed to start.",
       logPath: runtime?.getLogPath(),
       error: detail,
     });
@@ -879,7 +879,7 @@ async function retryRuntime(): Promise<void> {
   const currentRuntime = runtime;
   await stopRuntime();
   if (isQuitting) return;
-  publishRuntimeStatus({ phase: 'starting', message: 'Preparing PilotDeck runtime...', logPath: currentRuntime?.getLogPath() });
+  publishRuntimeStatus({ phase: 'starting', message: 'Preparing EastYunDesk runtime...', logPath: currentRuntime?.getLogPath() });
   if (!mainWindow || mainWindow.isDestroyed()) {
     await createOrShowWindow();
   } else {
@@ -891,8 +891,8 @@ async function retryRuntime(): Promise<void> {
 
 
 function resolveRuntimeRoot(): string {
-  if (process.env.PILOTDECK_DESKTOP_RUNTIME_ROOT) {
-    return path.resolve(process.env.PILOTDECK_DESKTOP_RUNTIME_ROOT);
+  if (process.env.EASTYUNDESK_DESKTOP_RUNTIME_ROOT) {
+    return path.resolve(process.env.EASTYUNDESK_DESKTOP_RUNTIME_ROOT);
   }
   if (app.isPackaged) {
     return path.join(process.resourcesPath, "runtime");
@@ -901,8 +901,8 @@ function resolveRuntimeRoot(): string {
 }
 
 function resolveNodeBinary(): string {
-  if (process.env.PILOTDECK_DESKTOP_NODE) {
-    return process.env.PILOTDECK_DESKTOP_NODE;
+  if (process.env.EASTYUNDESK_DESKTOP_NODE) {
+    return process.env.EASTYUNDESK_DESKTOP_NODE;
   }
   if (!app.isPackaged) {
     return process.platform === "win32" ? "node.exe" : "node";
@@ -922,8 +922,8 @@ function resolveBundledGitPaths(): BundledGitPaths | undefined {
     return undefined;
   }
 
-  const configuredRoot = process.env.PILOTDECK_DESKTOP_GIT_ROOT
-    ? path.resolve(process.env.PILOTDECK_DESKTOP_GIT_ROOT)
+  const configuredRoot = process.env.EASTYUNDESK_DESKTOP_GIT_ROOT
+    ? path.resolve(process.env.EASTYUNDESK_DESKTOP_GIT_ROOT)
     : undefined;
   const root = configuredRoot
     ?? (app.isPackaged
@@ -994,13 +994,13 @@ function readBuildMetadata(): BuildMetadata {
   }
 }
 
-function ensurePilotHome(log: (message: string) => void): { pilotHome: string } {
-  const pilotHome = process.env.PILOT_HOME
-    ? path.resolve(process.env.PILOT_HOME)
-    : path.join(os.homedir(), ".pilotdeck");
-  fs.mkdirSync(pilotHome, { recursive: true });
-  log(`PilotDeck home ready at ${pilotHome}`);
-  return { pilotHome };
+function ensureEastYunHome(log: (message: string) => void): { eastyunHome: string } {
+  const eastyunHome = process.env.EASTYUN_HOME
+    ? path.resolve(process.env.EASTYUN_HOME)
+    : path.join(os.homedir(), ".eastyundesk");
+  fs.mkdirSync(eastyunHome, { recursive: true });
+  log(`EastYunDesk home ready at ${eastyunHome}`);
+  return { eastyunHome };
 }
 
 async function killProcessTree(child: ChildProcess): Promise<void> {
@@ -1008,13 +1008,43 @@ async function killProcessTree(child: ChildProcess): Promise<void> {
   await stopProcessTree(child);
 }
 
-let updateController: ReturnType<typeof createUpdateController> | null = null;
+// EastYunDesk ships without auto-update: releases are distributed internally,
+// so the desktop client must never look for or install an upstream release.
+// Restore by flipping this flag; the whole update wiring below stays intact.
+const UPDATES_ENABLED = false;
+
+/**
+ * Drop-in replacement for `createUpdateController()` used while updates are
+ * disabled. It keeps every IPC handler shape intact so the renderer can still
+ * open the About page without an extra branch: checks report "no update
+ * available" and every action is a no-op returning the idle state.
+ */
+const disabledUpdates: ReturnType<typeof createUpdateController> = {
+  async check() {
+    return {
+      current: { version: app.getVersion() },
+      latest: null,
+      hasUpdate: false,
+      canDownload: false,
+      checkUnavailable: false,
+      reason: null,
+    };
+  },
+  status: () => ({ state: "idle", progress: 0 }),
+  start: () => ({ state: "idle", progress: 0 }),
+  cancel: () => ({ state: "idle", progress: 0 }),
+  pause: () => ({ state: "idle", progress: 0 }),
+  resume: () => ({ state: "idle", progress: 0 }),
+  wait: () => Promise.resolve(),
+};
+
 function getUpdateController() {
+  if (!UPDATES_ENABLED) return disabledUpdates;
   if (updateController) return updateController;
   // Node bundled with Electron supports require(ESM). Reuse the same release
   // discovery module as Web, from the packaged runtime outside app.asar.
   const releases = require(path.join(resolveRuntimeRoot(), "ui/server/services/releaseService.js"));
-  const repository = releases.normalizeRepository(process.env.PILOTDECK_UPDATE_REPOSITORY || readBuildMetadata().repository || DEFAULT_UPDATE_REPOSITORY);
+  const repository = releases.normalizeRepository(process.env.EASTYUNDESK_UPDATE_REPOSITORY || readBuildMetadata().repository || DEFAULT_UPDATE_REPOSITORY);
   const linuxPackageType = process.platform === "linux" && app.isPackaged
     ? fs.readFileSync(path.join(process.resourcesPath, "package-type"), "utf8").trim() : "deb";
   const updater = process.platform === "darwin" ? new MacUpdater()
@@ -1024,9 +1054,9 @@ function getUpdateController() {
   // executable's actual installed directory so custom paths survive upgrades.
   if (updater instanceof NsisUpdater && app.isPackaged) updater.installDirectory = path.dirname(app.getPath("exe"));
   const network = createUpdateNetwork(updater.netSession, () => {
-    const configService = require(path.join(resolveRuntimeRoot(), "ui/server/services/pilotdeckConfig.js"));
-    const record = configService.readPilotDeckConfigFile();
-    if (record.parseError) throw new Error("Invalid PilotDeck proxy configuration");
+    const configService = require(path.join(resolveRuntimeRoot(), "ui/server/services/eastyundeskConfig.js"));
+    const record = configService.readEastYunDeskConfigFile();
+    if (record.parseError) throw new Error("Invalid EastYunDesk proxy configuration");
     return record.config.proxy;
   });
   updater.on("login", network.login);
@@ -1085,7 +1115,7 @@ const notifications = createDesktopNotifications({
       fs.writeFileSync(file + '.tmp', JSON.stringify(value), { mode: 0o600 }); fs.renameSync(file + '.tmp', file);
     },
   },
-  dismissReminder: data => mainWindow?.webContents.send('pilotdeck:notification-dismissed', data),
+  dismissReminder: data => mainWindow?.webContents.send('eastyundesk:notification-dismissed', data),
   restore: () => process.platform === 'darwin' ? Notification.getHistory() : Promise.resolve([]),
   globalReminderActivation: process.platform === 'win32',
   removeReminder: process.platform === 'darwin' ? id => Notification.remove(id) : undefined,
@@ -1095,18 +1125,18 @@ const notifications = createDesktopNotifications({
   setOverlay: (bitmap, label) => mainWindow?.setOverlayIcon(bitmap ? nativeImage.createFromBitmap(bitmap, { width: 32, height: 32 }) : null, label),
   navigate: async data => {
     await restoreMainWindow();
-    mainWindow?.webContents.send('pilotdeck:notification-navigate', data);
+    mainWindow?.webContents.send('eastyundesk:notification-navigate', data);
   },
   report: error => console.warn('Desktop notification:', error),
 });
-ipcMain.handle('pilotdeck:notification-status', event => { requireUpdateSender(event); return notifications.status(); });
-ipcMain.handle('pilotdeck:notification-preferences', (event, value) => { requireUpdateSender(event); return notifications.preferences(value); });
-ipcMain.handle('pilotdeck:notification-reconcile', (event, value) => { requireUpdateSender(event); return notifications.reconcileReminders(value); });
-ipcMain.handle('pilotdeck:notification-dismiss', (event, data) => { requireUpdateSender(event); return notifications.dismissReminder(data); });
-ipcMain.handle('pilotdeck:notification-show', (event, value) => { requireUpdateSender(event); return notifications.show(value); });
-ipcMain.handle('pilotdeck:notification-reminder', (event, value) => { requireUpdateSender(event); return notifications.record(value); });
-ipcMain.handle('pilotdeck:notification-scope', (event, value) => { requireUpdateSender(event); notifications.setScope(value); void notifications.restoreReminders().catch(error => console.warn('Notification restore failed:', error)); });
-ipcMain.handle('pilotdeck:notification-settings', async event => {
+ipcMain.handle('eastyundesk:notification-status', event => { requireUpdateSender(event); return notifications.status(); });
+ipcMain.handle('eastyundesk:notification-preferences', (event, value) => { requireUpdateSender(event); return notifications.preferences(value); });
+ipcMain.handle('eastyundesk:notification-reconcile', (event, value) => { requireUpdateSender(event); return notifications.reconcileReminders(value); });
+ipcMain.handle('eastyundesk:notification-dismiss', (event, data) => { requireUpdateSender(event); return notifications.dismissReminder(data); });
+ipcMain.handle('eastyundesk:notification-show', (event, value) => { requireUpdateSender(event); return notifications.show(value); });
+ipcMain.handle('eastyundesk:notification-reminder', (event, value) => { requireUpdateSender(event); return notifications.record(value); });
+ipcMain.handle('eastyundesk:notification-scope', (event, value) => { requireUpdateSender(event); notifications.setScope(value); void notifications.restoreReminders().catch(error => console.warn('Notification restore failed:', error)); });
+ipcMain.handle('eastyundesk:notification-settings', async event => {
   requireUpdateSender(event);
   if (process.platform === 'darwin') {
     try { await shell.openExternal(`x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=${APP_ID}`); }
@@ -1125,13 +1155,13 @@ ipcMain.handle('pilotdeck:notification-settings', async event => {
   return false;
 });
 for (const [channel, action] of Object.entries({
-  "pilotdeck:about-info": () => desktopAboutInfo(desktopAboutContext()),
-  "pilotdeck:update-check": () => getUpdateController().check(),
-  "pilotdeck:update-status": () => getUpdateController().status(),
-  "pilotdeck:update-start": () => getUpdateController().start(),
-  "pilotdeck:update-cancel": () => getUpdateController().cancel(),
-  "pilotdeck:update-pause": () => getUpdateController().pause(),
-  "pilotdeck:update-resume": () => getUpdateController().resume(),
+  "eastyundesk:about-info": () => desktopAboutInfo(desktopAboutContext()),
+  "eastyundesk:update-check": () => getUpdateController().check(),
+  "eastyundesk:update-status": () => getUpdateController().status(),
+  "eastyundesk:update-start": () => getUpdateController().start(),
+  "eastyundesk:update-cancel": () => getUpdateController().cancel(),
+  "eastyundesk:update-pause": () => getUpdateController().pause(),
+  "eastyundesk:update-resume": () => getUpdateController().resume(),
 })) {
   ipcMain.handle(channel, (event) => { requireUpdateSender(event); return action(); });
 }
@@ -1143,7 +1173,7 @@ function readAppearance(): DesktopAppearance {
   } catch { return normalizeAppearance(null, locale); }
 }
 
-ipcMain.on("pilotdeck:get-appearance", (event) => {
+ipcMain.on("eastyundesk:get-appearance", (event) => {
   try {
     requireUpdateSender(event);
     event.returnValue = readAppearance();
@@ -1160,7 +1190,7 @@ function dispatchDesktopCommand(command: DesktopCommand): void {
   }
   if (mainWindow.isMinimized()) mainWindow.restore();
   mainWindow.focus();
-  mainWindow.webContents.send("pilotdeck:command", command);
+  mainWindow.webContents.send("eastyundesk:command", command);
 }
 
 function desktopAboutContext() {
@@ -1186,7 +1216,7 @@ function desktopMenuTemplate() {
           if (mainWindow && !mainWindow.isDestroyed()) void showDesktopAbout(mainWindow).catch(error => console.error("Desktop about dialog failed", error));
         } else {
           const operation = action === "docs"
-            ? shell.openExternal("https://pilotdeck.openbmb.cn/pilotdeck.github.io/docs/introduction")
+            ? shell.openExternal("https://pilotdeck.openbmb.cn/eastyundesk.github.io/docs/introduction")
             : action === "issues" ? shell.openExternal("https://github.com/OpenBMB/PilotDeck/issues")
               : shell.openPath(runtime?.getLogPath() || app.getPath("logs"));
           void operation.catch(error => console.error("Desktop help action failed", error));
@@ -1199,7 +1229,7 @@ function updateApplicationMenu(): void {
   Menu.setApplicationMenu(Menu.buildFromTemplate(desktopMenuTemplate()));
   if ((process.platform === "win32" || process.platform === "linux") && mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.setMenuBarVisibility(false);
-    if (process.platform === "linux") mainWindow.webContents.send("pilotdeck:application-menu-updated");
+    if (process.platform === "linux") mainWindow.webContents.send("eastyundesk:application-menu-updated");
   }
 }
 
@@ -1213,7 +1243,7 @@ function publishWindowState(): void {
   if ((process.platform === "win32" || process.platform === "linux") && !fullscreen) mainWindow.setTitleBarOverlay({
     color: palette.caption, symbolColor: palette.symbol, height: WINDOWS_CAPTION_HEIGHT,
   });
-  mainWindow.webContents.send("pilotdeck:window-state", { dark, fullscreen, palette });
+  mainWindow.webContents.send("eastyundesk:window-state", { dark, fullscreen, palette });
 }
 
 // Caption controls are also available in our startup data document, before the
@@ -1226,14 +1256,14 @@ function requireCaptionSender(event: Electron.IpcMainEvent | Electron.IpcMainInv
   if (url.protocol !== "data:" && (!updateOrigin || url.origin !== updateOrigin)) throw new Error("Invalid caption origin");
 }
 
-ipcMain.on("pilotdeck:get-window-state", event => {
+ipcMain.on("eastyundesk:get-window-state", event => {
   try {
     requireCaptionSender(event);
     const dark = nativeTheme.shouldUseDarkColors;
     event.returnValue = { dark, fullscreen: mainWindow!.isFullScreen(), palette: windowPalette(dark, process.platform, readAppearance().lightAppearance) };
   } catch { event.returnValue = { dark: false, fullscreen: false }; }
 });
-ipcMain.handle("pilotdeck:menu-state", (event, state: unknown) => {
+ipcMain.handle("eastyundesk:menu-state", (event, state: unknown) => {
   requireUpdateSender(event);
   const next = normalizeMenuState(state);
   if (JSON.stringify(next) === JSON.stringify(desktopMenuState)) return;
@@ -1241,7 +1271,7 @@ ipcMain.handle("pilotdeck:menu-state", (event, state: unknown) => {
   updateApplicationMenu();
 });
 const captionMenus = new WeakMap<BrowserWindow, WindowsCaptionMenu>();
-ipcMain.handle("pilotdeck:show-menu", (event, request?: CaptionMenuRequest) => {
+ipcMain.handle("eastyundesk:show-menu", (event, request?: CaptionMenuRequest) => {
   requireCaptionSender(event);
   if (process.platform !== "win32" && process.platform !== "linux") return;
   const owner = mainWindow!;
@@ -1254,7 +1284,7 @@ ipcMain.handle("pilotdeck:show-menu", (event, request?: CaptionMenuRequest) => {
 });
 nativeTheme.on("updated", () => { publishWindowState(); });
 
-ipcMain.handle("pilotdeck:set-appearance", (event, value: unknown) => {
+ipcMain.handle("eastyundesk:set-appearance", (event, value: unknown) => {
   requireUpdateSender(event);
   const current = readAppearance();
   const appearance = saveAppearancePatch(app.getPath('userData'), current, value, app.getLocale());
@@ -1267,28 +1297,28 @@ ipcMain.handle("pilotdeck:set-appearance", (event, value: unknown) => {
     desktopTray?.refreshMenu();
   }
 });
-ipcMain.handle('pilotdeck:appearance-capabilities', event => {
+ipcMain.handle('eastyundesk:appearance-capabilities', event => {
   requireUpdateSender(event);
   return { hardwareAcceleration: startupHardwareAcceleration };
 });
-ipcMain.handle('pilotdeck:save-appearance-image', (event, bytes: unknown) => {
+ipcMain.handle('eastyundesk:save-appearance-image', (event, bytes: unknown) => {
   requireUpdateSender(event);
   return writeAppearanceImage(app.getPath('userData'), bytes, buffer => nativeImage.createFromBuffer(buffer).getSize());
 });
-ipcMain.handle('pilotdeck:read-appearance-image', async (event, id: unknown) => {
+ipcMain.handle('eastyundesk:read-appearance-image', async (event, id: unknown) => {
   requireUpdateSender(event);
   const file = appearanceImagePath(app.getPath('userData'), id);
   if ((await fs.promises.stat(file)).size > 10 * 1024 * 1024) throw new Error('Invalid background image');
   return new Uint8Array(await fs.promises.readFile(file));
 });
-ipcMain.handle('pilotdeck:delete-appearance-image', (event, id: unknown) => {
+ipcMain.handle('eastyundesk:delete-appearance-image', (event, id: unknown) => {
   requireUpdateSender(event);
   // Never remove an image referenced by the last successfully saved configuration.
   if (readAppearance().lightAppearance?.background.imageId === id) return;
   fs.rmSync(appearanceImagePath(app.getPath('userData'), id), { force: true });
 });
 
-ipcMain.handle("pilotdeck:get-runtime-info", () => runtime?.getInfo());
+ipcMain.handle("eastyundesk:get-runtime-info", () => runtime?.getInfo());
 const uninstallDataHelper = require(app.isPackaged ? path.join(process.resourcesPath, 'uninstall-data.cjs') : path.join(__dirname, '../resources/uninstall-data.cjs'));
 const desktopUninstaller = createDesktopUninstaller({
   platform: process.platform, packaged: app.isPackaged, chinese: () => readAppearance().language === 'zh-CN', exists: fs.existsSync,
@@ -1297,40 +1327,40 @@ const desktopUninstaller = createDesktopUninstaller({
   stop: async () => { isQuitting = true; await stopRuntime(); },
   restore: async () => { isQuitting = false; await startRuntimeAndLoad(); },
   cleanup: () => {
-    return uninstallDataHelper.cleanupPersonalData({ profile: os.homedir(), appData: app.getPath('appData'), localAppData: process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache'), pilotHome: process.env.PILOT_HOME });
+    return uninstallDataHelper.cleanupPersonalData({ profile: os.homedir(), appData: app.getPath('appData'), localAppData: process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache'), eastyunHome: process.env.EASTYUN_HOME });
   },
-  notify: async message => { await dialog.showMessageBox({ type: 'info', title: 'PilotDeck', message }); },
+  notify: async message => { await dialog.showMessageBox({ type: 'info', title: 'EastYunDesk', message }); },
   quit: () => { isQuitting = true; app.exit(0); },
 });
-ipcMain.handle('pilotdeck:uninstall-status', event => { requireUpdateSender(event); return { supported: desktopUninstaller.supported() }; });
-ipcMain.handle('pilotdeck:uninstall', event => { requireUpdateSender(event); return desktopUninstaller.start(); });
-ipcMain.on('pilotdeck:get-runtime-status', (event) => { event.returnValue = lastRuntimeStatus; });
-ipcMain.handle('pilotdeck:save-runtime-logs', async event => {
+ipcMain.handle('eastyundesk:uninstall-status', event => { requireUpdateSender(event); return { supported: desktopUninstaller.supported() }; });
+ipcMain.handle('eastyundesk:uninstall', event => { requireUpdateSender(event); return desktopUninstaller.start(); });
+ipcMain.on('eastyundesk:get-runtime-status', (event) => { event.returnValue = lastRuntimeStatus; });
+ipcMain.handle('eastyundesk:save-runtime-logs', async event => {
   if (!mainWindow || event.sender !== mainWindow.webContents || event.senderFrame !== event.sender.mainFrame) throw new Error('Invalid log export sender');
   if (event.senderFrame.url !== startupPageUrl) requireUpdateSender(event);
   const logPath = runtime?.getLogPath() ?? lastRuntimeStatus?.logPath;
   if (!logPath) throw new Error('No runtime logs available');
   const result = await dialog.showSaveDialog(mainWindow, {
     title: readAppearance().language === 'zh-CN' ? '下载运行日志' : 'Download runtime logs',
-    defaultPath: path.join(app.getPath('downloads'), `PilotDeck-logs-${new Date().toISOString().replace(/[:.]/g, '-')}.log`),
+    defaultPath: path.join(app.getPath('downloads'), `EastYunDesk-logs-${new Date().toISOString().replace(/[:.]/g, '-')}.log`),
     filters: [{ name: readAppearance().language === 'zh-CN' ? '运行日志' : 'Runtime logs', extensions: ['log'] }],
   });
   if (result.canceled || !result.filePath) return { canceled: true };
   await exportRuntimeLogs(logPath, result.filePath);
   return { canceled: false };
 });
-ipcMain.handle("pilotdeck:retry-runtime", () => retryRuntime());
-ipcMain.handle("pilotdeck:open-runtime-log", async () => {
+ipcMain.handle("eastyundesk:retry-runtime", () => retryRuntime());
+ipcMain.handle("eastyundesk:open-runtime-log", async () => {
   const logPath = runtime?.getLogPath() ?? lastRuntimeStatus?.logPath;
   if (logPath) {
     await shell.openPath(logPath);
   }
 });
-ipcMain.handle('pilotdeck:open-directory', (event, directory: unknown) => {
+ipcMain.handle('eastyundesk:open-directory', (event, directory: unknown) => {
   requireUpdateSender(event);
   return openDesktopDirectory(directory, folder => shell.openPath(folder));
 });
-ipcMain.handle("pilotdeck:pick-folder", async () => {
+ipcMain.handle("eastyundesk:pick-folder", async () => {
   const owner = BrowserWindow.getFocusedWindow() ?? mainWindow ?? undefined;
   const result = owner
     ? await dialog.showOpenDialog(owner, { properties: ["openDirectory", "createDirectory"] })
@@ -1343,7 +1373,7 @@ const pickFiles = createFilePicker({
   chinese: () => readAppearance().language === 'zh-CN',
   showDialog: (owner, options) => dialog.showOpenDialog(owner, options),
 });
-ipcMain.handle('pilotdeck:pick-files', (event, request: unknown) => {
+ipcMain.handle('eastyundesk:pick-files', (event, request: unknown) => {
   requireUpdateSender(event);
   return pickFiles(mainWindow!, request);
 });
@@ -1371,8 +1401,8 @@ const lifecycle = createDesktopLifecycle({
   showDialog: (owner, options) => dialog.showMessageBox(owner, options),
   stopRuntime,
   quit: () => app.quit(),
-  reportError: error => console.error("PilotDeck lifecycle operation failed", error),
-  reportStopError: error => dialog.showErrorBox(startupText("PilotDeck could not stop", readAppearance().language), String(error)),
+  reportError: error => console.error("EastYunDesk lifecycle operation failed", error),
+  reportStopError: error => dialog.showErrorBox(startupText("EastYunDesk could not stop", readAppearance().language), String(error)),
 });
 
 const ownsInstance = process.platform === "darwin" || app.requestSingleInstanceLock();
@@ -1380,7 +1410,7 @@ if (!ownsInstance) {
   app.quit();
 } else {
   app.on("second-instance", (_event, argv) => {
-    void restoreMainWindow().then(() => argv.includes('--uninstall') ? desktopUninstaller.start() : undefined).catch(error => console.error("Could not restore PilotDeck", error));
+    void restoreMainWindow().then(() => argv.includes('--uninstall') ? desktopUninstaller.start() : undefined).catch(error => console.error("Could not restore EastYunDesk", error));
   });
   app.whenReady()
     .then(async () => {
@@ -1398,15 +1428,15 @@ if (!ownsInstance) {
                 ? path.join(process.resourcesPath, "icons", "trayTemplate.png")
                 : path.resolve(__dirname, "..", "resources", "icons", "trayTemplate.png");
               const image = nativeImage.createFromPath(iconPath);
-              if (image.isEmpty()) throw new Error("PilotDeck menu bar icon is missing");
+              if (image.isEmpty()) throw new Error("EastYunDesk menu bar icon is missing");
               image.setTemplateImage(true);
               return new Tray(image);
             }
             const iconPath = resolveAppIcon();
-            if (!iconPath) throw new Error("PilotDeck tray icon is missing");
+            if (!iconPath) throw new Error("EastYunDesk tray icon is missing");
             if (process.platform === "linux") {
               const image = nativeImage.createFromPath(iconPath).resize({ width: 24, height: 24 });
-              if (image.isEmpty()) throw new Error("PilotDeck tray icon is invalid");
+              if (image.isEmpty()) throw new Error("EastYunDesk tray icon is invalid");
               return new Tray(image);
             }
             return new Tray(iconPath);
@@ -1429,7 +1459,7 @@ if (!ownsInstance) {
           isChinese: () => readAppearance().language === "zh-CN",
           open: lifecycle.open,
           requestQuit: lifecycle.requestQuit,
-          reportError: error => console.error("PilotDeck tray operation failed", error),
+          reportError: error => console.error("EastYunDesk tray operation failed", error),
         });
       }
       if (process.platform === "darwin") {
@@ -1444,7 +1474,7 @@ if (!ownsInstance) {
     .then(async () => {
       if (process.platform === 'linux' && process.argv.includes('--uninstall')) {
         try { await desktopUninstaller.start(); }
-        catch (error) { dialog.showErrorBox('PilotDeck', String(error)); }
+        catch (error) { dialog.showErrorBox('EastYunDesk', String(error)); }
         if (!isQuitting) app.exit(0);
       } else await startRuntimeAndLoad();
     })
@@ -1453,7 +1483,7 @@ if (!ownsInstance) {
       await runtime?.stop().catch(() => undefined);
       publishRuntimeStatus({
         phase: "error",
-        message: "PilotDeck failed to start.",
+        message: "EastYunDesk failed to start.",
         logPath: runtime?.getLogPath(),
         error: detail,
       });

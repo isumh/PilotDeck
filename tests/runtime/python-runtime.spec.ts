@@ -4,10 +4,10 @@ import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { PythonRuntimeManager, withPythonMcpEnvironment, pythonRuntimeContext } from '../../src/runtime/pythonRuntime.js';
-import type { PilotDeckMcpServerSpec } from '../../src/mcp/protocol/types.js';
+import type { EastYunDeskMcpServerSpec } from '../../src/mcp/protocol/types.js';
 
 async function fixture(t: test.TestContext) {
-  const home = await mkdtemp(join(tmpdir(), 'pilotdeck-python-'));
+  const home = await mkdtemp(join(tmpdir(), 'eastyundesk-python-'));
   t.after(() => rm(home, { recursive: true, force: true }));
   const root = join(home, '应用 with spaces');
   await mkdir(root);
@@ -26,8 +26,8 @@ async function fixture(t: test.TestContext) {
     }
     return JSON.stringify({ version: manifest.version, prefix: dirname(dirname(command)) });
   };
-  const env = { Path: '/host/bin', PILOTDECK_PYTHON_ROOT: root, PYTHONHOME: '/wrong', PYTHONPATH: '/wrong', SECRET: 'never-publish' };
-  return { home, root, manifest, env, calls, run, manager: new PythonRuntimeManager({ pilotHome: home, env, run }) };
+  const env = { Path: '/host/bin', EASTYUNDESK_PYTHON_ROOT: root, PYTHONHOME: '/wrong', PYTHONPATH: '/wrong', SECRET: 'never-publish' };
+  return { home, root, manifest, env, calls, run, manager: new PythonRuntimeManager({ eastyunHome: home, env, run }) };
 }
 
 test('default-on initialization is coalesced, isolated, immutable and retained when disabled', async t => {
@@ -72,7 +72,7 @@ test('cold initialization imports libraries once and still verifies the publishe
   assert.equal(probes[1].command, ready.status.executable);
   // A different Gateway must validate imports in an existing environment.
   f.calls.length = 0;
-  const other = new PythonRuntimeManager({ pilotHome: f.home, env: f.env, run: f.run });
+  const other = new PythonRuntimeManager({ eastyunHome: f.home, env: f.env, run: f.run });
   assert.equal((await other.resolve()).status.state, 'ready');
   assert.equal(f.calls.length, 1);
   assert.match(f.calls[0].args.at(-1)!, /importlib\.import_module/);
@@ -80,7 +80,7 @@ test('cold initialization imports libraries once and still verifies the publishe
 
 test('a relocation identity failure is not reported as a ready environment', async t => {
   const f = await fixture(t);
-  const manager = new PythonRuntimeManager({ pilotHome: f.home, env: f.env, run: async (command, args) => {
+  const manager = new PythonRuntimeManager({ eastyunHome: f.home, env: f.env, run: async (command, args) => {
     if (args.includes('-c') && !args.at(-1)!.includes('importlib.import_module')) {
       return JSON.stringify({ version: '0.0.0', prefix: dirname(dirname(command)) });
     }
@@ -94,7 +94,7 @@ test('settings reports initialization in progress without waiting or starting an
   let release!: () => void, entered!: () => void;
   const waiting = new Promise<void>(done => { release = done; });
   const started = new Promise<void>(done => { entered = done; });
-  const manager = new PythonRuntimeManager({ pilotHome: f.home, env: f.env, run: async (...args) => {
+  const manager = new PythonRuntimeManager({ eastyunHome: f.home, env: f.env, run: async (...args) => {
     if (args[1].includes('venv')) { entered(); await waiting; }
     return f.run(args[0], args[1]);
   } });
@@ -107,7 +107,7 @@ test('settings reports initialization in progress without waiting or starting an
 
 test('concurrent Gateway instances share one completed virtual environment', async t => {
   const f = await fixture(t);
-  const other = new PythonRuntimeManager({ pilotHome: f.home, env: f.env, run: f.run });
+  const other = new PythonRuntimeManager({ eastyunHome: f.home, env: f.env, run: f.run });
   const [a, b] = await Promise.all([f.manager.resolve(), other.resolve()]);
   assert.equal(a.status.state, 'ready'); assert.equal(b.status.state, 'ready');
   assert.equal(a.status.executable, b.status.executable);
@@ -117,10 +117,10 @@ test('concurrent Gateway instances share one completed virtual environment', asy
 
 test('missing, disabled and explicitly activated environments never launch bundled Python', async () => {
   const run = async () => { throw new Error('Unexpected launch'); };
-  const manager = new PythonRuntimeManager({ pilotHome: '/unused', env: {}, run });
+  const manager = new PythonRuntimeManager({ eastyunHome: '/unused', env: {}, run });
   assert.deepEqual((await manager.resolve()).status, { enabled: true, state: 'unavailable', reason: 'not-installed' });
   assert.equal((await manager.resolve(false)).status.state, 'disabled');
-  const external = new PythonRuntimeManager({ pilotHome: '/unused', env: { VIRTUAL_ENV: '/project/.venv' }, run });
+  const external = new PythonRuntimeManager({ eastyunHome: '/unused', env: { VIRTUAL_ENV: '/project/.venv' }, run });
   assert.equal((await external.resolve()).status.state, 'external');
 });
 
@@ -143,7 +143,7 @@ test('MCP receives only the capability variables and preserves explicit override
   if (patched.transport !== 'stdio') throw new Error('wrong transport');
   assert.equal(patched.env?.UV_PYTHON, runtime.status.executable);
   assert.equal(patched.env?.CUSTOM, 'value'); assert.equal(patched.env?.SECRET, undefined);
-  const explicit: PilotDeckMcpServerSpec[] = [{ ...bare, command: join(f.home, 'project-python') }, { ...bare, command: './.venv/bin/python' },
+  const explicit: EastYunDeskMcpServerSpec[] = [{ ...bare, command: join(f.home, 'project-python') }, { ...bare, command: './.venv/bin/python' },
     { ...bare, env: { Path: '/custom' } }, { ...bare, env: { UV_PYTHON: '/custom/python' } },
     { id: 'http', transport: 'streamable_http' as const, url: 'https://example.test' }];
   for (const spec of explicit) {

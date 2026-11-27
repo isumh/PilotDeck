@@ -21,10 +21,6 @@ export default function CreateWorkspaceModal({
     progress,
     isCreating,
     setWorkspacePath,
-    setGithubUrl,
-    setTokenMode,
-    setSelectedGithubToken,
-    setNewGithubToken,
     createWorkspace,
   } = useOnboardingWorkspace();
 
@@ -72,10 +68,6 @@ export default function CreateWorkspaceModal({
           progress={progress}
           isCreating={isCreating}
           onWorkspacePathChange={setWorkspacePath}
-          onGithubUrlChange={setGithubUrl}
-          onTokenModeChange={setTokenMode}
-          onSelectedGithubTokenChange={setSelectedGithubToken}
-          onNewGithubTokenChange={setNewGithubToken}
           onCancel={onClose}
           onFinish={handleFinish}
         />

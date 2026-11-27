@@ -1,10 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import FolderBrowserModal from '../../../project-creation-wizard/components/FolderBrowserModal';
-import GithubAuthenticationCard from '../../../project-creation-wizard/components/GithubAuthenticationCard';
-import { useGithubTokens } from '../../../project-creation-wizard/hooks/useGithubTokens';
-import { shouldShowGithubAuthentication } from '../../../project-creation-wizard/utils/pathUtils';
-import type { TokenMode } from '../../../project-creation-wizard/types';
 import type { WorkspaceDraft } from '../types';
 import { ArrowLeftIcon, FolderBrowseIcon, StepCheckIcon } from './icons';
 
@@ -14,10 +10,6 @@ type WorkspaceStepBaseProps = {
   progress: string;
   isCreating: boolean;
   onWorkspacePathChange: (workspacePath: string) => void;
-  onGithubUrlChange: (githubUrl: string) => void;
-  onTokenModeChange: (tokenMode: TokenMode) => void;
-  onSelectedGithubTokenChange: (tokenId: string) => void;
-  onNewGithubTokenChange: (token: string) => void;
   onFinish: () => void | Promise<void>;
 };
 
@@ -43,10 +35,6 @@ export default function WorkspaceStep(props: WorkspaceStepProps) {
     progress,
     isCreating,
     onWorkspacePathChange,
-    onGithubUrlChange,
-    onTokenModeChange,
-    onSelectedGithubTokenChange,
-    onNewGithubTokenChange,
     onFinish,
   } = props;
   const isDialog = props.variant === 'dialog';
@@ -56,20 +44,6 @@ export default function WorkspaceStep(props: WorkspaceStepProps) {
   const [isPickingFolder, setIsPickingFolder] = useState(false);
   const [browseError, setBrowseError] = useState('');
   const [showFolderBrowser, setShowFolderBrowser] = useState(false);
-  const showGithubAuthentication = shouldShowGithubAuthentication(
-    draft.workspaceType,
-    draft.githubUrl,
-  );
-  const handleAutoSelectToken = useCallback((tokenId: string) => {
-    onSelectedGithubTokenChange(tokenId);
-    onTokenModeChange('stored');
-  }, [onSelectedGithubTokenChange, onTokenModeChange]);
-  const { tokens, loading: loadingTokens, loadError: tokenLoadError } = useGithubTokens({
-    shouldLoad: showGithubAuthentication,
-    selectedTokenId: draft.selectedGithubToken,
-    onAutoSelectToken: handleAutoSelectToken,
-  });
-
   const handlePathChange = (value: string) => {
     setPathInvalid(false);
     onWorkspacePathChange(value);
@@ -138,32 +112,6 @@ export default function WorkspaceStep(props: WorkspaceStepProps) {
             </small>
           </span>
         </label>
-        <label className="workspace-form-row github-url-field">
-          <span>{t('workspace.githubLabel')}</span>
-          <span className="workspace-field-stack">
-            <input
-              type="url"
-              value={draft.githubUrl}
-              onChange={(event) => onGithubUrlChange(event.target.value)}
-              placeholder={t('workspace.githubPlaceholder')}
-              disabled={isCreating}
-            />
-            <small>{t('workspace.githubHint')}</small>
-          </span>
-        </label>
-        {showGithubAuthentication ? (
-          <GithubAuthenticationCard
-            tokenMode={draft.tokenMode}
-            selectedGithubToken={draft.selectedGithubToken}
-            newGithubToken={draft.newGithubToken}
-            availableTokens={tokens}
-            loadingTokens={loadingTokens}
-            tokenLoadError={tokenLoadError}
-            onTokenModeChange={onTokenModeChange}
-            onSelectedGithubTokenChange={onSelectedGithubTokenChange}
-            onNewGithubTokenChange={onNewGithubTokenChange}
-          />
-        ) : null}
       </form>
 
       {(error || progress || browseError) && (

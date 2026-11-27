@@ -1,4 +1,4 @@
-import { loadPilotConfig } from "../../pilot/config/loadPilotConfig.js";
+import { loadEastYunConfig } from "../../eastyun/config/loadEastYunConfig.js";
 import type { ThinkingMode } from "../../model/thinking/registry.js";
 import type {
   ExplicitModelSelection,
@@ -15,7 +15,7 @@ const REASONING_VALUES = new Map<number, ThinkingMode>([
 ]);
 
 export function listModelCatalog(input: ModelCatalogListInput, env: NodeJS.ProcessEnv = process.env): ModelCatalogListResult {
-  const config = loadPilotConfig({ env }).config;
+  const config = loadEastYunConfig({ env }).config;
   const query = input.query?.trim().toLocaleLowerCase() ?? "";
   const items: ModelCatalogItem[] = [];
   for (const [providerId, provider] of Object.entries(config.model.providers)) {

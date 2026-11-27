@@ -34,9 +34,9 @@ export type ParseRouterConfigResult = {
 };
 
 /**
- * Validate the `router` section of PilotConfig and return a structured
+ * Validate the `router` section of EastYunConfig and return a structured
  * RouterConfig. Returns diagnostics rather than throwing so the caller
- * (loadPilotConfig) can integrate with its existing fatal-aware flow.
+ * (loadEastYunConfig) can integrate with its existing fatal-aware flow.
  */
 export function parseRouterConfig(
   raw: unknown,

@@ -6,7 +6,7 @@ test('classifies evidence and OS errors with a stable unknown fallback', () => {
   for (const [error, evidence, status, expected] of [
     [{ code: 'EADDRINUSE' }, '', undefined, 'PD_NETWORK_PORT_IN_USE'],
     [new Error('fetch failed', { cause: { code: 'ENOTFOUND' } }), '', undefined, 'PD_NETWORK_UNAVAILABLE'],
-    [{ name: 'PilotConfigError', code: 'CONFIG_AGENT_MODEL_INVALID' }, '', undefined, 'PD_CONFIG_INVALID'],
+    [{ name: 'EastYunConfigError', code: 'CONFIG_AGENT_MODEL_INVALID' }, '', undefined, 'PD_CONFIG_INVALID'],
     [{ code: 'ENOENT' }, '', undefined, 'PD_RESOURCE_NOT_FOUND'],
     [{ code: 'EACCES' }, '', undefined, 'PD_FILESYSTEM_PERMISSION'],
     [{ code: 'ENOSPC' }, '', undefined, 'PD_FILESYSTEM_FULL'],

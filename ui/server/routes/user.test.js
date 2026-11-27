@@ -116,6 +116,33 @@ describe('user onboarding status route', () => {
     });
   });
 
+  it('keeps reporting completion for a user whose stored flag is set', async () => {
+    vi.stubEnv('OPENAI_API_KEY', '');
+    const { request } = await createUserApp({
+      exists: true,
+      config: {
+        agent: { model: 'openai/gpt-4.1-mini' },
+        model: {
+          providers: {
+            openai: {
+              protocol: 'openai',
+              url: 'https://api.openai.com/v1',
+              models: { 'gpt-4.1-mini': {} },
+            },
+          },
+        },
+      },
+    }, { onboardingCompleted: true });
+
+    const data = await request('/api/user/onboarding-status');
+
+    expect(data).toMatchObject({
+      success: true,
+      hasCompletedOnboarding: true,
+      configuration: { state: 'needs_configuration', reason: 'missing_credential' },
+    });
+  });
+
   it('accepts a ready configuration even when Gateway is managed elsewhere', async () => {
     const { request } = await createUserApp({
       exists: true,
@@ -143,13 +170,20 @@ describe('user onboarding status route', () => {
   });
 });
 
-async function createUserApp(record) {
-  vi.doMock('../database/db.js', () => ({
-    userDb: {
-      getGitConfig: vi.fn(),
-      updateGitConfig: vi.fn(),
-    },
-  }));
+async function createUserApp(record, { onboardingCompleted = false } = {}) {
+  // EastYunDesk persists onboarding completion per user, so the mocked user
+  // store has to expose the same two helpers as the real one.
+  vi.doMock('../database/db.js', () => {
+    let completed = onboardingCompleted;
+    return {
+      userDb: {
+        getGitConfig: vi.fn(),
+        updateGitConfig: vi.fn(),
+        completeOnboarding: vi.fn(() => { completed = true; }),
+        hasCompletedOnboarding: vi.fn(() => completed),
+      },
+    };
+  });
   vi.doMock('../middleware/auth.js', () => ({
     authenticateToken: (req, _res, next) => {
       req.user = { id: 1, username: 'test' };
@@ -159,9 +193,9 @@ async function createUserApp(record) {
   vi.doMock('../utils/gitConfig.js', () => ({
     getSystemGitConfig: vi.fn(async () => ({ git_name: null, git_email: null })),
   }));
-  vi.doMock('../services/pilotdeckConfig.js', async (importOriginal) => ({
+  vi.doMock('../services/eastyundeskConfig.js', async (importOriginal) => ({
     ...await importOriginal(),
-    readPilotDeckConfigFile: vi.fn(() => record),
+    readEastYunDeskConfigFile: vi.fn(() => record),
   }));
 
   const { default: userRoutes } = await import('./user.js');

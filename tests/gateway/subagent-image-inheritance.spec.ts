@@ -9,10 +9,10 @@ import { createLocalGateway } from "../../src/cli/createLocalGateway.js";
 import { createSubagentImageInheritance, createSubagentImagePreparation } from "../../src/cli/subagentImageInheritance.js";
 import { createModelRuntime, type CanonicalModelEvent, type CanonicalModelRequest } from "../../src/model/index.js";
 import { ImageStore, type GeneratedImage } from "../../src/tool/builtin/images/ImageStore.js";
-import type { PilotDeckToolSuccessResult } from "../../src/tool/index.js";
+import type { EastYunDeskToolSuccessResult } from "../../src/tool/index.js";
 import type { GatewayEvent } from "../../src/gateway/protocol/types.js";
-import type { PilotConfigSnapshot } from "../../src/pilot/config/types.js";
-import { createProjectId } from "../../src/pilot/index.js";
+import type { EastYunConfigSnapshot } from "../../src/eastyun/config/types.js";
+import { createProjectId } from "../../src/eastyun/index.js";
 
 test("same-chat parent saves and edits parallel child images by ID, including after gateway restart", async t => {
   const root = await mkdtemp(join(tmpdir(), "subagent-images-"));
@@ -41,7 +41,7 @@ test("same-chat parent saves and edits parallel child images by ID, including af
   await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
   t.after(() => new Promise<void>(resolve => server.close(() => resolve())));
   const port = (server.address() as { port: number }).port;
-  await writeFile(join(home, "pilotdeck.yaml"), `schemaVersion: 1
+  await writeFile(join(home, "eastyundesk.yaml"), `schemaVersion: 1
 agent: { model: test/model, maxContextTokens: 65536, maxOutputTokens: 8192 }
 extension:
   builtinPluginsEnabled: { windows-skills: false, browser-use: false, funasr: false }
@@ -58,9 +58,9 @@ model:
       models: { model: {} }
 `);
   const modelRequests: CanonicalModelRequest[] = [];
-  const options = { pilotHome: home, projectRoot: workspace, builtinSkillsRoot: join(home, "skills"),
-    env: { ...process.env, PILOT_HOME: home, PILOT_AGENT_MODEL: undefined, PILOTDECK_CONFIG_PATH: join(home, "pilotdeck.yaml") },
-    __testModelFactory: (snapshot: PilotConfigSnapshot) => ({
+  const options = { eastyunHome: home, projectRoot: workspace, builtinSkillsRoot: join(home, "skills"),
+    env: { ...process.env, EASTYUN_HOME: home, EASTYUN_AGENT_MODEL: undefined, EASTYUNDESK_CONFIG_PATH: join(home, "eastyundesk.yaml") },
+    __testModelFactory: (snapshot: EastYunConfigSnapshot) => ({
       ...createModelRuntime(snapshot.config.model),
       async *stream(request: CanonicalModelRequest): AsyncIterable<CanonicalModelEvent> {
         modelRequests.push(request);
@@ -131,7 +131,7 @@ model:
     await assert.rejects(() => new ImageStore(join(home, "generated-images")).get("web:unrelated", image.imageId), /ENOENT/);
   }
   assert.equal(events.filter(event => event.type === "assistant_attachment").length, 3, "handoff does not send the two child images twice");
-  const files = (await readdir(workspace)).filter(file => file !== ".pilotdeck");
+  const files = (await readdir(workspace)).filter(file => file !== ".eastyundesk");
   assert.deepEqual(files, ["parent-0.png", "parent-1.png"], "only the parent's explicit saves write project files");
   for (const file of files) assert.deepEqual(await readFile(join(workspace, file)), png);
   assert.deepEqual(requests.map(request => request.path).sort(), ["/v1/images/generations", "/v1/images/generations", "/v1/images/edits"].sort());
@@ -157,7 +157,7 @@ test("child image handoff tolerates concurrent replay, preserves originals and r
   const png = await sharp({ create: { width: 24, height: 16, channels: 3, background: "blue" } }).png().toBuffer();
   const store = new ImageStore(root), image = await store.save("child", png);
   const inherit = createSubagentImageInheritance(store);
-  const result: PilotDeckToolSuccessResult = { type: "success", toolName: "generate_image", toolCallId: "draw", content: [],
+  const result: EastYunDeskToolSuccessResult = { type: "success", toolName: "generate_image", toolCallId: "draw", content: [],
     data: { imageGeneration: image }, startedAt: "", completedAt: "" };
   const args = { parentSessionId: "parent", subagentSessionId: "child", result };
   const copies = await Promise.all(Array.from({ length: 5 }, () => inherit(args)));

@@ -380,11 +380,11 @@ test("gateway cannot start replacement while a model metadata write holds the tr
 });
 
 test("replaceLastWebSessionTurn removes only the latest turn and leaves workspace files untouched", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-replace-turn-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-replace-turn-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-replace-turn-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-replace-turn-home-"));
   try {
     const sessionKey = "web:s_replace_tail";
-    const storage = createAgentProjectSessionStorage({ projectRoot, pilotHome, sessionId: sessionKey });
+    const storage = createAgentProjectSessionStorage({ projectRoot, eastyunHome, sessionId: sessionKey });
     await storage.transcript.recordAcceptedInput(sessionKey, "turn-1", [{
       role: "user",
       content: [{ type: "text", text: "first request" }],
@@ -411,7 +411,7 @@ test("replaceLastWebSessionTurn removes only the latest turn and leaves workspac
         expectedTurnId: "turn-2",
         replacementTurnId: "turn-3",
       },
-      { projectRoot, pilotHome },
+      { projectRoot, eastyunHome },
     );
 
     const transcript = await readTranscript(storage.transcriptPath);
@@ -424,16 +424,16 @@ test("replaceLastWebSessionTurn removes only the latest turn and leaves workspac
     assert.equal(await readFile(workspaceFile, "utf8"), "keep current workspace state");
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("replaceLastWebSessionTurn preserves session metadata written after the edited turn", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-replace-metadata-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-replace-metadata-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-replace-metadata-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-replace-metadata-home-"));
   try {
     const sessionKey = "web:s_replace_metadata";
-    const storage = createAgentProjectSessionStorage({ projectRoot, pilotHome, sessionId: sessionKey });
+    const storage = createAgentProjectSessionStorage({ projectRoot, eastyunHome, sessionId: sessionKey });
     await storage.transcript.recordSessionMetadata(sessionKey, "early-title", {
       aiTitle: "Obsolete generated title from before input",
       updatedAt: "2026-08-25T09:59:00.000Z",
@@ -462,7 +462,7 @@ test("replaceLastWebSessionTurn preserves session metadata written after the edi
         expectedTurnId: "turn-1",
         replacementTurnId: "turn-2",
       },
-      { projectRoot, pilotHome, now: () => new Date("2026-08-25T11:00:00.000Z") },
+      { projectRoot, eastyunHome, now: () => new Date("2026-08-25T11:00:00.000Z") },
     );
 
     const transcript = await readTranscript(storage.transcriptPath);
@@ -480,16 +480,16 @@ test("replaceLastWebSessionTurn preserves session metadata written after the edi
     assert.equal(metadataEntry.metadata.isSnapshot, true);
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("failed replacement submission can restore the original transcript exactly", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-replace-rollback-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-replace-rollback-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-replace-rollback-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-replace-rollback-home-"));
   try {
     const sessionKey = "web:s_replace_rollback";
-    const storage = createAgentProjectSessionStorage({ projectRoot, pilotHome, sessionId: sessionKey });
+    const storage = createAgentProjectSessionStorage({ projectRoot, eastyunHome, sessionId: sessionKey });
     await storage.transcript.recordAcceptedInput(sessionKey, "turn-1", [{
       role: "user",
       content: [{ type: "text", text: "original request" }],
@@ -507,7 +507,7 @@ test("failed replacement submission can restore the original transcript exactly"
         expectedTurnId: "turn-1",
         replacementTurnId: "turn-2",
       },
-      { projectRoot, pilotHome },
+      { projectRoot, eastyunHome },
     );
     await finalizeLastWebSessionTurnReplacement(
       {
@@ -516,22 +516,22 @@ test("failed replacement submission can restore the original transcript exactly"
         transactionId: replacement.transactionId,
         action: "rollback",
       },
-      { projectRoot, pilotHome },
+      { projectRoot, eastyunHome },
     );
 
     assert.equal(await readFile(storage.transcriptPath, "utf8"), original);
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("startup recovery restores a prepared replacement that was never accepted", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-replace-recovery-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-replace-recovery-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-replace-recovery-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-replace-recovery-home-"));
   try {
     const sessionKey = "web:s_replace_recovery";
-    const storage = createAgentProjectSessionStorage({ projectRoot, pilotHome, sessionId: sessionKey });
+    const storage = createAgentProjectSessionStorage({ projectRoot, eastyunHome, sessionId: sessionKey });
     await storage.transcript.recordAcceptedInput(sessionKey, "turn-1", [{
       role: "user",
       content: [{ type: "text", text: "original request" }],
@@ -549,26 +549,26 @@ test("startup recovery restores a prepared replacement that was never accepted",
         expectedTurnId: "turn-1",
         replacementTurnId: "turn-2",
       },
-      { projectRoot, pilotHome },
+      { projectRoot, eastyunHome },
     );
 
-    const recovery = recoverPendingLastTurnReplacements(pilotHome);
+    const recovery = recoverPendingLastTurnReplacements(eastyunHome);
     assert.equal(recovery.rolledBack, 1);
     assert.equal(recovery.committed, 0);
     assert.deepEqual(recovery.failures, []);
     assert.equal(await readFile(storage.transcriptPath, "utf8"), original);
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("startup recovery recognizes a durable legacy replacement without its journal", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-replace-commit-recovery-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-replace-commit-recovery-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-replace-commit-recovery-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-replace-commit-recovery-home-"));
   try {
     const sessionKey = "web:s_replace_commit_recovery";
-    const storage = createAgentProjectSessionStorage({ projectRoot, pilotHome, sessionId: sessionKey });
+    const storage = createAgentProjectSessionStorage({ projectRoot, eastyunHome, sessionId: sessionKey });
     await storage.transcript.recordAcceptedInput(sessionKey, "turn-1", [{
       role: "user",
       content: [{ type: "text", text: "original request" }],
@@ -581,7 +581,7 @@ test("startup recovery recognizes a durable legacy replacement without its journ
         expectedTurnId: "turn-1",
         replacementTurnId: "turn-2",
       },
-      { projectRoot, pilotHome },
+      { projectRoot, eastyunHome },
     );
     const prepared = await readTranscript(storage.transcriptPath);
     const latest = prepared.entries.at(-1);
@@ -598,7 +598,7 @@ test("startup recovery recognizes a durable legacy replacement without its journ
     assert.ok(legacyJournal);
     await rm(join(storage.chatDir, legacyJournal));
 
-    const recovery = recoverPendingLastTurnReplacements(pilotHome);
+    const recovery = recoverPendingLastTurnReplacements(eastyunHome);
     assert.equal(recovery.committed, 1);
     assert.equal(recovery.rolledBack, 0);
     assert.deepEqual(recovery.failures, []);
@@ -613,16 +613,16 @@ test("startup recovery recognizes a durable legacy replacement without its journ
     );
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("startup recovery decides from the newest replacement transaction only", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-replace-newest-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-replace-newest-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-replace-newest-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-replace-newest-home-"));
   try {
     const sessionKey = "web:s_replace_newest";
-    const storage = createAgentProjectSessionStorage({ projectRoot, pilotHome, sessionId: sessionKey });
+    const storage = createAgentProjectSessionStorage({ projectRoot, eastyunHome, sessionId: sessionKey });
     await storage.transcript.recordAcceptedInput(sessionKey, "turn-1", [{
       role: "user",
       content: [{ type: "text", text: "first request" }],
@@ -637,7 +637,7 @@ test("startup recovery decides from the newest replacement transaction only", as
       },
       {
         projectRoot,
-        pilotHome,
+        eastyunHome,
         now: () => new Date("2026-08-25T10:00:00.000Z"),
       },
     );
@@ -666,12 +666,12 @@ test("startup recovery decides from the newest replacement transaction only", as
       },
       {
         projectRoot,
-        pilotHome,
+        eastyunHome,
         now: () => new Date("2026-08-25T10:01:00.000Z"),
       },
     );
 
-    const recovery = recoverPendingLastTurnReplacements(pilotHome);
+    const recovery = recoverPendingLastTurnReplacements(eastyunHome);
     assert.equal(recovery.rolledBack, 1);
     assert.equal(recovery.committed, 0);
     assert.deepEqual(recovery.failures, []);
@@ -683,16 +683,16 @@ test("startup recovery decides from the newest replacement transaction only", as
     assert.equal(accepted.includes("turn-4"), false);
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("startup recovery skips a replacement owned by a live Gateway process", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-replace-owner-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-replace-owner-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-replace-owner-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-replace-owner-home-"));
   try {
     const sessionKey = "web:s_replace_owner";
-    const storage = createAgentProjectSessionStorage({ projectRoot, pilotHome, sessionId: sessionKey });
+    const storage = createAgentProjectSessionStorage({ projectRoot, eastyunHome, sessionId: sessionKey });
     await storage.transcript.recordAcceptedInput(sessionKey, "turn-1", [{
       role: "user",
       content: [{ type: "text", text: "original request" }],
@@ -707,18 +707,18 @@ test("startup recovery skips a replacement owned by a live Gateway process", asy
       },
       {
         projectRoot,
-        pilotHome,
+        eastyunHome,
         transactionOwner: { instanceId: "gateway-owner", pid: process.pid },
       },
     );
 
-    const whileOwned = recoverPendingLastTurnReplacements(pilotHome);
+    const whileOwned = recoverPendingLastTurnReplacements(eastyunHome);
     assert.equal(whileOwned.skipped, 1);
     assert.equal(whileOwned.rolledBack, 0);
     let transcript = await readTranscript(storage.transcriptPath);
     assert.equal(transcript.entries.some((entry) => entry.turnId === "turn-1"), false);
 
-    const afterOwnerExit = recoverPendingLastTurnReplacements(pilotHome, {
+    const afterOwnerExit = recoverPendingLastTurnReplacements(eastyunHome, {
       isProcessAlive: () => false,
     });
     assert.equal(afterOwnerExit.skipped, 0);
@@ -728,16 +728,16 @@ test("startup recovery skips a replacement owned by a live Gateway process", asy
     assert.equal(transcript.entries.some((entry) => entry.turnId === "turn-1"), true);
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });
 
 test("replaceLastWebSessionTurn rejects a stale target without changing the transcript", async () => {
-  const projectRoot = await mkdtemp(join(tmpdir(), "pilotdeck-replace-conflict-project-"));
-  const pilotHome = await mkdtemp(join(tmpdir(), "pilotdeck-replace-conflict-home-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "eastyundesk-replace-conflict-project-"));
+  const eastyunHome = await mkdtemp(join(tmpdir(), "eastyundesk-replace-conflict-home-"));
   try {
     const sessionKey = "web:s_replace_conflict";
-    const storage = createAgentProjectSessionStorage({ projectRoot, pilotHome, sessionId: sessionKey });
+    const storage = createAgentProjectSessionStorage({ projectRoot, eastyunHome, sessionId: sessionKey });
     await storage.transcript.recordAcceptedInput(sessionKey, "current-turn", [{
       role: "user",
       content: [{ type: "text", text: "current request" }],
@@ -752,7 +752,7 @@ test("replaceLastWebSessionTurn rejects a stale target without changing the tran
           expectedTurnId: "stale-turn",
           replacementTurnId: "replacement-turn",
         },
-        { projectRoot, pilotHome },
+        { projectRoot, eastyunHome },
       ),
       (error: unknown) => (
         error instanceof ReplaceLastTurnError && error.code === "replace_turn_conflict"
@@ -761,6 +761,6 @@ test("replaceLastWebSessionTurn rejects a stale target without changing the tran
     assert.equal(await readFile(storage.transcriptPath, "utf8"), before);
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(pilotHome, { recursive: true, force: true });
+    await rm(eastyunHome, { recursive: true, force: true });
   }
 });

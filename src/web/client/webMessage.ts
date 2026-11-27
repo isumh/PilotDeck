@@ -102,7 +102,7 @@ export type WebMessage = {
   sessionKey: string;
   projectKey?: string;
   createdAt: string;
-  provider: "pilotdeck" | (string & {});
+  provider: "eastyundesk" | (string & {});
   role: WebMessageRole;
   kind: WebMessageKind;
   /** Logical agent turn that owns this message. Stable across live/history projections. */
@@ -133,7 +133,7 @@ export type WebMessage = {
   }>;
   artifacts?: import("../../session/artifacts/FileArtifact.js").FileArtifact[];
   /**
-   * `PilotDeckToolErrorCode` of the underlying failure when
+   * `EastYunDeskToolErrorCode` of the underlying failure when
    * `kind === 'tool_result'` and `ok === false`. Empty for non-error or
    * non-tool-result frames. See `chatPermissions.ts` for how the host UI
    * uses this.
@@ -228,7 +228,7 @@ export function applyWebGatewayEvent(
         sessionKey: options.sessionKey,
         projectKey: options.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "assistant",
         kind: "text",
         text: event.text,
@@ -262,7 +262,7 @@ export function applyWebGatewayEvent(
         sessionKey: options.sessionKey,
         projectKey: options.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "assistant",
         kind: "thinking",
         text: event.text,
@@ -282,7 +282,7 @@ export function applyWebGatewayEvent(
         sessionKey: options.sessionKey,
         projectKey: options.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "assistant",
         kind: "file_artifacts",
         artifacts: event.artifacts,
@@ -298,7 +298,7 @@ export function applyWebGatewayEvent(
         sessionKey: options.sessionKey,
         projectKey: options.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "tool",
         kind: "tool_use",
         toolCallId: event.toolCallId,
@@ -353,7 +353,7 @@ export function applyWebGatewayEvent(
         sessionKey: options.sessionKey,
         projectKey: options.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "tool",
         kind: "tool_result",
         toolCallId: event.toolCallId,
@@ -395,7 +395,7 @@ export function applyWebGatewayEvent(
         sessionKey: options.sessionKey,
         projectKey: options.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "permission",
         kind: "permission_request",
         requestId: event.requestId,
@@ -417,7 +417,7 @@ export function applyWebGatewayEvent(
         sessionKey: options.sessionKey,
         projectKey: options.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "system",
         kind: "elicitation_request",
         requestId: event.requestId,
@@ -454,7 +454,7 @@ export function applyWebGatewayEvent(
         sessionKey: options.sessionKey,
         projectKey: options.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "system",
         kind: "structured_output",
         payload: event.payload,
@@ -470,7 +470,7 @@ export function applyWebGatewayEvent(
         sessionKey: options.sessionKey,
         projectKey: options.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "system",
         kind: "status",
         text: `mode → ${event.mode}`,
@@ -486,7 +486,7 @@ export function applyWebGatewayEvent(
         sessionKey: options.sessionKey,
         projectKey: options.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "system",
         kind: "complete",
         usage: event.usage,
@@ -520,7 +520,7 @@ export function applyWebGatewayEvent(
         sessionKey: options.sessionKey,
         projectKey: options.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: kind === "error" ? "error" : "system",
         kind,
         text,
@@ -559,7 +559,7 @@ export function applyWebGatewayEvent(
         sessionKey: options.sessionKey,
         projectKey: options.projectKey,
         createdAt: stamp,
-        provider: "pilotdeck",
+        provider: "eastyundesk",
         role: "error",
         kind: "error",
         text: event.message,
